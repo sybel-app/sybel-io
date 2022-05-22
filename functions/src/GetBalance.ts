@@ -26,7 +26,6 @@ export default () => functions
         process.env.SYBEL
             );
             const balance = await contract.methods.balanceOf(address).call();
-            console.log(balance);
             response.status(200).send({
               address: address,
               balance: balance / 1e18,

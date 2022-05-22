@@ -69,7 +69,6 @@ export default () => functions
                   });
                 });
           } catch (error) {
-            console.log(error);
             response.status(500).send({error});
           }
         }

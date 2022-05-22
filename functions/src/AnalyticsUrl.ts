@@ -29,13 +29,6 @@ export default () =>
             const userId = request.query.uid;
             const ownerId = request.query.oid;
             const seriesId = request.query.sid;
-
-            /* Apple Podcast User-Agent */
-            console.log({socket: request.socket,
-
-              subdomains: request.subdomains,
-              res: request.res,
-              originalUrl: request.originalUrl});
             if (
               request.headers["user-agent"]
             ) {
