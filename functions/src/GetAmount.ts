@@ -120,7 +120,7 @@ async function importSybelListenEvent() {
               ON owner_id.series_id = data.series_id
               WHERE UNIX_MILLIS(data.timestamp) > @lastTimestamp `;
   try {
-    const options = { query: query, location: 'EU', params: { lastTimestamp: lastRefreshedTimestamp.toMillis } };
+    const options = { query: query, location: 'EU', params: { lastTimestamp: lastRefreshedTimestamp.toMillis() } };
 
     // Create the job that will run the query and execute it
     const [job] = await bigquery.createQueryJob(options);
@@ -131,29 +131,34 @@ async function importSybelListenEvent() {
     const [rows] = await job.getQueryResults();
 
     // Create the batch for our database operation
-    const batch = db.batch();
     const collection = db.collection("listeningAnalyticsTest"); // FIXME : Should be push directly in the real database, wait for PR for that
 
     // Map each one of our row into new listen object, and then insert them in our database
     logger.info(`Found ${rows.length} new listen event to add in our collection from big query`)
-    rows.forEach((row: any) => {
-      // Build the new listen obj
-      const newListen = {
-        rssUrl: null,
-        userId: row.user_id,
-        ownerId: row.owner_id,
-        seriesId: row.series_id,
-        givenToOwner: false,
-        givenToUser: false,
-        date: admin.firestore.Timestamp.fromMillis(row.timestamp),
-      };
 
-      // Add it in our db transaction
-      batch.set(collection.doc(), newListen);
-    });
+    // Slide into chunk of 500 to prevent transaction overflow from firestore db
+    await sliceIntoChunks(rows, 500).forEach(async (chunkedRows: Array<any>) => {
+      const batch = db.batch();
 
-    // Then commit our transaction
-    await batch.commit();
+      chunkedRows.forEach((row: any) => {
+        // Build the new listen obj
+        const newListen = {
+          rssUrl: null,
+          userId: row.user_id,
+          ownerId: row.owner_id,
+          seriesId: row.series_id,
+          givenToOwner: false,
+          givenToUser: false,
+          date: admin.firestore.Timestamp.fromMillis(row.timestamp),
+        };
+
+        // Add it in our db transaction
+        batch.set(collection.doc(), newListen);
+      });
+      // Then commit our transaction
+      await batch.commit();
+    })
+
 
     // And finally, save this new data import
     await db.collection("sybelProdctionRefresh").add({
@@ -163,4 +168,14 @@ async function importSybelListenEvent() {
   } catch (e) {
     logger.warn("Unable to import the sybel listen event's", e)
   }
+}
+
+// Chunk an array into a given size (so for [1, 2, 3, 4] chunked by 2 it will give us [[1, 2], [3, 4]])
+function sliceIntoChunks(arr: Array<any>, chunkSize: number) {
+  const res = [];
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    const chunk = arr.slice(i, i + chunkSize);
+    res.push(chunk);
+  }
+  return res;
 }
