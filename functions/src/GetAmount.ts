@@ -3,6 +3,7 @@ import cors from "cors";
 import * as admin from "firebase-admin";
 import SybelDataRefresh from "./model/SybelDataRefresh";
 import { Timestamp } from "@firebase/firestore";
+import { sliceIntoChunks } from "./Common";
 
 const db = admin.firestore();
 
@@ -118,26 +119,24 @@ async function importSybelListenEvent() {
               FROM \`sybel-bigquery.prod_data_studio.prod_union_acpm\` AS data
               INNER JOIN \`sybel-bigquery.prod_server_api.dev_seriesid_ownerid\` AS owner_id
               ON owner_id.series_id = data.series_id
-              WHERE UNIX_MILLIS(data.timestamp) > @lastTimestamp `;
+              WHERE UNIX_MILLIS(data.timestamp) > @lastTimestamp 
+              ORDER BY data.timestamp`;
   try {
     const options = { query: query, location: 'EU', params: { lastTimestamp: lastRefreshedTimestamp.toMillis() } };
-
+∑
     // Create the job that will run the query and execute it
     const [job] = await bigquery.createQueryJob(options);
-
-    // Get the timestamp at wich this query was executed
-    const queryTimestamp = admin.firestore.Timestamp.fromDate(new Date())
-
     const [rows] = await job.getQueryResults();
 
     // Create the batch for our database operation
-    const collection = db.collection("listeningAnalyticsTest"); // FIXME : Should be push directly in the real database, wait for PR for that
+    const collection = db.collection("listeningAnalyticsTest");
 
     // Map each one of our row into new listen object, and then insert them in our database
     logger.info(`Found ${rows.length} new listen event to add in our collection from big query`)
 
     // Slide into chunk of 500 to prevent transaction overflow from firestore db
-    await sliceIntoChunks(rows, 500).forEach(async (chunkedRows: Array<any>) => {
+    // Await for the transactions to complete to be sure we got the fresh data in our database before computing the new amount 
+    await Promise.all(sliceIntoChunks(rows, 500).map(async (chunkedRows: Array<any>) => {
       const batch = db.batch();
 
       chunkedRows.forEach((row: any) => {
@@ -157,25 +156,17 @@ async function importSybelListenEvent() {
       });
       // Then commit our transaction
       await batch.commit();
-    })
+    }));
 
+    // Find the last timestamp we fetched
+    const lastTimestampFetched = rows[rows.length - 1].timestamp
 
     // And finally, save this new data import
     await db.collection("sybelProdctionRefresh").add({
-      timestamp: queryTimestamp,
+      timestamp: lastTimestampFetched,
       importCount: rows.length
     });
   } catch (e) {
     logger.warn("Unable to import the sybel listen event's", e)
   }
-}
-
-// Chunk an array into a given size (so for [1, 2, 3, 4] chunked by 2 it will give us [[1, 2], [3, 4]])
-function sliceIntoChunks(arr: Array<any>, chunkSize: number) {
-  const res = [];
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    const chunk = arr.slice(i, i + chunkSize);
-    res.push(chunk);
-  }
-  return res;
 }
