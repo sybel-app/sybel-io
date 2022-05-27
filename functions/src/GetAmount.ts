@@ -1,6 +1,8 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import * as admin from "firebase-admin";
+import SybelDataRefresh from "./model/SybelDataRefresh";
+import { Timestamp } from "@firebase/firestore";
 
 const db = admin.firestore();
 
@@ -23,7 +25,7 @@ export default () =>
         } else {
 
           const id = request.body.id;
-          logger.info(`Will refresh the amount for the user ${id}`)
+          logger.debug(`Will refresh the amount for the user ${id}`)
 
           try {
 
@@ -62,37 +64,70 @@ export default () =>
                 userAmount: userLog.length
               });
           } catch (error) {
-            logger.error("Unable refresh the amount for the user " + id, error)
+            logger.warn("Unable refresh the amount for the user " + id, error)
             response.status(500).send(error);
           }
         }
       });
     });
 
+// Get the last time the sybel prod data where imported
+async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
+  const collection = db.collection("sybelProdctionRefresh");
+  const documents: SybelDataRefresh[] = [];
+  const snapshot = await collection
+    .orderBy("timestamp", "desc")
+    .limit(1)
+    .get();
+  let lastTimestamp: Timestamp
+  snapshot.forEach((doc) => documents.push(doc.data() as SybelDataRefresh));
+  if (documents.length > 0) {
+    const lastDataRefresh = documents[0] as SybelDataRefresh
+    lastTimestamp = lastDataRefresh.timestamp
+  } else {
+    lastTimestamp = new Timestamp(1, 1)
+  }
+
+  return lastTimestamp
+}
+
 
 // Query our big query database to get all the Sybel listen event's for each user
 async function importSybelListenEvent() {
-  logger.info("Starting to import the sybel listen event")
+  logger.debug("Starting to import the sybel listen event")
+
+  // Get the last timestamp used to fetch the prod data
+  const lastRefreshedTimestamp = await getLastSybelRefreshTimestamp()
+
+  // Check the difference between the current time and the last time it was refreshed, if that was less than 15min again abort
+  const diffInMillis = new Date().getTime() - lastRefreshedTimestamp.toMillis()
+  if (diffInMillis < 15 * 60 * 1000) {
+    logger.debug("The sybel prod data where refreshed less than 15min again, aborting the refresh")
+    return
+  }
 
   // Build our big query connection
   const projectId = 'sybel-bigquery'
   const keyFilename = 'sybel-bigquery-3694f3cffbbb.json'
   const bigquery = new BigQuery({ projectId, keyFilename });
 
+
   // Build the query that will fetch all the data from the big query table
-  // FIXME : Should perform request filtering based on last timestamp fetched
   const query = `SELECT UNIX_MILLIS(data.timestamp) AS timestamp, 
               data.user_id, data.series_id, owner_id.owner_id, 
               FROM \`sybel-bigquery.prod_data_studio.prod_union_acpm\` AS data
               INNER JOIN \`sybel-bigquery.prod_server_api.dev_seriesid_ownerid\` AS owner_id
               ON owner_id.series_id = data.series_id
-              WHERE owner_id.owner_id IS NOT NULL
-              LIMIT 5`;
+              WHERE UNIX_MILLIS(data.timestamp) > @lastTimestamp `;
   try {
-    const options = { query: query, location: 'EU' };
+    const options = { query: query, location: 'EU', params: { lastTimestamp: lastRefreshedTimestamp.toMillis } };
 
     // Create the job that will run the query and execute it
     const [job] = await bigquery.createQueryJob(options);
+
+    // Get the timestamp at wich this query was executed
+    const queryTimestamp = admin.firestore.Timestamp.fromDate(new Date())
+
     const [rows] = await job.getQueryResults();
 
     // Create the batch for our database operation
@@ -100,7 +135,7 @@ async function importSybelListenEvent() {
     const collection = db.collection("listeningAnalyticsTest"); // FIXME : Should be push directly in the real database, wait for PR for that
 
     // Map each one of our row into new listen object, and then insert them in our database
-    logger.info(`Found ${rows.length} new listen event to add in our collection`)
+    logger.info(`Found ${rows.length} new listen event to add in our collection from big query`)
     rows.forEach((row: any) => {
       // Build the new listen obj
       const newListen = {
@@ -119,7 +154,13 @@ async function importSybelListenEvent() {
 
     // Then commit our transaction
     await batch.commit();
+
+    // And finally, save this new data import
+    await db.collection("sybelProdctionRefresh").add({
+      timestamp: queryTimestamp,
+      importCount: rows.length
+    });
   } catch (e) {
-    logger.error("Unable to import the sybel listen event's", e)
+    logger.warn("Unable to import the sybel listen event's", e)
   }
 }
