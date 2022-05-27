@@ -25,7 +25,6 @@ export default () =>
           const id = request.body.id;
           logger.info(`Will refresh the amount for the user ${id}`)
 
-
           try {
 
             // Try to perform the simple request
@@ -81,9 +80,11 @@ async function importSybelListenEvent() {
   const bigquery = new BigQuery({ projectId, keyFilename });
 
   // Build the query that will fetch all the data from the big query table
-  const query = `SELECT data.timestamp, data.user_id, data.series_id, owner_id.owner_id, 
+  // FIXME : Should perform request filtering based on last timestamp fetched
+  const query = `SELECT UNIX_MILLIS(data.timestamp) AS timestamp, 
+              data.user_id, data.series_id, owner_id.owner_id, 
               FROM \`sybel-bigquery.prod_data_studio.prod_union_acpm\` AS data
-              INNER JOIN \`sybel-bigquery.prod_server_api.dev_seriesid_ownerid\` as owner_id
+              INNER JOIN \`sybel-bigquery.prod_server_api.dev_seriesid_ownerid\` AS owner_id
               ON owner_id.series_id = data.series_id
               WHERE owner_id.owner_id IS NOT NULL
               LIMIT 5`;
@@ -94,20 +95,30 @@ async function importSybelListenEvent() {
     const [job] = await bigquery.createQueryJob(options);
     const [rows] = await job.getQueryResults();
 
-    // Map each one of our row into new listen object
-    rows.map((row: any) => {
-      return {
+    // Create the batch for our database operation
+    const batch = db.batch();
+    const collection = db.collection("listeningAnalyticsTest"); // FIXME : Should be push directly in the real database, wait for PR for that
+
+    // Map each one of our row into new listen object, and then insert them in our database
+    logger.info(`Found ${rows.length} new listen event to add in our collection`)
+    rows.forEach((row: any) => {
+      // Build the new listen obj
+      const newListen = {
         rssUrl: null,
         userId: row.user_id,
         ownerId: row.owner_id,
         seriesId: row.series_id,
         givenToOwner: false,
         givenToUser: false,
-        date: row.timestamp,
+        date: admin.firestore.Timestamp.fromMillis(row.timestamp),
       };
-    }).forEach((newListen: any) => {
-      logger.info("Created a new listen object for user " + newListen.userId)
+
+      // Add it in our db transaction
+      batch.set(collection.doc(), newListen);
     });
+
+    // Then commit our transaction
+    await batch.commit();
   } catch (e) {
     logger.error("Unable to import the sybel listen event's", e)
   }
