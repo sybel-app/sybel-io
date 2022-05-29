@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import { getWalletForUser } from "./Common";
+import { getWalletForUser } from "./utils/UserUtils";
 
 /**
  * @function Try to find a wallet for the user

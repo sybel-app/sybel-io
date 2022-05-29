@@ -2,7 +2,7 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import Web3 from "web3";
 import * as admin from "firebase-admin";
-import { getWalletForUser } from "./Common";
+import { getWalletForUser } from "./utils/UserUtils";
 
 const db = admin.firestore();
 const web3 = new Web3(process.env.NODE || "http://localhost:3000/");
