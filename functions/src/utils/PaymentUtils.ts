@@ -20,21 +20,23 @@ const analyticsCollection = db.collection("listeningAnalytics");
 
 /**
  * Pay a wallet for a given number of liste,
- * @param walletAddress the wallet address to pay
- * @param listenCount the number of listen to pay
- * @returns true if the payment was a success, false otherwise
+ * @param {string} walletAddress the wallet address to pay
+ * @param {number} listenCount the number of listen to pay
+ * @return {boolean} true if the payment was a success, false otherwise
  */
 export async function payWallet(
-  walletAddress: String,
+  walletAddress: string,
   listenCount: number
-): Promise<Boolean> {
+): Promise<boolean> {
   try {
     const tokenContract = new web3.eth.Contract(
       abi as AbiItem[],
       process.env.SYBEL
     );
     const bufferedPrivateKey = Buffer.from(process.env.SYBELPRIVK || "", "hex");
-    let count = await web3.eth.getTransactionCount(process.env.SYBELPUBK || "");
+    const count = await web3.eth.getTransactionCount(
+      process.env.SYBELPUBK || ""
+    );
     // Create the transaction
     const rawTransaction = {
       from: process.env.SYBELPUBK,
@@ -74,9 +76,9 @@ export async function payWallet(
 
 /**
  * Count the number of listen for a given wallet, matching the db properties
- * @param wallet The wallet to count listen and pay
- * @param idProperties The wallet id properties to check for in the database
- * @param paymentProperties The payment boolean properties to check in database
+ * @param {Wallet} wallet The wallet to count listen and pay
+ * @param {string} idProperties The wallet id properties to check for in the database
+ * @param {string} paymentProperties The payment boolean properties to check in database
  */
 export async function countListenAndPayWallet(
   wallet: Wallet,

@@ -2,14 +2,14 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import SybelDataRefresh from "./model/SybelDataRefresh";
 import { Timestamp } from "@firebase/firestore";
-import { sliceIntoChunks } from "./utils/Common";
 import { UsersImported } from "./model/UsersImported";
 import { getWalletForUserSet } from "./utils/UserUtils";
 import { countListenAndPayWallet } from "./utils/PaymentUtils";
+import { chunk } from "lodash";
 
 const db = admin.firestore();
 
-const { BigQuery } = require("@google-cloud/bigquery");
+import { BigQuery } from "@google-cloud/bigquery";
 const logger = functions.logger;
 
 /**
@@ -22,7 +22,7 @@ export default () =>
   functions
     .region("europe-west3")
     .pubsub.schedule("20 * * * *")
-    .onRun(async (context) => {
+    .onRun(async () => {
       logger.debug("Starting to import the sybel listen event");
 
       // Get the last timestamp used to fetch the prod data
@@ -62,7 +62,7 @@ export default () =>
 
 /**
  * Get the last time the sybel prod data where imported
- * @returns The last timestamp at which the listen data from Sybel where refreshed
+ * @return {void} The last timestamp at which the listen data from Sybel where refreshed
  */
 async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
   const collection = db.collection("sybelProdctionRefresh");
@@ -81,15 +81,17 @@ async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
 }
 
 /**
- * Query our big query database to get all the Sybel listen event's for each user, and import them into firebase
- * @returns nothing
+ * Query our big query database to get all the Sybel listen
+ * event's for each user, and import them into firebase
+ * @param {Timestamp} lastRefreshedTimestamp
+ * @return {void} nothing
  */
 async function importSybelListenEvent(
   lastRefreshedTimestamp: Timestamp
 ): Promise<UsersImported> {
   // Build our big query connection
   const projectId = "sybel-bigquery";
-  const keyFilename = "sybel-bigquery-3694f3cffbbb.json";
+  const keyFilename = "sybel-bigquery-prod.json";
   const bigquery = new BigQuery({ projectId, keyFilename });
 
   // Build the query that will fetch all the data from the big query table
@@ -120,13 +122,14 @@ async function importSybelListenEvent(
     );
 
     // Build the set of owner and user id set we updated
-    const ownerIdSet = new Set<String>();
-    const userIdSet = new Set<String>();
+    const ownerIdSet = new Set<string>();
+    const userIdSet = new Set<string>();
 
     // Slide into chunk of 500 to prevent transaction overflow from firestore db
+    // eslint-disable-next-line max-len
     // Await for the transactions to complete to be sure we got the fresh data in our database before computing the new amount
     await Promise.all(
-      sliceIntoChunks(rows, 500).map(async (chunkedRows: Array<any>) => {
+      chunk(rows, 500).map(async (chunkedRows) => {
         const batch = db.batch();
 
         chunkedRows.forEach((row: any) => {

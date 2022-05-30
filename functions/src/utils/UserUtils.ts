@@ -7,10 +7,10 @@ const logger = functions.logger;
 
 /**
  * Get the wallet (or null if not found) for the given user
- * @param userId The user for which we are searching the wallet
- * @returns The wallet found or null
+ * @param {string} userId The user for which we are searching the wallet
+ * @return {Wallet | null} The wallet found or null
  */
-export async function getWalletForUser(userId: String): Promise<Wallet | null> {
+export async function getWalletForUser(userId: string): Promise<Wallet | null> {
   try {
     logger.debug(`Try to get the wallet for the user ${userId}`);
     // Access our wallet collection
@@ -34,10 +34,11 @@ export async function getWalletForUser(userId: String): Promise<Wallet | null> {
 
 /**
  * Get the wallet's for all the given users
- * @param userIdSet The list of id for which we want the wallet's
+ * @param {Set<string>} userIdSet The list of id for which we want the wallet's
+ * @return {Set<Wallet>} all the wallet found
  */
 export async function getWalletForUserSet(
-  userIdSet: Set<String>
+  userIdSet: Set<string>
 ): Promise<Set<Wallet>> {
   try {
     logger.debug(`Try to get the wallet's for the user ${userIdSet}`);

@@ -1,8 +1,8 @@
 import { Timestamp } from "@firebase/firestore";
 
 interface SybelDataRefresh {
-  timestamp: Timestamp,
-  importCount: number
+  timestamp: Timestamp;
+  importCount: number;
 }
 
 export default SybelDataRefresh;

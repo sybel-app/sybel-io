@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "sybel-bigquery",
+  "private_key_id": "3694f3cffbbb1ee46dea45f0db4712da6ec50e45",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDKvR+KDJ/VBm8T\nbgTVRhRn6OhwzcHqxGgnoz+UIJaT5EO2GhSuyMhU+kByZjvcNPaLKKUs/1e0q+x6\nKrRUsPT1FCjYhkzXTa9Pfsa2IcSknV8hnwNiyt+ga6cUxWC58YqYHb2yU8Q1NfqK\nK3Sp7JCp7j5V9Qs81A4PeAsHtRkeZeY1HxizTt2tQsudmW0EJOUPbotZnaVFYghF\nHoLueHqzJ3MXo9DLtNl1HAa1FVHqTNHHjGiNUk8PPHIU6P828F1QNctzOjGRApwS\noijRf7YZ7J9Y6GrKW8uLnlYTXk1+k2HWyfH5oJobJToGDMnT70PClvmK3aayIM0e\nYw3KqVMJAgMBAAECggEAIvYRKce6ikxFPFcFG1gt7atS5hz9W0RKZ8d1j9A81z0O\nVilSNr/mGA1drrylhvhVKbM1JLjVwZDCQ2D43v/zBg5XattiBeDeIfnNP5w8Il0H\nCi+3MEKm5K2bzu+omfgmu8upKkbat4ha75fF0wW5/qvYcQ9ERFWXJSDA2i/nKIAA\nVjGJAk0ePl2GPfQTW0XJ0Vko1c2r9ecFX9nu2iaksS6jRJTFVoJdzLHzfn/phO5v\n9qlditMOLQDvCVwoTU0Ys0KYepl2rnhMc/zNX+Py56h2hklAZEQdjs3jeslBembm\nQ/vYGGp4+zZq6kfjHdIshxkoiz0e9afmBtIhZjOjbwKBgQDuk2BmJNdRCSBnL2JY\nq7chbmbkDOv7pDW8gJGgag/D2e+dQj5fNEZOQubb54ov2jnDhGeSeQ9NCW/vUzZ3\n/2fZCrDOeDoCBDS7ITsVKHh3wVa4lE5Lu7nxSiNMqbVfl2MVHml6Rih7yEojJnhM\nb0ND9KcYpaZF78H478YKtisM1wKBgQDZi7UiQayfJel/7i39Mtt83IxVJ0jHTUVd\nhLXeZ20UCs6P2H+qQpiROFobrC3uegpzTHUqnJEt8XpImkdby1PfrNEMOINeHMem\nstUZmh21Hl+ONHNfDFsGMN3fKb4I7FVatdwoAYPApIeGFAMimZGXMSXgl4ctDNSO\nyHveDE3DHwKBgQCTdzslx+3jZA3IWgyjHHjUzEYC/k27PJQOkTXyfryB5arrfG/L\nLyep5kaGdMcArxX3WVcfvX6MsqGiv7+ySoepK6d/5+aLKohhhrfbaymTdEkjTGBd\nBYt4rsfE8j1u+cc/3Y17C/SoFnRk57mCHV/pmEbUwEdXgUxXj/XM1y8i/wKBgQCx\n1CYo7o5xOch5rvUg+KW6l36PTSGM6Xk+TPFt8BWWQI9BvrP9NZsJeosN+91AB7rr\nLSDJyFpUuARBvPt/6eGSAe6QktGv6M67UYwo9XY7S6zIzc9RbwQpN2Dmv3R8TtQm\n5mokubg9jUDLNSiq6+W7NY3E3Zi+FrLaVMAMbvpR+QKBgQDsqPPpI+a61QwpxBlC\nibv3dDbXoAkdAYAoX0pXFgZVezjDHS8WpToLVA/5ksQvsD35CGWJsF5p+0bQNeg1\nwJYW3g3W2jTkB6VSlAyiuxrkO3qHKSxm/NeJxSKQ+RRAVCx/nGCYg/Dl+5bjXINo\nKYUhy1Tm/NzLdDiZOrvFcfoIcQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "sybel-io@sybel-bigquery.iam.gserviceaccount.com",
+  "client_id": "114559285244006583621",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sybel-io%40sybel-bigquery.iam.gserviceaccount.com"
+}
