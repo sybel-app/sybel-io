@@ -8,7 +8,8 @@ import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
 import getAmountFunction from "./GetAmount";
 import getSeriesFunction from "./SeriesInfo";
-
+import refreshUserBalanceFunction from "./RefreshUserBalance";
+import importSybelListenEventCron from "./ImportSybelListenEvent";
 
 /**
  * @function
@@ -66,3 +67,13 @@ export const getAmount = getAmountFunction();
  * @returns {void}
  */
 export const getSeries = getSeriesFunction();
+
+/**
+ * Refresh the user balance function
+ */
+export const refreshBalance = refreshUserBalanceFunction();
+
+/**
+ * Import the sybel listen event cron
+ */
+export const importSybelListenEvent = importSybelListenEventCron();

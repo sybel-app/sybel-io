@@ -1,0 +1,100 @@
+[debug] [2022-05-29T21:17:27.610Z] ----------------------------------------------------------------------
+[debug] [2022-05-29T21:17:27.612Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:start
+[debug] [2022-05-29T21:17:27.613Z] CLI Version:   11.0.1
+[debug] [2022-05-29T21:17:27.613Z] Platform:      darwin
+[debug] [2022-05-29T21:17:27.613Z] Node Version:  v16.13.1
+[debug] [2022-05-29T21:17:27.615Z] Time:          Sun May 29 2022 23:17:27 GMT+0200 (heure d’été d’Europe centrale)
+[debug] [2022-05-29T21:17:27.615Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2022-05-29T21:17:27.733Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2022-05-29T21:17:27.733Z] > authorizing via signed-in user (quentin@sybel.co)
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2022-05-29T21:17:27.753Z] [hub] writing locator at /var/folders/2z/gbc2rz9d6yg3wzf02bm1ztf00000gn/T/hub-sybel-io.json
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: auth, firestore, database, hosting, pubsub, storage {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mauth, firestore, database, hosting, pubsub, storage\u001b[22m"}}
+[info] ✔  functions: Using node@16 from host. {"metadata":{"emulator":{"name":"functions"},"message":"Using node@16 from host."}}
+[debug] [2022-05-29T21:17:27.774Z] defaultcredentials: writing to file /Users/quentin/.config/firebase/quentin_sybel_co_application_default_credentials.json
+[debug] [2022-05-29T21:17:27.781Z] Setting GAC to /Users/quentin/.config/firebase/quentin_sybel_co_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/quentin/.config/firebase/quentin_sybel_co_application_default_credentials.json"}}
+[debug] [2022-05-29T21:17:27.787Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/sybel-io/adminSdkConfig [none]
+[debug] [2022-05-29T21:17:28.163Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/sybel-io/adminSdkConfig 200
+[debug] [2022-05-29T21:17:28.163Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/sybel-io/adminSdkConfig {"projectId":"sybel-io","storageBucket":"sybel-io.appspot.com","locationId":"europe-west"}
+[debug] [2022-05-29T21:17:28.196Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"ui"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2022-05-29T21:17:28.196Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"ui"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2022-05-29T21:17:28.196Z] Starting Emulator UI with command {"binary":"node","args":["--dns-result-order=ipv4first","/Users/quentin/.cache/firebase/emulators/ui-v1.7.0/server.bundle.js"],"optionalArgs":[],"joinArgs":false} {"metadata":{"emulator":{"name":"ui"},"message":"Starting Emulator UI with command {\"binary\":\"node\",\"args\":[\"--dns-result-order=ipv4first\",\"/Users/quentin/.cache/firebase/emulators/ui-v1.7.0/server.bundle.js\"],\"optionalArgs\":[],\"joinArgs\":false}"}}
+[info] i  ui: Emulator UI logging to ui-debug.log {"metadata":{"emulator":{"name":"ui"},"message":"Emulator UI logging to \u001b[1mui-debug.log\u001b[22m"}}
+[debug] [2022-05-29T21:17:28.310Z] Web / API server started at localhost:4000
+ {"metadata":{"emulator":{"name":"ui"},"message":"Web / API server started at localhost:4000\n"}}
+[info] i  functions: Watching "/Users/quentin/Documents/Workspace/Sybel/sybel-io/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/quentin/Documents/Workspace/Sybel/sybel-io/functions\" for Cloud Functions..."}}
+[debug] [2022-05-29T21:17:28.470Z] Validating nodejs source
+[debug] [2022-05-29T21:17:30.259Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@ethereumjs/common": "^2.6.4",
+    "@firebase/firestore": "^3.4.9",
+    "@google-cloud/bigquery": "^5.12.0",
+    "cors": "^2.8.5",
+    "ethereumjs-tx": "^2.1.2",
+    "fast-xml-parser": "^4.0.7",
+    "firebase-admin": "^10.2.0",
+    "firebase-functions": "^3.21.2",
+    "node-vibrant": "^3.2.1-alpha.1",
+    "web3": "^1.7.3"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^0.2.0",
+    "typescript": "^4.5.4"
+  },
+  "private": true
+}
+[debug] [2022-05-29T21:17:30.260Z] Building nodejs source
+[debug] [2022-05-29T21:17:30.260Z] Analyzing nodejs backend spec
+[debug] [2022-05-29T21:17:30.263Z] Could not find functions.yaml. Must use http discovery
+[debug] [2022-05-29T21:17:30.431Z] Serving at port 9005
+
+[debug] [2022-05-29T21:17:31.079Z] Got response from /__/functions.yaml {"endpoints":{"createWallet":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"createWallet"},"getWallet":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"getWallet"},"getBalance":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"getBalance"},"payUser":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"payUser"},"generate":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"generate"},"analytics":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"analytics"},"getAmount":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"getAmount"},"getSeries":{"platform":"gcfv1","timeoutSeconds":540,"region":["europe-west3"],"availableMemoryMb":2048,"httpsTrigger":{},"entryPoint":"getSeries"},"refreshBalance":{"platform":"gcfv1","region":["europe-west3"],"httpsTrigger":{},"entryPoint":"refreshBalance"},"importSybelListenEvent":{"platform":"gcfv1","region":["europe-west3"],"scheduleTrigger":{"schedule":"20 * * * *"},"labels":{},"entryPoint":"importSybelListenEvent"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}]}
+[debug] [2022-05-29T21:17:31.087Z] shutdown requested via /__/quitquitquit
+
+[info] ✔  functions[europe-west3-createWallet]: http function initialized (http://localhost:5001/sybel-io/europe-west3/createWallet). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/createWallet)."}}
+[info] ✔  functions[europe-west3-getWallet]: http function initialized (http://localhost:5001/sybel-io/europe-west3/getWallet). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/getWallet)."}}
+[info] ✔  functions[europe-west3-getBalance]: http function initialized (http://localhost:5001/sybel-io/europe-west3/getBalance). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/getBalance)."}}
+[info] ✔  functions[europe-west3-payUser]: http function initialized (http://localhost:5001/sybel-io/europe-west3/payUser). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/payUser)."}}
+[info] ✔  functions[europe-west3-generate]: http function initialized (http://localhost:5001/sybel-io/europe-west3/generate). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/generate)."}}
+[info] ✔  functions[europe-west3-analytics]: http function initialized (http://localhost:5001/sybel-io/europe-west3/analytics). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/analytics)."}}
+[info] ✔  functions[europe-west3-getAmount]: http function initialized (http://localhost:5001/sybel-io/europe-west3/getAmount). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/getAmount)."}}
+[info] ✔  functions[europe-west3-getSeries]: http function initialized (http://localhost:5001/sybel-io/europe-west3/getSeries). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/getSeries)."}}
+[info] ✔  functions[europe-west3-refreshBalance]: http function initialized (http://localhost:5001/sybel-io/europe-west3/refreshBalance). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/sybel-io/europe-west3/refreshBalance)."}}
+[info] i  functions[europe-west3-importSybelListenEvent]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://localhost:4000                │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ localhost:5001 │ http://localhost:4000/functions │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub running at localhost:4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
