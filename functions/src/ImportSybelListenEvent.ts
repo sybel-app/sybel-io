@@ -43,10 +43,8 @@ export default () =>
         lastRefreshedTimestamp
       );
 
-      // WARN ! The count and payment are all in async, so we will reach the end of this function before the owner and user have been paied, be sure it's not a proble, otherwise encapsulate in a map and Promise all
       // Directly pay the owner updated
       const ownerWallets = await getWalletForUserSet(usersImported.ownerIdSet);
-      logger.debug("Found " + ownerWallets.size + " wallets of owner to add");
       ownerWallets.forEach(async (wallet) => {
         await countListenAndPayWallet(wallet, "ownerId", "givenToOwner");
       });
@@ -116,6 +114,12 @@ async function importSybelListenEvent(
     const [job] = await bigquery.createQueryJob(options);
     const [rows] = await job.getQueryResults();
 
+    // Exit recitly if we didn't found any new row
+    if (rows.length <= 0) {
+      logger.debug("No transaction found, aborting the import process");
+      return new UsersImported();
+    }
+
     // Create the batch for our database operation
     const collection = db.collection("listeningAnalytics");
 
@@ -172,6 +176,6 @@ async function importSybelListenEvent(
     return new UsersImported(ownerIdSet, userIdSet);
   } catch (e) {
     logger.warn("Unable to import the sybel listen event's", e);
-    return new UsersImported(new Set(), new Set());
+    return new UsersImported();
   }
 }

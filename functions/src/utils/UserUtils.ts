@@ -41,6 +41,10 @@ export async function getWalletForUser(userId: string): Promise<Wallet | null> {
 export async function getWalletForUserSet(
   userIdSet: Set<string>
 ): Promise<Set<Wallet>> {
+  // If we got an empty set as param, exit directly
+  if (userIdSet.size == 0) {
+    return new Set();
+  }
   try {
     logger.debug(`Try to get the wallet's for the ${userIdSet.size} users`);
     // Access our wallet collection
