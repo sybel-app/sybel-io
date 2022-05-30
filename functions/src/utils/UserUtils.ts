@@ -47,7 +47,7 @@ export async function getWalletForUserSet(
     const foundWallets = new Set<Wallet>();
     // Execute the query
     const snapshot = await collection
-      .where("id", "in", userIdSet)
+      .where("id", "in", Array.from(userIdSet))
       .limit(1)
       .get();
     // Find document and map them

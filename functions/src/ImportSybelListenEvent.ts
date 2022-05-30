@@ -114,7 +114,7 @@ async function importSybelListenEvent(
     const [rows] = await job.getQueryResults();
 
     // Create the batch for our database operation
-    const collection = db.collection("listeningAnalyticsTest");
+    const collection = db.collection("listeningAnalytics");
 
     // Map each one of our row into new listen object, and then insert them in our database
     logger.info(
