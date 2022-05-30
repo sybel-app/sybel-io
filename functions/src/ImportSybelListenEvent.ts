@@ -91,7 +91,7 @@ async function importSybelListenEvent(
 ): Promise<UsersImported> {
   // Build our big query connection
   const projectId = "sybel-bigquery";
-  const keyFilename = "sybel-bigquery-prod.json";
+  const keyFilename = "sybel-bigquery.json";
   const bigquery = new BigQuery({ projectId, keyFilename });
 
   // Build the query that will fetch all the data from the big query table
