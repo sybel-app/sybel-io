@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { chunk } from "lodash";
 import Wallet from "../model/Wallet";
 
 const db = admin.firestore();
@@ -41,17 +42,23 @@ export async function getWalletForUserSet(
   userIdSet: Set<string>
 ): Promise<Set<Wallet>> {
   try {
-    logger.debug(`Try to get the wallet's for the user ${userIdSet}`);
+    logger.debug(`Try to get the wallet's for the ${userIdSet.size} users`);
     // Access our wallet collection
     const collection = db.collection("wallet");
     const foundWallets = new Set<Wallet>();
-    // Execute the query
-    const snapshot = await collection
-      .where("id", "in", Array.from(userIdSet))
-      .limit(1)
-      .get();
-    // Find document and map them
-    snapshot.forEach((doc) => foundWallets.add(doc.data() as Wallet));
+    // Chunk our load to fetch them 10 by 10 (firestore limitation)
+    await Promise.all(
+      chunk(Array.from(userIdSet), 10).map(async (userIdChunked) => {
+        // Execute the query
+        const snapshot = await collection
+          .where("id", "in", userIdChunked)
+          .limit(1)
+          .get();
+        // Find document and map them
+        snapshot.forEach((doc) => foundWallets.add(doc.data() as Wallet));
+      })
+    );
+    logger.debug(`Finally found ${foundWallets.size} wallets`);
     return foundWallets;
   } catch (exception) {
     logger.warn("Error when searching for the user wallet", exception);

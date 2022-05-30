@@ -95,6 +95,9 @@ async function importSybelListenEvent(
   const bigquery = new BigQuery({ projectId, keyFilename });
 
   // Build the query that will fetch all the data from the big query table
+  logger.debug(
+    `Will import all the listen event after timestamp ${lastRefreshedTimestamp.toMillis()}`
+  );
   const query = `SELECT UNIX_MILLIS(data.timestamp) AS timestamp, 
               data.user_id, data.series_id, owner_id.owner_id, 
               FROM \`sybel-bigquery.prod_data_studio.prod_union_acpm\` AS data
@@ -161,7 +164,7 @@ async function importSybelListenEvent(
 
     // And finally, save this new data import
     await db.collection("sybelProdctionRefresh").add({
-      timestamp: lastTimestampFetched,
+      timestamp: admin.firestore.Timestamp.fromMillis(lastTimestampFetched),
       importCount: rows.length,
     });
 
