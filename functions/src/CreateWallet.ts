@@ -26,7 +26,7 @@ export default () =>
         const id = request.body.id;
         try {
           // Check if the user already have a wallet
-          const currentWallet = getWalletForUser(id);
+          const currentWallet = await getWalletForUser(id);
           if (currentWallet != null) {
             functions.logger.debug(
               "The user already have a wallet, don't create a new one"
