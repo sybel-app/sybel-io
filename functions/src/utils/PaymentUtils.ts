@@ -28,6 +28,10 @@ export async function payWallet(
   walletAddress: string,
   listenCount: number
 ): Promise<boolean> {
+  if (listenCount <= 0) {
+    logger.debug("No listen perform, so no payment to be done");
+    return false;
+  }
   try {
     const tokenContract = new web3.eth.Contract(
       abi as AbiItem[],
