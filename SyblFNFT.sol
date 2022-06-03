@@ -55,75 +55,75 @@ contract SybelFNFT is ERC1155, Ownable {
      * @dev Add a new podcast to this contract, and then build the associated NFT, and fungible participation of this NFT (so epic, rare, normal) given the supply
      */
     function addPodcast(
-        uint256 _classicSupply,
-        uint256 _rareSupply,
-        uint256 _epicSupply,
-        string memory _name,
-        bytes calldata _data,
-        address _podcastOwnerAddress
+        uint256 classicSupply,
+        uint256 rareSupply,
+        uint256 epicSupply,
+        string memory name,
+        bytes calldata data,
+        address podcastOwnerAddress
     ) public onlyOwner {
         require(
-            _classicSupply > 0,
-            "Cannot add podcast without classic supply !"
+            classicSupply > 0,
+            "SYB: Cannot add podcast without classic supply !"
         );
 
         // Get the next podcast id and increment the current podcast token id
-        uint256 _id = _getNextTokenID();
+        uint256 id = _getNextTokenID();
         _incrementPodcastTokenID();
         // No need to update the owner here, since it will be called on the _afterTokenTransfer of the _mint method
 
         // Give the podcast owner 1000 utility token
-        _mint(_podcastOwnerAddress, TOKEN_TYPE_UTILITY, 1000, _data);
+        _mint(podcastOwnerAddress, TOKEN_TYPE_UTILITY, 1000, data);
 
         // Mint the podcast nft into the podcast owner wallet directly
         _mint(
-            _podcastOwnerAddress,
-            _createTypedId(_id, TOKEN_TYPE_NFT_MASK),
+            podcastOwnerAddress,
+            _createTypedId(id, TOKEN_TYPE_NFT_MASK),
             1,
-            _data
+            data
         );
 
         // Mint all the fraction of this token into the owner wallet
         _mint(
             msg.sender,
-            _createTypedId(_id, TOKEN_TYPE_CLASSIC_MASK),
-            _classicSupply,
-            _data
+            _createTypedId(id, TOKEN_TYPE_CLASSIC_MASK),
+            classicSupply,
+            data
         );
         tokenSupplies[
-            _createTypedId(_id, TOKEN_TYPE_CLASSIC_MASK)
-        ] = _classicSupply;
-        if (_rareSupply > 0) {
+            _createTypedId(id, TOKEN_TYPE_CLASSIC_MASK)
+        ] = classicSupply;
+        if (rareSupply > 0) {
             _mint(
                 msg.sender,
-                _createTypedId(_id, TOKEN_TYPE_RARE_MASK),
-                _rareSupply,
-                _data
+                _createTypedId(id, TOKEN_TYPE_RARE_MASK),
+                rareSupply,
+                data
             );
             tokenSupplies[
-                _createTypedId(_id, TOKEN_TYPE_RARE_MASK)
-            ] = _rareSupply;
+                _createTypedId(id, TOKEN_TYPE_RARE_MASK)
+            ] = rareSupply;
         }
-        if (_epicSupply > 0) {
+        if (epicSupply > 0) {
             _mint(
                 msg.sender,
-                _createTypedId(_id, TOKEN_TYPE_EPIC_MASK),
-                _epicSupply,
-                _data
+                _createTypedId(id, TOKEN_TYPE_EPIC_MASK),
+                epicSupply,
+                data
             );
             tokenSupplies[
-                _createTypedId(_id, TOKEN_TYPE_EPIC_MASK)
-            ] = _epicSupply;
+                _createTypedId(id, TOKEN_TYPE_EPIC_MASK)
+            ] = epicSupply;
         }
 
         // Emit that our podcast is now published
         emit PodcastPublished(
-            _id,
-            _classicSupply,
-            _rareSupply,
-            _epicSupply,
-            _name,
-            _podcastOwnerAddress
+            id,
+            classicSupply,
+            rareSupply,
+            epicSupply,
+            name,
+            podcastOwnerAddress
         );
     }
 
@@ -142,20 +142,20 @@ contract SybelFNFT is ERC1155, Ownable {
         for (uint256 i = 0; i < ids.length; ++i) {
             if (_isPodcastRelatedToken(ids[i])) {
                 // If this token is a podcast related one (so classic, rare or epic)
-                uint256 _podcastId = _extractPodcastId(ids[i]);
+                uint256 podcastId = _extractPodcastId(ids[i]);
                 // If we got a to address, at it to this podcast investor
                 if (to != address(0)) {
-                    _addInvestorOnce(podcastInvestors[_podcastId], to);
+                    _addInvestorOnce(podcastInvestors[podcastId], to);
                 }
                 // If we got a from address, remove it from the investor
                 if (from != address(0)) {
-                    _addInvestorOnce(podcastInvestors[_podcastId], from);
+                    _addInvestorOnce(podcastInvestors[podcastId], from);
                 }
             } else if (_isPodcastNft(ids[i])) {
                 // If this token is a podcast NFT, change the owner of this podcast
-                uint256 _podcastId = _extractPodcastId(ids[i]);
-                owners[_podcastId] = to;
-                emit PodcastOwnerChanged(_podcastId, from, to);
+                uint256 podcastId = _extractPodcastId(ids[i]);
+                owners[podcastId] = to;
+                emit PodcastOwnerChanged(podcastId, from, to);
             }
         }
     }
@@ -163,41 +163,153 @@ contract SybelFNFT is ERC1155, Ownable {
     /**
      * @dev Pay a user listening
      */
-    function payUserListenToWallet(
-        address _listenerAddress,
-        uint256 _listenCount,
-        uint256 _podcastId
+    function payUserListen(
+        address listenerAddress,
+        uint256 listenCount,
+        uint256 podcastId
     ) public onlyOwner {
         require(
-            _listenerAddress != address(0),
-            "ERC1155: paying the zero address"
+            listenerAddress != address(0),
+            "SYB: Want to pay the zero address"
         );
-        require(_listenCount > 0, "ERC1155: paying 0 listen");
+        require(listenCount > 0, "SYB: Want to pay 0 listen");
         // The multiplier on listen count
-        uint256 _listenMultiplier = 1;
+        uint256 listenMultiplier = 1;
 
-        // Check if the listener has some token in the podcast (if yes, increase it's multiplier)
-        uint256 _epicBalance = balanceOf(
-            _listenerAddress,
-            _createTypedId(_podcastId, TOKEN_TYPE_EPIC_MASK)
+        // Check if the listener has some token in the podcast
+        uint256 epicBalance = balanceOf(
+            listenerAddress,
+            _createTypedId(podcastId, TOKEN_TYPE_EPIC_MASK)
         );
-        _listenMultiplier += _epicBalance * 1000;
-        uint256 _rareBalance = balanceOf(
-            _listenerAddress,
-            _createTypedId(_podcastId, TOKEN_TYPE_RARE_MASK)
+        uint256 rareBalance = balanceOf(
+            listenerAddress,
+            _createTypedId(podcastId, TOKEN_TYPE_RARE_MASK)
         );
-        _listenMultiplier += _rareBalance * 100;
-        uint256 _classicBalance = balanceOf(
-            _listenerAddress,
-            _createTypedId(_podcastId, TOKEN_TYPE_CLASSIC_MASK)
+        uint256 classicBalance = balanceOf(
+            listenerAddress,
+            _createTypedId(podcastId, TOKEN_TYPE_CLASSIC_MASK)
         );
-        _listenMultiplier += _classicBalance * 10;
+
+        // Increase hte multiplier only for the rarest token found
+        if (epicBalance > 0) {
+            listenMultiplier += epicBalance * 100;
+        } else if (rareBalance > 0) {
+            listenMultiplier += rareBalance * 50;
+        } else if (classicBalance > 0) {
+            listenMultiplier += classicBalance * 10;
+        }
 
         // Compute the number of token to mint
-        uint256 _toMint = _listenCount * _listenMultiplier;
+        uint256 toMint = listenCount * listenMultiplier;
 
         // Then, mint them directly into the listener wallet
-        _mint(_listenerAddress, TOKEN_TYPE_UTILITY, _toMint, new bytes(0));
+        _mint(listenerAddress, TOKEN_TYPE_UTILITY, toMint, new bytes(0));
+    }
+
+    /**
+     * @dev Pay a podcaster from it's podcast id's and the listen counts per podcast id
+     * /!\ The _podcastIds and _listenCounts should be the same size, for one to one array mapping
+     */
+    function payPodcaster(
+        uint256[] calldata podcastIds,
+        uint256[] calldata listenCounts
+    ) public onlyOwner {
+        require(
+            podcastIds.length == listenCounts.length,
+            "SYB: Can't pay of podcast for id and listen of different length"
+        );
+        // Iterate over each podcast id received
+        for (uint256 i = 0; i < podcastIds.length; ++i) {
+            // Get the base amount to be paid dependening on the number of listen
+            uint256 toMintForOwner = 1000 * listenCounts[i];
+            // Find all the investor of this podcast
+            uint256 podcastId = podcastIds[i];
+            uint256 paidAmount = _payPodcastInvestor(podcastId, toMintForOwner);
+            toMintForOwner -= paidAmount;
+            // Pay the podcast owner if we got a valid wallet
+            address ownerWallet = owners[podcastId];
+            if (ownerWallet == address(0)) {
+                // If we didn't find the owner wallet, send the minted amount to the sender of this message
+                _mint(
+                    msg.sender,
+                    TOKEN_TYPE_UTILITY,
+                    toMintForOwner,
+                    new bytes(0)
+                );
+            } else {
+                _mint(
+                    ownerWallet,
+                    TOKEN_TYPE_UTILITY,
+                    toMintForOwner,
+                    new bytes(0)
+                );
+            }
+        }
+    }
+
+    /**
+     * @dev Pay all the investor for a given podcast
+     */
+    function _payPodcastInvestor(uint256 podcastId, uint256 baseAmount)
+        private
+        onlyOwner
+        returns (uint256 mintedForInvestor)
+    {
+        uint256 mintedToken = 0;
+
+        uint256 epicAmount = (baseAmount * 30) / 100;
+        uint256 rareAmount = (baseAmount * 20) / 100;
+        uint256 classicAmount = (baseAmount * 10) / 100;
+
+        for (uint256 i = 0; i < podcastInvestors[podcastId].length; ++i) {
+            address investor = podcastInvestors[podcastId][i];
+            // Get the ratio of each token he has
+            uint256 epicRatio = _getWalletRatioForToken(
+                podcastId,
+                TOKEN_TYPE_EPIC_MASK,
+                investor
+            );
+            uint256 rareRatio = _getWalletRatioForToken(
+                podcastId,
+                TOKEN_TYPE_RARE_MASK,
+                investor
+            );
+            uint256 classicRatio = _getWalletRatioForToken(
+                podcastId,
+                TOKEN_TYPE_CLASSIC_MASK,
+                investor
+            );
+
+            // Compute the amount to mint
+            uint256 toMintAmount = (epicAmount * epicRatio) / 100; // epic
+            toMintAmount += (rareAmount * rareRatio) / 100; // rare
+            toMintAmount += (classicAmount * classicRatio) / 100; // classic
+
+            // Mint the computed amount directly to the investor wallet
+            _mint(investor, TOKEN_TYPE_UTILITY, toMintAmount, new bytes(0));
+
+            // Append the minted amount to the total
+            mintedToken += toMintAmount;
+        }
+        return mintedToken;
+    }
+
+    /**
+     * @dev Get the wallet balance percentage ratio for the given podcast and mask (between 0 and 100)
+     */
+    function _getWalletRatioForToken(
+        uint256 podcastId,
+        uint256 mask,
+        address wallet
+    ) private view returns (uint256 ratio) {
+        uint256 tokenId = _createTypedId(podcastId, mask);
+        // Ensure we got supply for this token
+        if (tokenSupplies[tokenId] > 0) {
+            uint256 tokenBalance = balanceOf(wallet, tokenId);
+            // Compute our ratio
+            ratio = (tokenBalance * 100) / tokenSupplies[tokenId];
+        }
+        return ratio;
     }
 
     /**
@@ -206,7 +318,7 @@ contract SybelFNFT is ERC1155, Ownable {
     function _createTypedId(uint256 _id, uint256 _type)
         private
         pure
-        returns (uint256 _typedId)
+        returns (uint256 typedId)
     {
         return (_id << ID_OFFSET) | _type;
     }
@@ -267,12 +379,12 @@ contract SybelFNFT is ERC1155, Ownable {
      */
     function _removeInvestorOnce(
         address[] storage investors,
-        address _investorAddress
+        address investorAddress
     ) private {
         // Iterate over it to find all the time the investor is mentionned
         for (uint256 i = 0; i < investors.length; ++i) {
             // If we found it, remove it from the array and exit (only remove it once)
-            if (investors[i] == _investorAddress) {
+            if (investors[i] == investorAddress) {
                 investors[i] = investors[investors.length - 1];
                 investors.pop();
                 return;
@@ -285,20 +397,20 @@ contract SybelFNFT is ERC1155, Ownable {
      */
     function _addInvestorOnce(
         address[] storage investors,
-        address _investorAddress
+        address investorAddress
     ) private {
         // Check if the investor is already present in the investor array
-        bool _isAlreadyAnInvestor = false;
+        bool isAlreadyAnInvestor = false;
         // Iterate over it to find all the time the investor is mentionned
         for (uint256 i = 0; i < investors.length; ++i) {
             // Update our already investor address
-            _isAlreadyAnInvestor =
-                _isAlreadyAnInvestor ||
-                investors[i] == _investorAddress;
+            isAlreadyAnInvestor =
+                isAlreadyAnInvestor ||
+                investors[i] == investorAddress;
         }
-        if (!_isAlreadyAnInvestor) {
+        if (!isAlreadyAnInvestor) {
             // If the user wasn't already an investor of this podcast, add it to the array
-            investors.push(_investorAddress);
+            investors.push(investorAddress);
         }
     }
 }
