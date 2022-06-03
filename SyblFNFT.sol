@@ -22,22 +22,13 @@ contract SybelFNFT is ERC1155, Ownable {
     // The current podcast token id
     uint256 private _currentPodcastTokenID = 1;
 
-    // Id to owner of podcast
+    // Id of podcast to owner of podcast
     mapping(uint256 => address) public owners;
 
-    // Podcaster address to their podcast id's
-    mapping(address => uint256[]) public ownersToPodcast;
-
-    // Array of unpaid listeners per podcast
-    mapping(uint256 => address[]) public unpaidListeners;
-
-    // Number of listen per address on a given podcast (so listenCount[_podcastId][_unpaidListenerAddress])
-    mapping(uint256 => mapping(address => uint256)) public listenCount;
-
-    // Investor on a podast
+    // id of token to array of investor
     mapping(uint256 => address[]) public podcastInvestors;
 
-    // Supply of each tokens
+    // Supply of each tokens (classic, rare and epic only) by they id
     mapping(uint256 => uint256) public tokenSupplies;
 
     // Event when podcast is published
@@ -49,6 +40,9 @@ contract SybelFNFT is ERC1155, Ownable {
         string name,
         address owner
     );
+
+    // Event when podcast owner changed
+    event PodcastOwnerChanged(uint256 podcastId, address from, address to);
 
     constructor()
         ERC1155("https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json")
@@ -76,12 +70,10 @@ contract SybelFNFT is ERC1155, Ownable {
         // Get the next podcast id and increment the current podcast token id
         uint256 _id = _getNextTokenID();
         _incrementPodcastTokenID();
-        owners[_id] = _podcastOwnerAddress;
+        // No need to update the owner here, since it will be called on the _afterTokenTransfer of the _mint method
 
         // Give the podcast owner 1000 utility token
         _mint(_podcastOwnerAddress, TOKEN_TYPE_UTILITY, 1000, _data);
-
-        // TODO : Should give him governance token, respecting Matt calculation system
 
         // Mint the podcast nft into the podcast owner wallet directly
         _mint(
@@ -136,22 +128,15 @@ contract SybelFNFT is ERC1155, Ownable {
     }
 
     /**
-     * Register a podcast listen
-     */
-    function registerPodcastListen(uint256 _podcastId, address _listenerAddress)
-        public
-    {}
-
-    /**
-     * @dev Save a podcast investor
+     * @dev Handle the transfer token (so update the podcast investor, change the owner of some podcast etc)
      */
     function _afterTokenTransfer(
-        address operator,
+        address,
         address from,
         address to,
         uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        uint256[] memory,
+        bytes memory
     ) internal override {
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -160,18 +145,18 @@ contract SybelFNFT is ERC1155, Ownable {
                 uint256 _podcastId = _extractPodcastId(ids[i]);
                 // If we got a to address, at it to this podcast investor
                 if (to != address(0)) {
-                    podcastInvestors[_podcastId].push(to);
+                    _addInvestorOnce(podcastInvestors[_podcastId], to);
                 }
                 // If we got a from address, remove it from the investor
                 if (from != address(0)) {
-                    _removeInvestorOnce(_podcastId, from);
+                    _addInvestorOnce(podcastInvestors[_podcastId], from);
                 }
             } else if (_isPodcastNft(ids[i])) {
                 // If this token is a podcast NFT, change the owner of this podcast
                 uint256 _podcastId = _extractPodcastId(ids[i]);
                 owners[_podcastId] = to;
+                emit PodcastOwnerChanged(_podcastId, from, to);
             }
-            // TODO : Should also check if that a NFT, and then handle a nft owner change
         }
     }
 
@@ -278,27 +263,42 @@ contract SybelFNFT is ERC1155, Ownable {
     }
 
     /**
-     * @dev return an item from an array
+     * @dev Remove an investor from the investor array
      */
-    function _removeInvestorOnce(uint256 _podcastId, address _investorAddress)
-        private
-    {
-        // Get the list of address for the given podcast
-        address[] storage _currentPodcastInvestors = podcastInvestors[
-            _podcastId
-        ];
+    function _removeInvestorOnce(
+        address[] storage investors,
+        address _investorAddress
+    ) private {
         // Iterate over it to find all the time the investor is mentionned
-        for (uint256 i = 0; i < _currentPodcastInvestors.length; ++i) {
-            address _currentInvestorAddress = _currentPodcastInvestors[i];
+        for (uint256 i = 0; i < investors.length; ++i) {
             // If we found it, remove it from the array and exit (only remove it once)
-            if (_currentInvestorAddress == _investorAddress) {
-                _currentPodcastInvestors[i] = _currentPodcastInvestors[
-                    _currentPodcastInvestors.length - 1
-                ];
-                _currentPodcastInvestors.pop();
-                podcastInvestors[_podcastId] = _currentPodcastInvestors;
+            if (investors[i] == _investorAddress) {
+                investors[i] = investors[investors.length - 1];
+                investors.pop();
                 return;
             }
+        }
+    }
+
+    /**
+     * @dev Add an investor to the investor array (if he isn't present yet)
+     */
+    function _addInvestorOnce(
+        address[] storage investors,
+        address _investorAddress
+    ) private {
+        // Check if the investor is already present in the investor array
+        bool _isAlreadyAnInvestor = false;
+        // Iterate over it to find all the time the investor is mentionned
+        for (uint256 i = 0; i < investors.length; ++i) {
+            // Update our already investor address
+            _isAlreadyAnInvestor =
+                _isAlreadyAnInvestor ||
+                investors[i] == _investorAddress;
+        }
+        if (!_isAlreadyAnInvestor) {
+            // If the user wasn't already an investor of this podcast, add it to the array
+            investors.push(_investorAddress);
         }
     }
 }
