@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "prod": "sybel-io",
+    "default": "sybel-io"
+  },
+  "targets": {}
+}
