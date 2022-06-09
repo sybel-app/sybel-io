@@ -9,4 +9,10 @@ module.exports = {
       runs: 1000,
     },
   },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  },
 };

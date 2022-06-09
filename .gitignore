@@ -17,3 +17,7 @@ node_modules/
 
 # VS code files
 .vscode/
+
+# Blockchain parts
+blockchain/artifacts/
+blockchain/cache/
