@@ -7,7 +7,7 @@ import "../models/PodcastBadge.sol";
 /**
  * @dev Represent our owner badge handler class
  */
-interface IBadgeHandler {
+interface IOwnerBadges {
 
     /**
     * @dev Update the podcast internal coefficient

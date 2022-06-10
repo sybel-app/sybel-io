@@ -7,7 +7,7 @@ import "../models/PodcastBadge.sol";
 /**
  * @dev Represent our lisener badge handler class
  */
-interface IBadgeHandler {
+interface IListenerBadges {
 
     /**
     * @dev Update the listener snft amount

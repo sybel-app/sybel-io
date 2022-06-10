@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @dev Contract that provide some utils function for each sybel smart contract (decimals aware, podcast id and extraction mecanism)
- */
-abstract contract SybelContract {
-    // The decimals for each emitted token
-    uint256 public constant DECIMALS = 10**6;
-
+library SybelMath {
     // The offset of the id and the mask we use to store the token type
     uint256 public constant ID_OFFSET = 4;
     uint256 public constant TYPE_MASK = 0xF;
+
+    // The decimals for each emitted token
+    uint8 public constant DECIMALS_COUNT = 6;
+    uint256 public constant DECIMALS = 10**DECIMALS_COUNT;
 
     /**
      * @dev Build the id for a S FNT

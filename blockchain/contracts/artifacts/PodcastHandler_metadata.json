@@ -1,0 +1,401 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "Paused",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "Unpaused",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_classicSupply",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_rareSupply",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_epicSupply",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes",
+						"name": "_data",
+						"type": "bytes"
+					},
+					{
+						"internalType": "address",
+						"name": "_podcastOwnerAddress",
+						"type": "address"
+					}
+				],
+				"name": "addPodcast",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "listenerBadges",
+				"outputs": [
+					{
+						"internalType": "contract IListenerBadges",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "paused",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "_podcastIds",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "_listenCounts",
+						"type": "uint256[]"
+					}
+				],
+				"name": "payPodcastOwner",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "_listenerAddresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "_listenCounts",
+						"type": "uint256[]"
+					}
+				],
+				"name": "payUserListen",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "Podcast handler contract, represent the entry point of our d apps",
+			"kind": "dev",
+			"methods": {
+				"addPodcast(uint256,uint256,uint256,string,bytes,address)": {
+					"details": "Add a new podcast to our eco system"
+				},
+				"owner()": {
+					"details": "Returns the address of the current owner."
+				},
+				"paused()": {
+					"details": "Returns true if the contract is paused, and false otherwise."
+				},
+				"payPodcastOwner(uint256[],uint256[])": {
+					"details": "Pay a group of podcast owner"
+				},
+				"payUserListen(address[],uint256[])": {
+					"details": "Pay a group of user listening"
+				},
+				"renounceOwnership()": {
+					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				}
+			},
+			"stateVariables": {
+				"listenerBadges": {
+					"details": "Access our listener badges"
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/PodcastHandler.sol": "PodcastHandler"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts/access/Ownable.sol": {
+			"keccak256": "0x24e0364e503a9bbde94c715d26573a76f14cd2a202d45f96f52134ab806b67b9",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e12cbaa7378fd9b62280e4e1d164bedcb4399ce238f5f98fc0eefb7e50577981",
+				"dweb:/ipfs/QmXRoFGUgfsaRkoPT5bxNMtSayKTQ8GZATLPXf69HcRA51"
+			]
+		},
+		"@openzeppelin/contracts/security/Pausable.sol": {
+			"keccak256": "0xe68ed7fb8766ed1e888291f881e36b616037f852b37d96877045319ad298ba87",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1d491a2ca79dbf44bc02e876e21a5847a2cbcc011188532ad8662cdc1c134a4e",
+				"dweb:/ipfs/QmUQXhSV8ZvHLzfdG89ZNSh1nLrAYyjnNBLznJGwGcwVk8"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC1155/ERC1155.sol": {
+			"keccak256": "0x74216d303b87202736b6d571fc3e9b530aa98ff017a41516170f1c555e518669",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c0228d82cef8911972f4cbf7e33dfb9ceebb813d15771335949e06fc0f4a3f1b",
+				"dweb:/ipfs/QmYCgp6PABoEe9iDmZTeUc31wp7ekraVavgKF1vVSnd438"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC1155/IERC1155.sol": {
+			"keccak256": "0x8e93de94c9062ebc94fb7e2e3929b0781ac6a2b7772e2f7a59045861c93e5be9",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f920a631bf986c610fe573d3c70a2bb6f224f86f4a8550016470c7ee476c9ab5",
+				"dweb:/ipfs/QmYzsyVMfnaREKHcHv5RPS8Xg5r1Q38E2SDsGBTnXeFWzb"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol": {
+			"keccak256": "0xeb373f1fdc7b755c6a750123a9b9e3a8a02c1470042fd6505d875000a80bde0b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0e28648f994abf1d6bc345644a361cc0b7efa544f8bc0c8ec26011fed85a91ec",
+				"dweb:/ipfs/QmVVE7AiRjKaQYYji7TkjmTeVzGpNmms5eoxqTCfvvpj6D"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol": {
+			"keccak256": "0xa66d18b9a85458d28fc3304717964502ae36f7f8a2ff35bc83f6f85d74b03574",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e46c80ea068989111d6103e5521223f9ef337e93de76deed8b03f75c6f7b2797",
+				"dweb:/ipfs/QmNoSE6knNfFncdDDLTb3fGR6oSQty1srG96Vsx3E9wQdw"
+			]
+		},
+		"@openzeppelin/contracts/utils/Address.sol": {
+			"keccak256": "0x2ccf9d2313a313d41a791505f2b5abfdc62191b5d4334f7f7a82691c088a1c87",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b3a57d0854b2fdce6ebff933a48dca2445643d1eccfc27f00292e937f26c6a58",
+				"dweb:/ipfs/QmW45rZooS9TqR4YXUbjRbtf2Bpb5ouSarBvfW1LdGprvV"
+			]
+		},
+		"@openzeppelin/contracts/utils/Context.sol": {
+			"keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+			]
+		},
+		"@openzeppelin/contracts/utils/Strings.sol": {
+			"keccak256": "0x32c202bd28995dd20c4347b7c6467a6d3241c74c8ad3edcbb610cd9205916c45",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8179c356adb19e70d6b31a1eedc8c5c7f0c00e669e2540f4099e3844c6074d30",
+				"dweb:/ipfs/QmWFbivarEobbqhS1go64ootVuHfVohBseerYy9FTEd1W2"
+			]
+		},
+		"@openzeppelin/contracts/utils/introspection/ERC165.sol": {
+			"keccak256": "0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d",
+				"dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43"
+			]
+		},
+		"@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+			"keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+				"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+			]
+		},
+		"@openzeppelin/contracts/utils/math/SafeMath.sol": {
+			"keccak256": "0x0f633a0223d9a1dcccfcf38a64c9de0874dfcbfac0c6941ccf074d63a2ce0e1e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://864a40efcffdf408044c332a5aa38ec5618ed7b4eecb8f65faf45671bd6cdc65",
+				"dweb:/ipfs/QmQJquTMtc6fgm5JQzGdsGpA2fqBe3MHWEdt2qzaLySMdN"
+			]
+		},
+		"contracts/ListenerBadges.sol": {
+			"keccak256": "0x293dcd145c2aec552a7ab67cc77cd9b993011a290c152c8eb26326d515a4ba3b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8b244a3f99149d70c780abc5db82f9dd00f2441810782d7cbea0c6362c790df1",
+				"dweb:/ipfs/QmY1b7TSsLb6VREnfx7fwk3EJeKjq4YbFFpaHKm9F7UbnM"
+			]
+		},
+		"contracts/PodcastHandler.sol": {
+			"keccak256": "0xc1aa0a332743cf1d88c44253d73992f227e5286bc14511accdc8392958e1d463",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a9bf59671ad4130850ba1a9a951496bc308bacadffb8e0b274a215be0150b014",
+				"dweb:/ipfs/QmRMTNoRaok6w1c6UuJgV9DNb7QkH8RbiDLZjj8WndcEGo"
+			]
+		},
+		"contracts/interfaces/IListenerBadges.sol": {
+			"keccak256": "0x98d72c7af666a0631e4362c7454130e5125f27112566e7531fd2f66869ca90b6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a0342799a7512f463e8c3d4c447b147e0d1337f8dc36cd4b8f4126f63e371868",
+				"dweb:/ipfs/QmbhpgphjXb6XVTFrr4XBeZm8u5Yj8M8oedej9BnFBpMy6"
+			]
+		},
+		"contracts/libs/SybBadgeCalculator.sol": {
+			"keccak256": "0xadbd5b6a3e1e5d3901aa700e0a53078c2f6454a67805ac2bf6acc23300f6fe86",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://8b4313ee29f805c50081fdc92ac34c7a14f58dd4e37a89bfca9799a8debce2d1",
+				"dweb:/ipfs/QmTcGKS1WSb67x3ywoNKsuhcBt1rdNJZHXM57spo4dVhTo"
+			]
+		},
+		"contracts/models/ListenerBadge.sol": {
+			"keccak256": "0x205c36968a502fde959bbc92d89da716037cd579e26866f448e2f4ce33990f07",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b5b4471d215dd74a692c04ffe7b71bd92bc15397d3905591641994d9f67a7799",
+				"dweb:/ipfs/QmNrJry2gpjEYaDqcLwUw1CfAW7sZNxu3jxXfL8prsCYYu"
+			]
+		},
+		"contracts/models/PodcastBadge.sol": {
+			"keccak256": "0xd11c5e8659da49299454a2a046a8e09710b3369b5ee45ff435e6d19ad1d1ab42",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ca934bdd52a43203d742697cb8a3bc79a73b0cea884d06632e72fc39ee61a25c",
+				"dweb:/ipfs/Qmaa1HAh3LoPWvGmwfkY1f994Pmq3aLGW4xKorNxmwUdS4"
+			]
+		},
+		"contracts/utils/SybelMath.sol": {
+			"keccak256": "0x7a0f49703b55420028d10ff8a66c8e61ac60c387d60d4626c2478f6068ff7be3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2633cdbc8115b5515bb2e01268abf4753fc52f9dea28fcad3232a23ed14fb9b9",
+				"dweb:/ipfs/QmPwqRWzmBC5bpB4dUT7kHmx92RrbrBbCbXF66nGQQjXXo"
+			]
+		}
+	},
+	"version": 1
+}

@@ -21,3 +21,4 @@ node_modules/
 # Blockchain parts
 blockchain/artifacts/
 blockchain/cache/
+blockchain/contracts/artifacts/build-info/

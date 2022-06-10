@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./libs/SybelMath.sol";
+import "../utils/SybelMath.sol";
 
 contract SybGovernanceToken is ERC20 {
     uint256 totalSupply_ = 3000000000**decimals();
@@ -12,7 +12,7 @@ contract SybGovernanceToken is ERC20 {
         _mint(msg.sender, totalSupply_);
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return SybelMath.DECIMALS_COUNT;
     }
 }
