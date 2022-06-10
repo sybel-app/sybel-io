@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "./libs/SybBadgeCalculator.sol";
-import "./interfaces/IListenerBadges.sol";
+
+import "./IListenerBadges.sol";
 import "./models/ListenerBadge.sol";
+import "../utils/pausable/OwnerPausable.sol";
 
 /**
  * @dev Handle the computation of our listener badges
  */
-contract ListenerBadges is IListenerBadges, Pausable, Ownable {
+contract ListenerBadges is IListenerBadges, OwnerPausable {
 
     // Map of user address to listener badge
     mapping(address => ListenerBadge) listenerBadges;
@@ -34,21 +33,5 @@ contract ListenerBadges is IListenerBadges, Pausable, Ownable {
     */
     function getBadge(address listener) external override view returns (ListenerBadge memory) {
         return listenerBadges[listener];
-    }
-
-    /**
-     * @dev Pause the contracts
-     */
-    function pause() external override onlyOwner {
-        // Pause this contract
-        _pause();
-    }
-
-    /**
-     * @dev Resume the contracts
-     */
-    function unpause() external override onlyOwner {
-        // Un pause this contract
-        _unpause();
     }
 }

@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "./libs/SybBadgeCalculator.sol";
-import "./interfaces/IPodcastBadges.sol";
+
+import "./IPodcastBadges.sol";
 import "./models/PodcastBadge.sol";
+import "../utils/pausable/OwnerPausable.sol";
 
 /**
  * @dev Handle the computation of our listener badges
  */
-contract PodcastBadges is IPodcastBadges, Pausable, Ownable {
+contract PodcastBadges is IPodcastBadges, OwnerPausable {
 
     // Map podcast id to Podcast badge
     mapping(uint256 => PodcastBadge) podcastBadges;
@@ -41,21 +40,5 @@ contract PodcastBadges is IPodcastBadges, Pausable, Ownable {
     */
     function getBadge(uint podcastId) external override view returns (PodcastBadge memory) {
         return podcastBadges[podcastId];
-    }
-
-    /**
-     * @dev Pause the contracts
-     */
-    function pause() external override onlyOwner {
-        // Pause this contract
-        _pause();
-    }
-
-    /**
-     * @dev Resume the contracts
-     */
-    function unpause() external override onlyOwner {
-        // Un pause this contract
-        _unpause();
     }
 }

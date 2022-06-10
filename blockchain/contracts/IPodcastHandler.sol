@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IPausable.sol";
+import "./utils/pausable/IPausable.sol";
 
 /**
  * @dev Represent our podcast handler contract
  */
 interface IPodcastHandler is IPausable {
-    
     /**
      * @dev Add a new podcast to our eco system
      */
@@ -45,5 +44,4 @@ interface IPodcastHandler is IPausable {
      * @dev Resume all the contracts
      */
     function unPauseAll() external;
-
 }

@@ -6,16 +6,24 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./utils/SybelMath.sol";
-import "./interfaces/IListenerBadges.sol";
-import "./interfaces/IPodcastBadges.sol";
-import "./interfaces/IPodcastHandler.sol";
-import "./ListenerBadges.sol";
-import "./PodcastBadges.sol";
+import "./utils/pausable/OwnerPausable.sol";
+import "./badges/IListenerBadges.sol";
+import "./badges/IPodcastBadges.sol";
+import "./IPodcastHandler.sol";
+import "./badges/ListenerBadges.sol";
+import "./badges/PodcastBadges.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
  */
-contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
+contract PodcastHandler is IPodcastHandler, OwnerPausable {
+    // Our base reward amount for podcast listen and owner
+    uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
+    uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
+    uint256 private OWNER_PUBLISH_REWARD = SybelMath.DECIMALS; // So 1 TSE
+
+    // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
+    uint256 private constant SYBEL_COEFFICIENT = 250;
 
     /**
      * @dev Access our listener badges
@@ -33,6 +41,22 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
         podcastBadges = new PodcastBadges();
     }
 
+    /**
+     * @dev Update our podcast badges address
+     */
+    function updateListenerBadgesAddress(address newAddress)
+        external
+        onlyOwner
+    {
+        listenerBadges = IListenerBadges(newAddress);
+    }
+
+    /**
+     * @dev Update our podcast badges address
+     */
+    function updatePodcastBadgesAddress(address newAddress) external onlyOwner {
+        podcastBadges = IPodcastBadges(newAddress);
+    }
 
     /**
      * @dev Add a new podcast to our eco system
@@ -44,9 +68,7 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
         string memory _name,
         bytes calldata _data,
         address _podcastOwnerAddress
-    ) external override onlyOwner whenNotPaused {
-
-    }
+    ) external override onlyOwner whenNotPaused {}
 
     /**
      * @dev Pay a group of user listening
@@ -54,9 +76,7 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
     function payUserListen(
         address[] calldata _listenerAddresses,
         uint256[] calldata _listenCounts
-    ) external override onlyOwner whenNotPaused {
-
-    }
+    ) external override onlyOwner whenNotPaused {}
 
     /**
      * @dev Pay a group of podcast owner
@@ -64,9 +84,7 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
     function payPodcastOwner(
         uint256[] calldata _podcastIds,
         uint256[] calldata _listenCounts
-    ) external override onlyOwner whenNotPaused {
-
-    }
+    ) external override onlyOwner whenNotPaused {}
 
     /**
      * @dev Pause all the contracts
@@ -92,22 +110,6 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
         // Un Pause this contract
         _unpause();
     }
-
-    /**
-     * @dev Pause the contracts
-     */
-    function pause() external override onlyOwner {
-        // Pause this contract
-        _pause();
-    }
-
-    /**
-     * @dev Resume the contracts
-     */
-    function unpause() external override onlyOwner {
-        // Un pause this contract
-        _unpause();
-    }
 }
 
 /**
@@ -123,4 +125,3 @@ contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
 
     For owner and listener payment, we should compute the badge (from the erc1155 contract ?? Or separate contract that erc1155 feed and that podcast handler read ???)
  */
-

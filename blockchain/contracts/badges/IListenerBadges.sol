@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../models/ListenerBadge.sol";
-import "./IPausable.sol";
+import "./models/ListenerBadge.sol";
+import "../utils/pausable/IPausable.sol";
 
 /**
  * @dev Represent our lisener badge handler class
