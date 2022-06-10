@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../models/ListenerBadge.sol";
 import "../models/PodcastBadge.sol";
+import "./IPausable.sol";
 
 /**
- * @dev Represent our owner badge handler class
+ * @dev Represent our podcast badge contract
  */
-interface IOwnerBadges {
+interface IPodcastBadges is IPausable {
 
     /**
     * @dev Update the podcast internal coefficient

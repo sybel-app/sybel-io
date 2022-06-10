@@ -35,5 +35,20 @@ contract ListenerBadges is IListenerBadges, Pausable, Ownable {
     function getBadge(address listener) external override view returns (ListenerBadge memory) {
         return listenerBadges[listener];
     }
-    
+
+    /**
+     * @dev Pause the contracts
+     */
+    function pause() external override onlyOwner {
+        // Pause this contract
+        _pause();
+    }
+
+    /**
+     * @dev Resume the contracts
+     */
+    function unpause() external override onlyOwner {
+        // Un pause this contract
+        _unpause();
+    }
 }

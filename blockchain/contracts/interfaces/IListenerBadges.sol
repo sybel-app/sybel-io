@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../models/ListenerBadge.sol";
-import "../models/PodcastBadge.sol";
+import "./IPausable.sol";
 
 /**
  * @dev Represent our lisener badge handler class
  */
-interface IListenerBadges {
+interface IListenerBadges is IPausable {
 
     /**
     * @dev Update the listener snft amount

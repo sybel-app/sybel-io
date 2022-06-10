@@ -7,21 +7,30 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./utils/SybelMath.sol";
 import "./interfaces/IListenerBadges.sol";
+import "./interfaces/IPodcastBadges.sol";
+import "./interfaces/IPodcastHandler.sol";
 import "./ListenerBadges.sol";
+import "./PodcastBadges.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
  */
-contract PodcastHandler is Pausable, Ownable {
+contract PodcastHandler is IPodcastHandler, Pausable, Ownable {
 
     /**
      * @dev Access our listener badges
      */
     IListenerBadges public listenerBadges;
 
+    /**
+     * @dev Access our podcast badges
+     */
+    IPodcastBadges public podcastBadges;
+
     constructor() {
         // Create our badges contracts
         listenerBadges = new ListenerBadges();
+        podcastBadges = new PodcastBadges();
     }
 
 
@@ -35,7 +44,7 @@ contract PodcastHandler is Pausable, Ownable {
         string memory _name,
         bytes calldata _data,
         address _podcastOwnerAddress
-    ) external onlyOwner whenNotPaused {
+    ) external override onlyOwner whenNotPaused {
 
     }
 
@@ -45,7 +54,7 @@ contract PodcastHandler is Pausable, Ownable {
     function payUserListen(
         address[] calldata _listenerAddresses,
         uint256[] calldata _listenCounts
-    ) external onlyOwner whenNotPaused {
+    ) external override onlyOwner whenNotPaused {
 
     }
 
@@ -55,10 +64,50 @@ contract PodcastHandler is Pausable, Ownable {
     function payPodcastOwner(
         uint256[] calldata _podcastIds,
         uint256[] calldata _listenCounts
-    ) external onlyOwner whenNotPaused {
+    ) external override onlyOwner whenNotPaused {
 
     }
 
+    /**
+     * @dev Pause all the contracts
+     */
+    function pauseAll() external override onlyOwner {
+        // Pause the badges calculation
+        // Pause the badges calculation
+        listenerBadges.pause();
+        podcastBadges.pause();
+        // Pause the token provider
+        // Pause this contract
+        _pause();
+    }
+
+    /**
+     * @dev Resume all the contracts
+     */
+    function unPauseAll() external override onlyOwner {
+        // Pause the badges calculation
+        listenerBadges.unpause();
+        podcastBadges.unpause();
+        // Pause the token provider
+        // Un Pause this contract
+        _unpause();
+    }
+
+    /**
+     * @dev Pause the contracts
+     */
+    function pause() external override onlyOwner {
+        // Pause this contract
+        _pause();
+    }
+
+    /**
+     * @dev Resume the contracts
+     */
+    function unpause() external override onlyOwner {
+        // Un pause this contract
+        _unpause();
+    }
 }
 
 /**
