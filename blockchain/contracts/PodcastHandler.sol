@@ -12,11 +12,14 @@ import "./badges/IPodcastBadges.sol";
 import "./IPodcastHandler.sol";
 import "./badges/ListenerBadges.sol";
 import "./badges/PodcastBadges.sol";
+import "./badges/accessor/BadgeAccessor.sol";
+import "./tokens/ITokenProvider.sol";
+import "./tokens/InternalTokens.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
  */
-contract PodcastHandler is IPodcastHandler, OwnerPausable {
+contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
     // Our base reward amount for podcast listen and owner
     uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
     uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
@@ -26,36 +29,18 @@ contract PodcastHandler is IPodcastHandler, OwnerPausable {
     uint256 private constant SYBEL_COEFFICIENT = 250;
 
     /**
-     * @dev Access our listener badges
+     * @dev Access our token provider
      */
-    IListenerBadges public listenerBadges;
-
-    /**
-     * @dev Access our podcast badges
-     */
-    IPodcastBadges public podcastBadges;
+    ITokenProvider public tokenProvider;
 
     constructor() {
-        // Create our badges contracts
+        // Create our initial badges contracts
         listenerBadges = new ListenerBadges();
         podcastBadges = new PodcastBadges();
-    }
-
-    /**
-     * @dev Update our podcast badges address
-     */
-    function updateListenerBadgesAddress(address newAddress)
-        external
-        onlyOwner
-    {
-        listenerBadges = IListenerBadges(newAddress);
-    }
-
-    /**
-     * @dev Update our podcast badges address
-     */
-    function updatePodcastBadgesAddress(address newAddress) external onlyOwner {
-        podcastBadges = IPodcastBadges(newAddress);
+        // Create our initial token provider contract
+        tokenProvider = new InternalTokens();
+        // Update the address of the badges in the token provider
+        tokenProvider.updateAllBadgesAddress(address(listenerBadges), address(podcastBadges));
     }
 
     /**

@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../utils/pausable/IPausable.sol";
+import "../badges/accessor/IBadgeAccessor.sol";
 
 /**
  * @dev Represent our token provider class (like small banking system, with batch minting and burning operation)
  */
-interface ITokenProvider is IPausable {
+interface ITokenProvider is IPausable, IBadgeAccessor {
 
     /**
      * @dev Mint a new podcast, return the id of the built podcast

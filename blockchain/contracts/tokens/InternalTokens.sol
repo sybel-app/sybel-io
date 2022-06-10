@@ -9,9 +9,10 @@ import "../utils/SybelMath.sol";
 import "./ITokenProvider.sol";
 import "../badges/IListenerBadges.sol";
 import "../badges/IPodcastBadges.sol";
+import "../badges/accessor/BadgeAccessor.sol";
 import "../utils/pausable/OwnerPausable.sol";
 
-contract SybelFNFT is ITokenProvider, ERC1155, OwnerPausable {
+contract InternalTokens is ITokenProvider, ERC1155, OwnerPausable, BadgeAccessor {
     // Our base token types
     uint256 public constant TOKEN_TYPE_UTILITY = 1; // Fungible
 
@@ -51,16 +52,6 @@ contract SybelFNFT is ITokenProvider, ERC1155, OwnerPausable {
     // Available supply of each tokens (classic, rare and epic only) by they id
     mapping(uint256 => uint256) public availableSupplies;
 
-    /**
-     * @dev Access our listener badges
-     */
-    IListenerBadges public listenerBadges;
-
-    /**
-     * @dev Access our podcast badges
-     */
-    IPodcastBadges public podcastBadges;
-
     // Event when podcast is published
     event PodcastMinted(
         uint256 baseId,
@@ -73,13 +64,7 @@ contract SybelFNFT is ITokenProvider, ERC1155, OwnerPausable {
     // Event when podcast owner changed
     event PodcastOwnerChanged(uint256 podcastId, address from, address to);
 
-    constructor(address listenerBadgesAddr, address podcastBadgesAddr)
-        ERC1155("https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json")
-    {
-        // Set the address used to access listener and podcast badges
-        listenerBadges = IListenerBadges(listenerBadgesAddr);
-        podcastBadges = IPodcastBadges(podcastBadgesAddr);
-    }
+    constructor() ERC1155("https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json") { }
 
     /**
      * @dev Mint a new podcast, return the id of the built podcast
