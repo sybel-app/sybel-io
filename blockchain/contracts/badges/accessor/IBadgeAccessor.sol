@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
  * @dev Represent a contract that can access the badges contract
  */
 interface IBadgeAccessor {
+    event BadgeAddressChanged(address newAddress, string id);
+
     /**
      * @dev Update our listener badges address
      */

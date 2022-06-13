@@ -41,6 +41,7 @@ abstract contract AccessControlBadgeAccessor is IBadgeAccessor, AccessControl {
         onlyAddressUpdater
     {
         listenerBadges = IListenerBadges(newAddress);
+        emit BadgeAddressChanged(newAddress, "listener_badges");
     }
 
     /**
@@ -53,5 +54,6 @@ abstract contract AccessControlBadgeAccessor is IBadgeAccessor, AccessControl {
         onlyAddressUpdater
     {
         podcastBadges = IPodcastBadges(newAddress);
+        emit BadgeAddressChanged(newAddress, "podcast_badges");
     }
 }

@@ -19,6 +19,12 @@ import "./tokens/GovernanceToken.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
+  * Deployment Steps : 
+  1 - deploy governance and internal tokens
+  2 - deploy podcast handler with governance and internal tokens address as param
+  3 - grand the minter and addr updater role to the podcast handler contract in the internal tokens
+  4 - call the updateBadgesAddrOnInnerContract() on the podcast handler contract (it will refresh the badges address, and associate the right roles)
+  5 - you're (theorically) ready to goooo
  */
 contract PodcastHandler is
     IPodcastHandler,
@@ -46,6 +52,9 @@ contract PodcastHandler is
      */
     GovernanceToken private governanceToken;
 
+    /**
+     * @dev Build our podcast handler from the deployed governance and internal token contracts
+     */
     constructor(address governanceTokenAddr, address internalTokenAddr) {
         // Create our initial badges contracts
         listenerBadges = new ListenerBadges();
@@ -57,11 +66,48 @@ contract PodcastHandler is
         // Grand the updater roles on our governance token for the badges contract
         listenerBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
-            address(governanceToken)
+            address(internalTokenAddr)
         );
         podcastBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
-            address(governanceToken)
+            address(internalTokenAddr)
+        );
+    }
+
+    /**
+     * @dev Update the address of the badges computer on governance token
+     * Should be call after a deployment, when this address contract as been granted the podcast updater role
+     */
+    function updateBadgesAddrOnInnerContract()
+        external
+        onlyOwner
+        whenNotPaused
+    {
+        // Update the address for the different badges
+        internalTokens.updateListenerBadgesAddress(address(listenerBadges));
+        internalTokens.updatePodcastBadgesAddress(address(podcastBadges));
+        // Grand the roles
+        listenerBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(internalTokens)
+        );
+        podcastBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(internalTokens)
+        );
+    }
+
+    function updateInternalTokenAddress(address _newInternalTokenAddress) external {
+        // Find our internal token provider contract
+        internalTokens = InternalTokens(_newInternalTokenAddress);
+        // Grand the updater roles on our governance token for the badges contract
+        listenerBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            _newInternalTokenAddress
+        );
+        podcastBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            _newInternalTokenAddress
         );
     }
 
@@ -172,10 +218,14 @@ contract PodcastHandler is
         override
         onlyOwner
     {
+        // Update the current address
         listenerBadges = IListenerBadges(newAddress);
+
+        // Update the address for the internal tokens, and set the right roles
+        internalTokens.updateListenerBadgesAddress(address(listenerBadges));
         listenerBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
-            address(governanceToken)
+            address(internalTokens)
         );
     }
 
@@ -187,10 +237,14 @@ contract PodcastHandler is
         override
         onlyOwner
     {
+        // Update the current address
         podcastBadges = IPodcastBadges(newAddress);
+
+        // Update the address for the internal tokens, and set the right roles
+        internalTokens.updatePodcastBadgesAddress(address(podcastBadges));
         podcastBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
-            address(governanceToken)
+            address(internalTokens)
         );
     }
 }

@@ -30,6 +30,7 @@ abstract contract OwnableBadgeAccessor is IBadgeAccessor, Ownable {
         onlyOwner
     {
         listenerBadges = IListenerBadges(newAddress);
+        emit BadgeAddressChanged(newAddress, "listener_badges");
     }
 
     /**
@@ -42,5 +43,6 @@ abstract contract OwnableBadgeAccessor is IBadgeAccessor, Ownable {
         onlyOwner
     {
         podcastBadges = IPodcastBadges(newAddress);
+        emit BadgeAddressChanged(newAddress, "podcast_badges");
     }
 }

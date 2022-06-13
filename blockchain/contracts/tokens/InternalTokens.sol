@@ -90,9 +90,9 @@ contract InternalTokens is
         _currentPodcastTokenID++;
 
         // Mint the podcast nft into the podcast owner wallet directly
+        tokenSupplies[SybelMath.buildNftId(id)] = 1;
+        availableSupplies[SybelMath.buildNftId(id)] = 1;
         _mint(_podcastOwnerAddress, SybelMath.buildNftId(id), 1, _data);
-        tokenSupplies[SybelMath.buildNftId(id)] = _classicSupply;
-        availableSupplies[SybelMath.buildNftId(id)] = _classicSupply;
 
         // Save the supplies for each token types
         tokenSupplies[SybelMath.buildClassicNftId(id)] = _classicSupply;
@@ -153,8 +153,8 @@ contract InternalTokens is
         bytes memory
     ) internal override {
         // Handle the badges updates
-        podcastBadges.updateFromTransaction(from, to, ids, amounts);
-        listenerBadges.updateFromTransaction(from, to, ids, amounts);
+        //podcastBadges.updateFromTransaction(from, to, ids, amounts);
+        //listenerBadges.updateFromTransaction(from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
             // If we got a from address,so not a minted token
