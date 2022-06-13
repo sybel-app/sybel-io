@@ -14,7 +14,6 @@ interface IPodcastHandler is IPausable {
         uint256 _classicSupply,
         uint256 _rareSupply,
         uint256 _epicSupply,
-        string memory _name,
         bytes calldata _data,
         address _podcastOwnerAddress
     ) external;
