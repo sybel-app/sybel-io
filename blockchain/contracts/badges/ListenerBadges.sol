@@ -18,9 +18,6 @@ contract ListenerBadges is
     // Map of user address to listener badge
     mapping(address => ListenerBadge) listenerBadges;
 
-    // Amount of nft a listener has
-    mapping(address => uint256) public listenerNfts;
-
     /**
      * @dev Update the listener snft amount
      */
@@ -31,18 +28,6 @@ contract ListenerBadges is
         whenNotPaused
     {
         listenerBadges[listener].coefficient = coefficient;
-    }
-
-    /**
-     * @dev Update the listener snft amount
-     */
-    function updateSnftAmount(address listener, uint256 sNftamount)
-        external
-        override
-        onlyUpdater
-        whenNotPaused
-    {
-        listenerBadges[listener].sNftOwnedCount = sNftamount;
     }
 
     /**
@@ -61,12 +46,12 @@ contract ListenerBadges is
                 // If we got a to address (so not a burn token)
                 if (to != address(0)) {
                     // Update the number of token held by this listener
-                    listenerNfts[from] += amounts[i];
+                    listenerBadges[to].sNftOwnedCount += amounts[i];
                 }
                 // If we got a from address, so not a minted token
                 if (from != address(0)) {
                     // Update the number of token held by this listener
-                    listenerNfts[from] -= amounts[i];
+                    listenerBadges[to].sNftOwnedCount -= amounts[i];
                 }
             }
         }
@@ -82,5 +67,19 @@ contract ListenerBadges is
         returns (ListenerBadge memory)
     {
         return listenerBadges[listener];
+    }
+
+    /**
+     * @dev Get the multiplier for the given listener
+     */
+    function getMultiplier(address listener)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return
+            (1 + listenerBadges[listener].coefficient) *
+            listenerBadges[listener].sNftOwnedCount;
     }
 }

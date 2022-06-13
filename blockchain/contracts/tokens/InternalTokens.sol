@@ -6,12 +6,20 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../utils/SybelMath.sol";
+import "../utils/SybelRoles.sol";
 import "../badges/IListenerBadges.sol";
 import "../badges/IPodcastBadges.sol";
-import "../badges/accessor/BadgeAccessor.sol";
-import "../utils/pausable/OwnerPausable.sol";
+import "../badges/accessor/AccessControlBadgeAccessor.sol";
+import "../utils/pausable/AccessControlPausable.sol";
 
-contract InternalTokens is ERC1155, OwnerPausable, BadgeAccessor {
+contract InternalTokens is
+    ERC1155,
+    AccessControlPausable,
+    AccessControlBadgeAccessor
+{
+    // Base token type
+    uint256 public constant TOKEN_TYPE_UTILITY = 0; // Fungible
+
     // The cap for each mintable token type
     uint256 public constant TOKEN_EPIC_CAP = 50;
     uint256 public constant TOKEN_RARE_CAP = 200;
@@ -54,7 +62,12 @@ contract InternalTokens is ERC1155, OwnerPausable, BadgeAccessor {
         uint256 _epicSupply,
         bytes calldata _data,
         address _podcastOwnerAddress
-    ) external onlyOwner whenNotPaused returns (uint256) {
+    )
+        external
+        onlyRole(SybelRoles.MINTER_ROLE)
+        whenNotPaused
+        returns (uint256)
+    {
         require(
             _classicSupply > 0,
             "SYB: Cannot add podcast without classic supply !"
@@ -73,8 +86,8 @@ contract InternalTokens is ERC1155, OwnerPausable, BadgeAccessor {
         );
 
         // Get the next podcast id and increment the current podcast token id
-        uint256 id = _getNextTokenID();
-        _incrementPodcastTokenID();
+        uint256 id = _currentPodcastTokenID + 1;
+        _currentPodcastTokenID++;
 
         // Mint the podcast nft into the podcast owner wallet directly
         _mint(_podcastOwnerAddress, SybelMath.buildNftId(id), 1, _data);
@@ -154,17 +167,34 @@ contract InternalTokens is ERC1155, OwnerPausable, BadgeAccessor {
     }
 
     /**
-     * @dev calculates the next token ID based on value of _currentTokenID
-     * @return uint256 for the next token ID
+     * @dev Mint new utility token to the given addresses for the given amount
      */
-    function _getNextTokenID() private view returns (uint256) {
-        return _currentPodcastTokenID + 1;
+    function mintUtility(address to, uint256 amount)
+        external
+        onlyRole(SybelRoles.MINTER_ROLE)
+        whenNotPaused
+    {
+        _mint(to, TOKEN_TYPE_UTILITY, amount, new bytes(0x0));
     }
 
     /**
-     * @dev increments the value of _currentTokenID
+     * @dev Mint new utility token to the given addresses for the given amount
      */
-    function _incrementPodcastTokenID() private {
-        _currentPodcastTokenID++;
+    function burnUtility(address from, uint256 amount)
+        external
+        onlyRole(SybelRoles.MINTER_ROLE)
+        whenNotPaused
+    {
+        _burn(from, TOKEN_TYPE_UTILITY, amount);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }

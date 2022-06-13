@@ -2,22 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "../utils/SybelRoles.sol";
 
 /**
  * @dev Abstract control that help us handling badge access control
  */
 abstract contract BadgesAccessControl is AccessControl {
-    // The role required to update the badge
-    bytes32 public constant UPDATER_ROLE = keccak256("UPDATER");
-
     constructor() {
-        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        grantRole(UPDATER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // Allow only the updater role
     modifier onlyUpdater() {
-        _checkRole(UPDATER_ROLE);
+        _checkRole(SybelRoles.BADGE_UPDATER_ROLE);
         _;
     }
 

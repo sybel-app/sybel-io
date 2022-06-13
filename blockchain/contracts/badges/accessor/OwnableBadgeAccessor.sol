@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../models/BadgeAddresses.sol";
 import "./IBadgeAccessor.sol";
 import "../IListenerBadges.sol";
 import "../IPodcastBadges.sol";
@@ -10,7 +9,7 @@ import "../IPodcastBadges.sol";
 /**
  * @dev Represent a pausable contract
  */
-abstract contract BadgeAccessor is IBadgeAccessor, Ownable {
+abstract contract OwnableBadgeAccessor is IBadgeAccessor, Ownable {
     /**
      * @dev Access our listener badges
      */
@@ -26,6 +25,7 @@ abstract contract BadgeAccessor is IBadgeAccessor, Ownable {
      */
     function updateListenerBadgesAddress(address newAddress)
         external
+        virtual
         override
         onlyOwner
     {
@@ -37,33 +37,10 @@ abstract contract BadgeAccessor is IBadgeAccessor, Ownable {
      */
     function updatePodcastBadgesAddress(address newAddress)
         external
+        virtual
         override
         onlyOwner
     {
         podcastBadges = IPodcastBadges(newAddress);
-    }
-
-    /**
-     * @dev Update our both badges address
-     */
-    function updateAllBadgesAddress(BadgeAddresses calldata addresses)
-        external
-        override
-        onlyOwner
-    {
-        listenerBadges = IListenerBadges(addresses.listener);
-        podcastBadges = IPodcastBadges(addresses.podcast);
-    }
-
-    /**
-     * @dev Get the current badges address
-     */
-    function getBadgesAddress()
-        external
-        view
-        override
-        returns (BadgeAddresses memory)
-    {
-        return BadgeAddresses(address(listenerBadges), address(podcastBadges));
     }
 }

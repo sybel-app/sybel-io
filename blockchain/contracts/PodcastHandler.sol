@@ -6,21 +6,25 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./utils/SybelMath.sol";
+import "./utils/SybelRoles.sol";
 import "./utils/pausable/OwnerPausable.sol";
 import "./badges/IListenerBadges.sol";
 import "./badges/IPodcastBadges.sol";
-import "./badges/models/BadgeAddresses.sol";
 import "./IPodcastHandler.sol";
 import "./badges/ListenerBadges.sol";
 import "./badges/PodcastBadges.sol";
-import "./badges/accessor/BadgeAccessor.sol";
+import "./badges/accessor/OwnableBadgeAccessor.sol";
 import "./tokens/InternalTokens.sol";
 import "./tokens/GovernanceToken.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
  */
-contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
+contract PodcastHandler is
+    IPodcastHandler,
+    OwnableBadgeAccessor,
+    OwnerPausable
+{
     // Our base reward amount for podcast listen and owner
     uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
     uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
@@ -50,9 +54,14 @@ contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
         internalTokens = InternalTokens(internalTokenAddr);
         // Find our governance token provider contract
         governanceToken = GovernanceToken(governanceTokenAddr);
-        // Update the address of the badges in the token provider
-        internalTokens.updateAllBadgesAddress(
-            BadgeAddresses(address(listenerBadges), address(podcastBadges))
+        // Grand the updater roles on our governance token for the badges contract
+        listenerBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(governanceToken)
+        );
+        podcastBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(governanceToken)
         );
     }
 
@@ -74,7 +83,7 @@ contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
             _data,
             _podcastOwnerAddress
         );
-        // TODO : Do something with the podcast id ? Base badge generation or update ?
+        // TODO : Do something with the podcast id ? Pay the podcaster directly ??
     }
 
     /**
@@ -92,6 +101,14 @@ contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
             _listenerAddresses.length <= MAX_BATCH_AMOUNT,
             "SYB: Can't treat more than 20 items at a time"
         );
+        // Iterate over each user
+        for (uint256 i = 0; i < _listenerAddresses.length; ++i) {
+            uint256 amountToPay = USER_LISTEN_REWARD *
+                listenerBadges.getMultiplier(_listenerAddresses[i]);
+            _listenCounts[i];
+            // Mint the given token's
+            internalTokens.mintUtility(_listenerAddresses[i], amountToPay);
+        }
     }
 
     /**
@@ -109,13 +126,23 @@ contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
             _podcastIds.length <= MAX_BATCH_AMOUNT,
             "SYB: Can't treat more than 20 items at a time"
         );
+        // Iterate over each podcast
+        for (uint256 i = 0; i < _podcastIds.length; ++i) {
+            uint256 amountToPay = OWNER_LISTEN_REWARD *
+                podcastBadges.getMultiplier(_podcastIds[i]) *
+                _listenCounts[i];
+            // Mint the given token's
+            internalTokens.mintUtility(
+                podcastBadges.getOwner(_podcastIds[i]),
+                amountToPay
+            );
+        }
     }
 
     /**
      * @dev Pause all the contracts
      */
     function pauseAll() external override onlyOwner {
-        // Pause the badges calculation
         // Pause the badges calculation
         listenerBadges.pause();
         podcastBadges.pause();
@@ -134,6 +161,37 @@ contract PodcastHandler is IPodcastHandler, BadgeAccessor, OwnerPausable {
         // Pause the token provider
         // Un Pause this contract
         _unpause();
+    }
+
+    /**
+     * @dev Update our listener badges address
+     * Overrided to grant the role for the governance token to update the value
+     */
+    function updateListenerBadgesAddress(address newAddress)
+        external
+        override
+        onlyOwner
+    {
+        listenerBadges = IListenerBadges(newAddress);
+        listenerBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(governanceToken)
+        );
+    }
+
+    /**
+     * @dev Update our podcast badges address
+     */
+    function updatePodcastBadgesAddress(address newAddress)
+        external
+        override
+        onlyOwner
+    {
+        podcastBadges = IPodcastBadges(newAddress);
+        podcastBadges.grantRole(
+            SybelRoles.BADGE_UPDATER_ROLE,
+            address(governanceToken)
+        );
     }
 }
 
