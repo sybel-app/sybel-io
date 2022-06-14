@@ -1,9 +1,7 @@
 // This script can be used to deploy the "PodcastHandler" contract using Web3 library.
-import { Signer } from "ethers";
-import { ethers, waffle } from "hardhat";
+import { ethers } from "hardhat";
 
 const hre = require("hardhat");
-const { deployContract } = waffle;
 
 import { GovernanceToken } from "../typechain-types/contracts/tokens/GovernanceToken";
 import { InternalTokens } from "../typechain-types/contracts/tokens/InternalTokens";
@@ -15,9 +13,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log(
       "Deploying all the contract for a simple blockchain intergration"
     );
-    // Get our signers
-    const signers = await ethers.getSigners();
-    const signer = signers[0];
 
     // Deploy our libs
     const SybelMathFactory = await ethers.getContractFactory("SybelMath");
