@@ -22,3 +22,4 @@ node_modules/
 blockchain/artifacts/
 blockchain/cache/
 blockchain/contracts/artifacts/
+blockchain/typechain-types/

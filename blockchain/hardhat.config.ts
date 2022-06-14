@@ -1,4 +1,6 @@
 import { task } from "hardhat/config";
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -27,4 +29,14 @@ export default {
     cache: "./cache",
     artifacts: "./artifacts",
   },
+  compilerOptions: {
+    target: "es2018",
+    module: "commonjs",
+    strict: true,
+    esModuleInterop: true,
+    outDir: "dist",
+    resolveJsonModule: true,
+  },
+  include: ["./scripts", "./test", "./typechain-types"],
+  files: ["./hardhat.config.ts"],
 };
