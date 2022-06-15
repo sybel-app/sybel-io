@@ -69,7 +69,12 @@ contract SybelFNFT is ERC1155, Ownable {
         ERC1155("https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json")
     {
         // Mint all of our TOKEN_TYPE_GOVERNANCE token (3 billion)
-        _mint(msg.sender, TOKEN_TYPE_GOVERNANCE, 3000000000 ** SybelMath.DECIMALS_COUNT, "");
+        _mint(
+            _msgSender(),
+            TOKEN_TYPE_GOVERNANCE,
+            3000000000**SybelMath.DECIMALS_COUNT,
+            ""
+        );
     }
 
     /**

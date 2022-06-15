@@ -9,7 +9,7 @@ import "../utils/SybelRoles.sol";
  */
 abstract contract BadgesAccessControl is AccessControl {
     constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     // Allow only the updater role

@@ -153,8 +153,8 @@ contract InternalTokens is
         bytes memory
     ) internal override {
         // Handle the badges updates
-        //podcastBadges.updateFromTransaction(from, to, ids, amounts);
-        //listenerBadges.updateFromTransaction(from, to, ids, amounts);
+        podcastBadges.updateFromTransaction(from, to, ids, amounts);
+        listenerBadges.updateFromTransaction(from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
             // If we got a from address,so not a minted token

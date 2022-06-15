@@ -15,7 +15,6 @@ import "./badges/ListenerBadges.sol";
 import "./badges/PodcastBadges.sol";
 import "./badges/accessor/OwnableBadgeAccessor.sol";
 import "./tokens/InternalTokens.sol";
-import "./tokens/GovernanceToken.sol";
 
 /**
  * @dev Podcast handler contract, represent the entry point of our d apps
@@ -32,46 +31,23 @@ contract PodcastHandler is
     OwnerPausable
 {
     // Our base reward amount for podcast listen and owner
-    uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
-    uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
     uint256 private OWNER_PUBLISH_REWARD = SybelMath.DECIMALS; // So 1 TSE
-
-    // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
-    uint256 private constant SYBEL_COEFFICIENT = 250;
-
-    // Maximum data we can treat in a batch manner
-    uint256 private constant MAX_BATCH_AMOUNT = 20;
 
     /**
      * @dev Access our internal token
+     * @dev Required ? The podcast minting should be exposed in another contract no ??
      */
     InternalTokens private internalTokens;
 
     /**
-     * @dev Access our governance token
-     */
-    GovernanceToken private governanceToken;
-
-    /**
      * @dev Build our podcast handler from the deployed governance and internal token contracts
      */
-    constructor(address governanceTokenAddr, address internalTokenAddr) {
+    constructor(address internalTokenAddr) {
         // Create our initial badges contracts
         listenerBadges = new ListenerBadges();
         podcastBadges = new PodcastBadges();
         // Find our internal token provider contract
         internalTokens = InternalTokens(internalTokenAddr);
-        // Find our governance token provider contract
-        governanceToken = GovernanceToken(governanceTokenAddr);
-        // Grand the updater roles on our governance token for the badges contract
-        listenerBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
-            address(internalTokenAddr)
-        );
-        podcastBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
-            address(internalTokenAddr)
-        );
     }
 
     /**
@@ -97,7 +73,9 @@ contract PodcastHandler is
         );
     }
 
-    function updateInternalTokenAddress(address _newInternalTokenAddress) external {
+    function updateInternalTokenAddress(address _newInternalTokenAddress)
+        external
+    {
         // Find our internal token provider contract
         internalTokens = InternalTokens(_newInternalTokenAddress);
         // Grand the updater roles on our governance token for the badges contract
@@ -130,59 +108,7 @@ contract PodcastHandler is
             _podcastOwnerAddress
         );
         // TODO : Do something with the podcast id ? Pay the podcaster directly ??
-    }
-
-    /**
-     * @dev Pay a group of user listening
-     */
-    function payUserListen(
-        address[] calldata _listenerAddresses,
-        uint256[] calldata _listenCounts
-    ) external override onlyOwner whenNotPaused {
-        require(
-            _listenerAddresses.length == _listenCounts.length,
-            "SYB: Can't pay for listeners address and listen of different length"
-        );
-        require(
-            _listenerAddresses.length <= MAX_BATCH_AMOUNT,
-            "SYB: Can't treat more than 20 items at a time"
-        );
-        // Iterate over each user
-        for (uint256 i = 0; i < _listenerAddresses.length; ++i) {
-            uint256 amountToPay = USER_LISTEN_REWARD *
-                listenerBadges.getMultiplier(_listenerAddresses[i]);
-            _listenCounts[i];
-            // Mint the given token's
-            internalTokens.mintUtility(_listenerAddresses[i], amountToPay);
-        }
-    }
-
-    /**
-     * @dev Pay a group of podcast owner
-     */
-    function payPodcastOwner(
-        uint256[] calldata _podcastIds,
-        uint256[] calldata _listenCounts
-    ) external override onlyOwner whenNotPaused {
-        require(
-            _podcastIds.length == _listenCounts.length,
-            "SYB: Can't pay of podcast for id and listen of different length"
-        );
-        require(
-            _podcastIds.length <= MAX_BATCH_AMOUNT,
-            "SYB: Can't treat more than 20 items at a time"
-        );
-        // Iterate over each podcast
-        for (uint256 i = 0; i < _podcastIds.length; ++i) {
-            uint256 amountToPay = OWNER_LISTEN_REWARD *
-                podcastBadges.getMultiplier(_podcastIds[i]) *
-                _listenCounts[i];
-            // Mint the given token's
-            internalTokens.mintUtility(
-                podcastBadges.getOwner(_podcastIds[i]),
-                amountToPay
-            );
-        }
+        // TODO : Call the rewarder contract to pay the creator ??
     }
 
     /**
@@ -213,52 +139,24 @@ contract PodcastHandler is
      * @dev Update our listener badges address
      * Overrided to grant the role for the governance token to update the value
      */
-    function updateListenerBadgesAddress(address newAddress)
-        external
-        override
-        onlyOwner
-    {
-        // Update the current address
-        listenerBadges = IListenerBadges(newAddress);
-
+    /*function __afterListenerBadgesAddressUpdate() external override onlyOwner {
         // Update the address for the internal tokens, and set the right roles
         internalTokens.updateListenerBadgesAddress(address(listenerBadges));
         listenerBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
             address(internalTokens)
         );
-    }
+    }*/
 
     /**
      * @dev Update our podcast badges address
      */
-    function updatePodcastBadgesAddress(address newAddress)
-        external
-        override
-        onlyOwner
-    {
-        // Update the current address
-        podcastBadges = IPodcastBadges(newAddress);
-
+    /*function _afterPodcastBadgesAddressUpdate() external override onlyOwner {
         // Update the address for the internal tokens, and set the right roles
         internalTokens.updatePodcastBadgesAddress(address(podcastBadges));
         podcastBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
             address(internalTokens)
         );
-    }
+    }*/
 }
-
-/**
- * Should expose interface : 
-    Mint podcast (with param : name, supply of each tokens, owner address)
-    Pay podcast owner (with param : podcastId, listenCount)
-    Pay listener (with param : listenerWallet, listenCount) -> alias for claimListen(listenCount) directly called from a listener ?? Consume a bit of matic, so TSE burning for matic in wallet ?
-        Can be a burning reason -> faster payment, and not waiting for batching operation
-    Mint podcast nft (with params: podcastId, type, supply, receiver address)
-    Podcast sNFT should implement royalties ??
-    
-    For podcast minting, we should mint the podcast NFT (representing the owner of a podcast), then set the total supply of each token
-
-    For owner and listener payment, we should compute the badge (from the erc1155 contract ?? Or separate contract that erc1155 feed and that podcast handler read ???)
- */

@@ -12,7 +12,7 @@ import "../../utils/SybelRoles.sol";
  */
 abstract contract AccessControlBadgeAccessor is IBadgeAccessor, AccessControl {
     constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     // Allow only the address updater role
@@ -40,9 +40,21 @@ abstract contract AccessControlBadgeAccessor is IBadgeAccessor, AccessControl {
         override
         onlyAddressUpdater
     {
+        _beforeListenerBadgesAddressUpdate(newAddress);
         listenerBadges = IListenerBadges(newAddress);
         emit BadgeAddressChanged(newAddress, "listener_badges");
+        _afterListenerBadgesAddressUpdate(newAddress);
     }
+
+    function _beforeListenerBadgesAddressUpdate(address newAddress)
+        internal
+        virtual
+    {}
+
+    function _afterListenerBadgesAddressUpdate(address newAddress)
+        internal
+        virtual
+    {}
 
     /**
      * @dev Update our podcast badges address
@@ -53,7 +65,19 @@ abstract contract AccessControlBadgeAccessor is IBadgeAccessor, AccessControl {
         override
         onlyAddressUpdater
     {
+        _beforePodcastBadgesAddressUpdate(newAddress);
         podcastBadges = IPodcastBadges(newAddress);
         emit BadgeAddressChanged(newAddress, "podcast_badges");
+        _afterPodcastBadgesAddressUpdate(newAddress);
     }
+
+    function _beforePodcastBadgesAddressUpdate(address newAddress)
+        internal
+        virtual
+    {}
+
+    function _afterPodcastBadgesAddressUpdate(address newAddress)
+        internal
+        virtual
+    {}
 }

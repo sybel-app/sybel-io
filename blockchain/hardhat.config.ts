@@ -104,11 +104,11 @@ task("mintPodcast", "Mint a simple podcast")
   .addParam("owner", "The owner address of this token", null, types.string)
   .setAction(async (taskArgs, hre) => {
     try {
-      const sybelMathAddr = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-      const podcastHandlerAddr = "0x09635F643e140090A9A8Dcd712eD6285858ceBef";
+      const sybelMathAddr = "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB";
+      const podcastHandlerAddr = "0x851356ae760d987E095750cCeb3bC6014560891C";
 
       const SybelMathFactory = await hre.ethers.getContractFactory("SybelMath");
-      const sybelMath = await SybelMathFactory.attach(sybelMathAddr);
+      const sybelMath = SybelMathFactory.attach(sybelMathAddr);
 
       console.log("Starting to mint a new podcast");
       const podcastHandlerFactory = await hre.ethers.getContractFactory(
@@ -120,9 +120,7 @@ task("mintPodcast", "Mint a simple podcast")
         }
       );
       // Find our podcast handler contract and attach to it
-      const podcastHandler = await podcastHandlerFactory.attach(
-        podcastHandlerAddr
-      );
+      const podcastHandler = podcastHandlerFactory.attach(podcastHandlerAddr);
       // Mint our podcast
       const mintTransaction = await podcastHandler.addPodcast(
         taskArgs.classicSupply,
