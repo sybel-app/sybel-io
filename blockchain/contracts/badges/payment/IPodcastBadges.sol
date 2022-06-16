@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "./models/PodcastBadge.sol";
-import "../utils/pausable/IPausable.sol";
+import "./models/PodcastPaymentBadge.sol";
+import "../../utils/pausable/IPausable.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
@@ -10,7 +11,7 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
  */
 interface IPodcastBadges is IPausable, IAccessControl {
     /**
-     * @dev Update the podcast internal coefficient
+     * @dev Update the podcast custom coefficient
      */
     function updateCoefficient(uint256 podcastId, uint256 coefficient) external;
 
@@ -33,20 +34,11 @@ interface IPodcastBadges is IPausable, IAccessControl {
         returns (PodcastBadge memory);
 
     /**
-     * @dev Get the multiplier for the given podcast
+     * @dev Get the payment badges for the given informations
      */
-    function getMultiplier(uint256 podcastId) external view returns (uint256);
-
-    /**
-     * @dev Get all the investor address of the given podcast
-     */
-    function getInvestors(uint256 podcastId)
-        external
-        view
-        returns (address[] memory);
-
-    /**
-     * @dev Get the owner of the given podcast
-     */
-    function getOwner(uint256 podcastId) external view returns (address);
+    function getPaymentBadges(
+        address listener,
+        uint256[] calldata podcastIds,
+        uint256[] calldata listenCounts
+    ) external view returns (PodcastPaymentBadge[] memory);
 }

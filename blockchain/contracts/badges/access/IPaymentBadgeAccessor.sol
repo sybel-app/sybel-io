@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @dev Represent a contract that can access the badges contract
- */
-interface IBadgeAccessor {
-    event BadgeAddressChanged(address newAddress, string id);
+import "@openzeppelin/contracts/access/IAccessControl.sol";
 
+/**
+ * @dev Represent a contract that can access the payments badges contract
+ */
+interface IPaymentBadgeAccessor is IAccessControl {
     /**
      * @dev Update our listener badges address
      */

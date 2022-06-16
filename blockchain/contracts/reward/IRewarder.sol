@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../badges/accessor/IBadgeAccessor.sol";
+import "../badges/access/IPaymentBadgeAccessor.sol";
 import "../utils/pausable/IPausable.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
  * @dev Represent our rewarder contract
  */
-interface IRewarder is IPausable, IBadgeAccessor {
+interface IRewarder is IPausable, IPaymentBadgeAccessor {
     /**
      * @dev Pay a group of user listening
      */

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../badges/accessor/IBadgeAccessor.sol";
+import "../badges/access/IPaymentBadgeAccessor.sol";
 import "../utils/pausable/IPausable.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
  * @dev Represent our minter contract
  */
-interface IMinter is IPausable, IBadgeAccessor {
+interface IMinter is IPausable, IPaymentBadgeAccessor {
     /**
      * @dev Add a new podcast to our eco system
      */
@@ -20,5 +20,13 @@ interface IMinter is IPausable, IBadgeAccessor {
         address _podcastOwnerAddress
     ) external;
 
-    // TODO : Function to mint some new podcast fraction nft
+    /**
+     * @dev Mint a new s nft
+     */
+    function mintSNFT(
+        uint256 _id,
+        address _to,
+        uint256 _amount,
+        bytes calldata _data
+    ) external;
 }

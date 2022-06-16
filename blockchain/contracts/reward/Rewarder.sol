@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IRewarder.sol";
-import "../badges/accessor/AccessControlBadgeAccessor.sol";
+import "../badges/access/PaymentBadgesAccessor.sol";
 import "../utils/pausable/AccessControlPausable.sol";
 import "../utils/SybelMath.sol";
 import "../tokens/InternalTokens.sol";
@@ -11,11 +11,7 @@ import "../tokens/GovernanceToken.sol";
 /**
  * @dev Represent our rewarder contract
  */
-contract Rewarder is
-    IRewarder,
-    AccessControlPausable,
-    AccessControlBadgeAccessor
-{
+contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     // Our base reward amount for podcast listen and owner
     uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
     uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE

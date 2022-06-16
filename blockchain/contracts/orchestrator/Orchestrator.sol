@@ -2,13 +2,18 @@
 pragma solidity ^0.8.0;
 
 import "./IOrchestrator.sol";
-import "../badges/accessor/OwnableBadgeAccessor.sol";
 import "../utils/pausable/OwnerPausable.sol";
 import "../reward/IRewarder.sol";
 import "../reward/Rewarder.sol";
 import "../minter/IMinter.sol";
 import "../minter/Minter.sol";
+import "../updater/IUpdater.sol";
+import "../updater/Updater.sol";
 import "../tokens/InternalTokens.sol";
+import "../badges/payment/IListenerBadges.sol";
+import "../badges/payment/IPodcastBadges.sol";
+import "../badges/payment/ListenerBadges.sol";
+import "../badges/payment/PodcastBadges.sol";
 
 /**
  * @dev Represent our orchestrator contract, reponsable for global address updating, global pausing etc
@@ -46,11 +51,74 @@ Bricks :
         - Build the minter contract
         - Grant the right roles
 
+listener
+podcastId[]
+listenCount[]
+
+limit listen count per user per day per podcast -> open to ext
+
+Badge podcast : 
+    - Listen count on the week (so timestamp count)
+    - Coefficient on investment
+        - for 10 leg, 30 rare, 45 common, 400000 standart
+        - 10 x LegCoef + 30 x RareCoef + 45 x CommonCoef (no standart)
+    - Adjustable token on burn
+
+toMint =
+    - nbrListen x badgePodcast x (nbrLeg x coef)
+    - same for rare, classic and standart
+
+Percent Partage podcast 
+
+Percent per token types -> mapping open to ext
+
+NFT fraction prices
+    -> Initial price
+    -> Then recomputed in function of the interest arround the podcast listen count -> With a new CostBadges
+
+Royalties sur NFT tx
+    -> 6% for first mint to podcaster
+    -> 4% for other tx to podcast and 2% for sybel ecosystem
+
+Burn : 
+    - Sur inactivité
+    - Mint plus de fraction sur ton token
+    - Burn pour lvl up badge podcast
+    - Burn pour popup / boost de reco
+    - Burn pour increase listen count on podcast
+
+Loop sur l'ensemble des tokens posseder par l'utilisateur pour ce podcast
+
+
+Referral : 
+    - Pecule de TSE au moment du first mint
+    - Depend de la qualité du mint
+
+Coef per token types -> mapping open to ext
+
+Standart granted at each listen if user not listener
+
+
+TODO : 
+    - Timestamp per account usage (in badge) to burn user token if inactive
+    - Royalties on SNFT 
+    - Pool of interact to earn, so badges get a portion of the pools 
+
+
+
+Sub NFT ->
+    - Fraction of the podcast remuneration
+        - Classic -> 
+        - Rare ->
+        - Epic -> 
+    - If not podcast taken, where goes the remuneration ?
+    - 
+
 
 ----
 
  */
-contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
+contract Orchestrator is IOrchestrator, OwnerPausable {
     /**
      * @dev Access our internal token
      */
@@ -72,6 +140,21 @@ contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
     IMinter private minter;
 
     /**
+     * @dev Access our updater contract
+     */
+    IUpdater private updater;
+
+    /**
+     * @dev Access our listener badges
+     */
+    IListenerBadges public listenerBadges;
+
+    /**
+     * @dev Access our podcast badges
+     */
+    IPodcastBadges public podcastBadges;
+
+    /**
      * @dev Event pushed when a contract change address
      */
     event ContractAddressChanged(address newAddress, string id);
@@ -84,11 +167,22 @@ contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
         internalTokens = InternalTokens(internalTokenAddr);
         // Find our governance token provider contract
         governanceToken = GovernanceToken(governanceTokenAddr);
-        // Create our initial rewarder and minter contract
+        // Create our initial rewarder, minter and updater contract
         rewarder = new Rewarder(governanceTokenAddr, internalTokenAddr);
         emit ContractAddressChanged(address(rewarder), "rewarder");
         minter = new Minter(governanceTokenAddr, internalTokenAddr);
         emit ContractAddressChanged(address(minter), "minter");
+        updater = new Updater();
+        emit ContractAddressChanged(address(updater), "updater");
+        // Create the initial bades contracts
+        podcastBadges = new PodcastBadges();
+        emit ContractAddressChanged(address(podcastBadges), "podcast_badges");
+        listenerBadges = new ListenerBadges();
+        emit ContractAddressChanged(address(listenerBadges), "listener_badges");
+        // TODO : Should update the listener badges on all the contracts
+        // TODO : Setup the badges in the constructor for performance and fees efficiency ???
+
+        // TODO : Big checkup on all the roles, standby for now since we only perfom conception
         // Grand the updater roles on our governance token for the badges contract
         listenerBadges.grantRole(
             SybelRoles.BADGE_UPDATER_ROLE,
@@ -122,41 +216,44 @@ contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
     /**
      * @dev Update our rewarder contract
      */
-    function updateMinter(address newMinterAddress)
-        external
-        override
-        onlyOwner
-    {
+    function updateMinter(address newMinterAddr) external override onlyOwner {
         // TODO : Require the admin role on the new minter addr
         // Pause the previous minter
         if (address(minter) != address(0)) {
             minter.pause();
         }
         // Update our minter
-        minter = IMinter(newMinterAddress);
+        minter = IMinter(newMinterAddr);
         // TODO : Send the update to the concerned contract, and grant the right roles
-        emit ContractAddressChanged(newMinterAddress, "minter");
+        emit ContractAddressChanged(newMinterAddr, "minter");
+    }
+
+    /**
+     * @dev Update our rewarder contract
+     */
+    function updateUpdater(address newUpdaterAddr) external override onlyOwner {
+        // TODO : Require the admin role on the new updater addr
+        // Pause the previous updater
+        if (address(updater) != address(0)) {
+            updater.pause();
+        }
+        // Update our updater
+        updater = IUpdater(newUpdaterAddr);
+        // TODO : Send the update to the concerned contract, and grant the right roles
+        emit ContractAddressChanged(newUpdaterAddr, "updater");
     }
 
     /**
      * @dev Update our listener badges address
      */
-    function _beforeListenerBadgesAddressUpdate(address newAddress)
-        internal
+    function updateListenerBadgesAddress(address newAddress)
+        external
         override
         onlyOwner
     {
         // TODO : Check that the new address of the right roles (needed for this contract to perform the update operation)
-    }
-
-    /**
-     * @dev Update our listener badges address
-     */
-    function _afterListenerBadgesAddressUpdate(address newAddress)
-        internal
-        override
-        onlyOwner
-    {
+        // TODO : Should pause the previous one
+        listenerBadges = IListenerBadges(newAddress);
         // Update the address on all the contract's
         rewarder.updateListenerBadgesAddress(newAddress);
         minter.updateListenerBadgesAddress(newAddress);
@@ -166,28 +263,20 @@ contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
             SybelRoles.BADGE_UPDATER_ROLE,
             address(internalTokens)
         );
-    }
-
-    /**
-     * @dev Before the update our podcast badges address
-     */
-    function _beforePodcastBadgesAddressUpdate(address newAddress)
-        internal
-        override
-        onlyOwner
-    {
-        // TODO : Check that the new address of the right roles (needed for this contract to perform the update operation)
+        emit ContractAddressChanged(newAddress, "listener_badges");
     }
 
     /**
      * @dev Update our podcast badges address
      */
-    function _afterPodcastBadgesAddressUpdate(address newAddress)
-        internal
+    function updatePodcastBadgesAddress(address newAddress)
+        external
         override
         onlyOwner
     {
+        // TODO : Check that the new address of the right roles (needed for this contract to perform the update operation)
         // TODO : Should pause the previous one
+        podcastBadges = IPodcastBadges(newAddress);
         // Update the address on all the contract's
         rewarder.updatePodcastBadgesAddress(newAddress);
         minter.updatePodcastBadgesAddress(newAddress);
@@ -197,5 +286,6 @@ contract Orchestrator is IOrchestrator, OwnableBadgeAccessor, OwnerPausable {
             SybelRoles.BADGE_UPDATER_ROLE,
             address(internalTokens)
         );
+        emit ContractAddressChanged(newAddress, "podcast_badges");
     }
 }

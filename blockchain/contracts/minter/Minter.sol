@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IMinter.sol";
-import "../badges/accessor/AccessControlBadgeAccessor.sol";
+import "../badges/access/PaymentBadgesAccessor.sol";
 import "../utils/pausable/AccessControlPausable.sol";
 import "../utils/SybelMath.sol";
 import "../tokens/InternalTokens.sol";
@@ -11,7 +11,7 @@ import "../tokens/GovernanceToken.sol";
 /**
  * @dev Represent our minter contract
  */
-contract Minter is IMinter, AccessControlPausable, AccessControlBadgeAccessor {
+contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
     // Our base reward amount for podcast listen and owner
     uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
     uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
@@ -62,5 +62,22 @@ contract Minter is IMinter, AccessControlPausable, AccessControlBadgeAccessor {
         );
         // TODO : Do something with the podcast id ? Pay the podcaster directly ??
         // TODO : Call the rewarder contract to pay the creator ??
+    }
+
+    /**
+     * @dev Mint a new s nft
+     */
+    function mintSNFT(
+        uint256 _id,
+        address _to,
+        uint256 _amount,
+        bytes calldata _data
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        // TODO : Call the cost badges to determine the prices
+        // TODO : Check the to wallet, if he have enough supply
+        // TODO : Burn it's TSE associated to the cost
+        // TBD : Ask matt for computation rules
+        // Ask the internal tokens
+        internalTokens.mint(_to, _id, _amount, _data);
     }
 }

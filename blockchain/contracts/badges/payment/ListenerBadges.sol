@@ -3,18 +3,14 @@ pragma solidity ^0.8.0;
 
 import "./IListenerBadges.sol";
 import "./models/ListenerBadge.sol";
-import "./BadgesAccessControl.sol";
-import "../utils/SybelMath.sol";
-import "../utils/pausable/AccessControlPausable.sol";
+import "../../utils/SybelMath.sol";
+import "../../utils/SybelRoles.sol";
+import "../../utils/pausable/AccessControlPausable.sol";
 
 /**
  * @dev Handle the computation of our listener badges
  */
-contract ListenerBadges is
-    IListenerBadges,
-    BadgesAccessControl,
-    AccessControlPausable
-{
+contract ListenerBadges is IListenerBadges, AccessControlPausable {
     // Map of user address to listener badge
     mapping(address => ListenerBadge) listenerBadges;
 
@@ -24,7 +20,7 @@ contract ListenerBadges is
     function updateCoefficient(address listener, uint256 coefficient)
         external
         override
-        onlyUpdater
+        onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
         listenerBadges[listener].coefficient = coefficient;
@@ -38,7 +34,7 @@ contract ListenerBadges is
         address to,
         uint256[] memory ids,
         uint256[] memory amounts
-    ) external override onlyUpdater whenNotPaused {
+    ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
             // Handling investor array update, and token supplies
@@ -64,7 +60,7 @@ contract ListenerBadges is
         external
         view
         override
-        returns (ListenerBadge memory)
+        returns (ListenerBadge storage)
     {
         return listenerBadges[listener];
     }

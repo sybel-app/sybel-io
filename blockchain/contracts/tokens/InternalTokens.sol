@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
-import "../badges/IListenerBadges.sol";
-import "../badges/IPodcastBadges.sol";
-import "../badges/accessor/AccessControlBadgeAccessor.sol";
 import "../utils/pausable/AccessControlPausable.sol";
+import "../updater/IUpdater.sol";
 
-contract InternalTokens is
-    ERC1155,
-    AccessControlPausable,
-    AccessControlBadgeAccessor
-{
+contract InternalTokens is ERC1155, AccessControlPausable {
     // Base token type
     uint256 public constant TOKEN_TYPE_UTILITY = 0; // Fungible
 
@@ -37,6 +29,9 @@ contract InternalTokens is
     // Available supply of each tokens (classic, rare and epic only) by they id
     mapping(uint256 => uint256) public availableSupplies;
 
+    // Access our updater contract
+    IUpdater private updater;
+
     // Event when podcast is published
     event PodcastMinted(
         uint256 baseId,
@@ -54,6 +49,17 @@ contract InternalTokens is
     {}
 
     /**
+     * @dev Update the updater address
+     */
+    function updateUpdaterAddr(address newAddress)
+        external
+        onlyRole(SybelRoles.ADDRESS_UPDATER)
+        whenNotPaused
+    {
+        updater = IUpdater(newAddress);
+    }
+
+    /**
      * @dev Mint a new podcast, return the id of the built podcast
      */
     function mintPodcast(
@@ -62,12 +68,7 @@ contract InternalTokens is
         uint256 _epicSupply,
         bytes calldata _data,
         address _podcastOwnerAddress
-    )
-        external
-        onlyRole(SybelRoles.MINTER_ROLE)
-        whenNotPaused
-        returns (uint256)
-    {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused returns (uint256) {
         require(
             _classicSupply > 0,
             "SYB: Cannot add podcast without classic supply !"
@@ -145,7 +146,7 @@ contract InternalTokens is
      * @dev Handle the transfer token (so update the podcast investor, change the owner of some podcast etc)
      */
     function _afterTokenTransfer(
-        address,
+        address operator,
         address from,
         address to,
         uint256[] memory ids,
@@ -153,8 +154,7 @@ contract InternalTokens is
         bytes memory
     ) internal override {
         // Handle the badges updates
-        podcastBadges.updateFromTransaction(from, to, ids, amounts);
-        listenerBadges.updateFromTransaction(from, to, ids, amounts);
+        updater.updateFromTransaction(operator, from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
             // If we got a from address,so not a minted token
@@ -171,7 +171,7 @@ contract InternalTokens is
      */
     function mintUtility(address to, uint256 amount)
         external
-        onlyRole(SybelRoles.MINTER_ROLE)
+        onlyRole(SybelRoles.MINTER)
         whenNotPaused
     {
         _mint(to, TOKEN_TYPE_UTILITY, amount, new bytes(0x0));
@@ -182,12 +182,15 @@ contract InternalTokens is
      */
     function burnUtility(address from, uint256 amount)
         external
-        onlyRole(SybelRoles.MINTER_ROLE)
+        onlyRole(SybelRoles.MINTER)
         whenNotPaused
     {
         _burn(from, TOKEN_TYPE_UTILITY, amount);
     }
 
+    /**
+     * @dev Required extension to support access control and ERC1155
+     */
     function supportsInterface(bytes4 interfaceId)
         public
         view

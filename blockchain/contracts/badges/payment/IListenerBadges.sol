@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./models/ListenerBadge.sol";
-import "../utils/pausable/IPausable.sol";
+import "../../utils/pausable/IPausable.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
@@ -10,12 +10,12 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
  */
 interface IListenerBadges is IPausable, IAccessControl {
     /**
-     * @dev Update the listener snft amount
+     * @dev Update the listener custom coefficient
      */
     function updateCoefficient(address listener, uint256 coefficient) external;
 
     /**
-     * @dev Update the badges from a transaction record
+     * @dev Update the listener badge from a transaction record
      */
     function updateFromTransaction(
         address from,
