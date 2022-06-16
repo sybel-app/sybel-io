@@ -8,4 +8,6 @@ library SybelRoles {
     bytes32 public constant ADDRESS_UPDATER = keccak256("ADDRESS_UPDATER");
     // The role required to mint new tokens
     bytes32 public constant MINTER = keccak256("MINTER");
+    // The role required to launch the reward for users
+    bytes32 public constant REWARDER = keccak256("REWARDER");
 }

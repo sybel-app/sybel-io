@@ -10,17 +10,10 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
  */
 interface IRewarder is IPausable, IPaymentBadgeAccessor {
     /**
-     * @dev Pay a group of user listening
+     * @dev Pay a user for all the listening he have done on different podcast
      */
-    function payUserListen(
-        address[] calldata _listenerAddresses,
-        uint256[] calldata _listenCounts
-    ) external;
-
-    /**
-     * @dev Pay a group of podcast owner
-     */
-    function payPodcastOwner(
+    function getPaymentBadges(
+        address _listener,
         uint256[] calldata _podcastIds,
         uint256[] calldata _listenCounts
     ) external;

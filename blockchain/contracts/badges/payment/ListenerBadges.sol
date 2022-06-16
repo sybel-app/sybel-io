@@ -34,24 +34,7 @@ contract ListenerBadges is IListenerBadges, AccessControlPausable {
         address to,
         uint256[] memory ids,
         uint256[] memory amounts
-    ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
-        // In the case we are sending the token to a given wallet
-        for (uint256 i = 0; i < ids.length; ++i) {
-            // Handling investor array update, and token supplies
-            if (SybelMath.isPodcastRelatedToken(ids[i])) {
-                // If we got a to address (so not a burn token)
-                if (to != address(0)) {
-                    // Update the number of token held by this listener
-                    listenerBadges[to].sNftOwnedCount += amounts[i];
-                }
-                // If we got a from address, so not a minted token
-                if (from != address(0)) {
-                    // Update the number of token held by this listener
-                    listenerBadges[to].sNftOwnedCount -= amounts[i];
-                }
-            }
-        }
-    }
+    ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {}
 
     /**
      * @dev Find the badge for the given lsitener
@@ -60,7 +43,7 @@ contract ListenerBadges is IListenerBadges, AccessControlPausable {
         external
         view
         override
-        returns (ListenerBadge storage)
+        returns (ListenerBadge memory)
     {
         return listenerBadges[listener];
     }
@@ -74,8 +57,6 @@ contract ListenerBadges is IListenerBadges, AccessControlPausable {
         override
         returns (uint256)
     {
-        return
-            (1 + listenerBadges[listener].coefficient) *
-            listenerBadges[listener].sNftOwnedCount;
+        return 1 + listenerBadges[listener].coefficient;
     }
 }

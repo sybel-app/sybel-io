@@ -36,9 +36,7 @@ interface IPodcastBadges is IPausable, IAccessControl {
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadges(
-        address listener,
-        uint256[] calldata podcastIds,
-        uint256[] calldata listenCounts
-    ) external view returns (PodcastPaymentBadge[] memory);
+    function getPaymentBadge(uint256 podcastId, uint256 listenCount)
+        external
+        returns (PodcastPaymentBadge memory);
 }

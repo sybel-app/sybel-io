@@ -70,14 +70,13 @@ contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
     function mintSNFT(
         uint256 _id,
         address _to,
-        uint256 _amount,
-        bytes calldata _data
+        uint256 _amount
     ) external override onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         // TODO : Call the cost badges to determine the prices
         // TODO : Check the to wallet, if he have enough supply
         // TODO : Burn it's TSE associated to the cost
         // TBD : Ask matt for computation rules
         // Ask the internal tokens
-        internalTokens.mint(_to, _id, _amount, _data);
+        internalTokens.mintSNft(_to, _id, _amount);
     }
 }

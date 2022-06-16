@@ -185,11 +185,11 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // TODO : Big checkup on all the roles, standby for now since we only perfom conception
         // Grand the updater roles on our governance token for the badges contract
         listenerBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
+            SybelRoles.BADGE_UPDATER,
             address(internalTokenAddr)
         );
         podcastBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
+            SybelRoles.BADGE_UPDATER,
             address(internalTokenAddr)
         );
     }
@@ -257,10 +257,9 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Update the address on all the contract's
         rewarder.updateListenerBadgesAddress(newAddress);
         minter.updateListenerBadgesAddress(newAddress);
-        internalTokens.updateListenerBadgesAddress(newAddress);
         // Grant the right roles for each contract
         listenerBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
+            SybelRoles.BADGE_UPDATER,
             address(internalTokens)
         );
         emit ContractAddressChanged(newAddress, "listener_badges");
@@ -280,10 +279,9 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Update the address on all the contract's
         rewarder.updatePodcastBadgesAddress(newAddress);
         minter.updatePodcastBadgesAddress(newAddress);
-        internalTokens.updatePodcastBadgesAddress(newAddress);
         // Grant the right roles for each contract
         podcastBadges.grantRole(
-            SybelRoles.BADGE_UPDATER_ROLE,
+            SybelRoles.BADGE_UPDATER,
             address(internalTokens)
         );
         emit ContractAddressChanged(newAddress, "podcast_badges");

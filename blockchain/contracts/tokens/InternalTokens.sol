@@ -162,6 +162,9 @@ contract InternalTokens is ERC1155, AccessControlPausable {
                 // Update the token available supplies (cause if the from is address 0, it's mean we have mint this token)
                 // Only perform the update for podcast related token, since we don't need to know the supply of all the other token
                 availableSupplies[ids[i]] -= amounts[i];
+            } else if (to == address(0)) {
+                // Update the supply by adding the amount of token burned
+                availableSupplies[ids[i]] += amounts[i];
             }
         }
     }
@@ -169,23 +172,53 @@ contract InternalTokens is ERC1155, AccessControlPausable {
     /**
      * @dev Mint new utility token to the given addresses for the given amount
      */
-    function mintUtility(address to, uint256 amount)
+    function mintUtility(address _to, uint256 _amount)
         external
         onlyRole(SybelRoles.MINTER)
         whenNotPaused
     {
-        _mint(to, TOKEN_TYPE_UTILITY, amount, new bytes(0x0));
+        _mint(_to, TOKEN_TYPE_UTILITY, _amount, new bytes(0x0));
     }
 
     /**
      * @dev Mint new utility token to the given addresses for the given amount
      */
-    function burnUtility(address from, uint256 amount)
+    function burnUtility(address _from, uint256 _amount)
         external
         onlyRole(SybelRoles.MINTER)
         whenNotPaused
     {
-        _burn(from, TOKEN_TYPE_UTILITY, amount);
+        _burn(_from, TOKEN_TYPE_UTILITY, _amount);
+    }
+
+    /**
+     * @dev Mint a new fraction of a nft
+     */
+    function mintSNft(
+        address _to,
+        uint256 _id,
+        uint256 _amount
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
+        require(
+            SybelMath.isPodcastRelatedToken(_id),
+            "SYB: Asked to mint S NFT but sent a non podcast id"
+        );
+        _mint(_to, _id, _amount, new bytes(0x0));
+    }
+
+    /**
+     * @dev Burn a fraction of a nft
+     */
+    function burnSNft(
+        address _from,
+        uint256 _id,
+        uint256 _amount
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
+        require(
+            SybelMath.isPodcastRelatedToken(_id),
+            "SYB: Asked to burn S NFT but sent a non podcast id"
+        );
+        _burn(_from, _id, _amount);
     }
 
     /**

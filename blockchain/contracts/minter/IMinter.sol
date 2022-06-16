@@ -26,7 +26,6 @@ interface IMinter is IPausable, IPaymentBadgeAccessor {
     function mintSNFT(
         uint256 _id,
         address _to,
-        uint256 _amount,
-        bytes calldata _data
+        uint256 _amount
     ) external;
 }
