@@ -14,6 +14,7 @@ import "../badges/payment/IListenerBadges.sol";
 import "../badges/payment/IPodcastBadges.sol";
 import "../badges/payment/ListenerBadges.sol";
 import "../badges/payment/PodcastBadges.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev Represent our orchestrator contract, reponsable for global address updating, global pausing etc
@@ -179,19 +180,31 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         emit ContractAddressChanged(address(podcastBadges), "podcast_badges");
         listenerBadges = new ListenerBadges();
         emit ContractAddressChanged(address(listenerBadges), "listener_badges");
+
+        console.log(address(rewarder));
+
+        // Grand the updater roles on all the contract from this one
+        rewarder.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
+        minter.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
+        updater.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
+
         // TODO : Should update the listener badges on all the contracts
         // TODO : Setup the badges in the constructor for performance and fees efficiency ???
 
         // TODO : Big checkup on all the roles, standby for now since we only perfom conception
-        // Grand the updater roles on our governance token for the badges contract
-        listenerBadges.grantRole(
-            SybelRoles.BADGE_UPDATER,
-            address(internalTokenAddr)
-        );
-        podcastBadges.grantRole(
-            SybelRoles.BADGE_UPDATER,
-            address(internalTokenAddr)
-        );
+        // Grand the roles for the badges
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(rewarder));
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
+        listenerBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
+    }
+
+    /**
+     * @dev Update the roles on our internal token (need to happen post creation, since at start we don't have the right roles on it)
+     */
+    function updateInternalTokenRole() external onlyOwner whenNotPaused {
+        internalTokens.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
+        internalTokens.updateUpdaterAddr(address(updater));
+        internalTokens.grantRole(SybelRoles.MINTER, address(updater));
     }
 
     /**
@@ -201,14 +214,22 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         external
         override
         onlyOwner
+        whenNotPaused
     {
         // TODO : Require the admin role on the new rewarder addr
         // Pause the previous rewarder
         if (address(rewarder) != address(0)) {
             rewarder.pause();
+            // TODO : If too much increase in gas fee not needed
+            podcastBadges.revokeRole(
+                SybelRoles.BADGE_UPDATER,
+                address(rewarder)
+            );
         }
         // Update our rewarder
         rewarder = IRewarder(newRewarderAddr);
+        // Grant updater roles on podcast badges
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(rewarder));
         // TODO : Send the update to the concerned contract, and grant the right roles
         emit ContractAddressChanged(newRewarderAddr, "rewarder");
     }
@@ -216,7 +237,12 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
     /**
      * @dev Update our rewarder contract
      */
-    function updateMinter(address newMinterAddr) external override onlyOwner {
+    function updateMinter(address newMinterAddr)
+        external
+        override
+        onlyOwner
+        whenNotPaused
+    {
         // TODO : Require the admin role on the new minter addr
         // Pause the previous minter
         if (address(minter) != address(0)) {
@@ -224,6 +250,8 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         }
         // Update our minter
         minter = IMinter(newMinterAddr);
+        // Grant the minter roles to the itnernal tokens contract
+        internalTokens.grantRole(SybelRoles.MINTER, address(updater));
         // TODO : Send the update to the concerned contract, and grant the right roles
         emit ContractAddressChanged(newMinterAddr, "minter");
     }
@@ -231,7 +259,12 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
     /**
      * @dev Update our rewarder contract
      */
-    function updateUpdater(address newUpdaterAddr) external override onlyOwner {
+    function updateUpdater(address newUpdaterAddr)
+        external
+        override
+        onlyOwner
+        whenNotPaused
+    {
         // TODO : Require the admin role on the new updater addr
         // Pause the previous updater
         if (address(updater) != address(0)) {
@@ -239,6 +272,9 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         }
         // Update our updater
         updater = IUpdater(newUpdaterAddr);
+        // Grant updater roles on podcast badges
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
+        listenerBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
         // TODO : Send the update to the concerned contract, and grant the right roles
         emit ContractAddressChanged(newUpdaterAddr, "updater");
     }
@@ -250,6 +286,7 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         external
         override
         onlyOwner
+        whenNotPaused
     {
         // TODO : Check that the new address of the right roles (needed for this contract to perform the update operation)
         // TODO : Should pause the previous one
@@ -258,10 +295,7 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         rewarder.updateListenerBadgesAddress(newAddress);
         minter.updateListenerBadgesAddress(newAddress);
         // Grant the right roles for each contract
-        listenerBadges.grantRole(
-            SybelRoles.BADGE_UPDATER,
-            address(internalTokens)
-        );
+        listenerBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
         emit ContractAddressChanged(newAddress, "listener_badges");
     }
 
@@ -272,6 +306,7 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         external
         override
         onlyOwner
+        whenNotPaused
     {
         // TODO : Check that the new address of the right roles (needed for this contract to perform the update operation)
         // TODO : Should pause the previous one
@@ -280,10 +315,8 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         rewarder.updatePodcastBadgesAddress(newAddress);
         minter.updatePodcastBadgesAddress(newAddress);
         // Grant the right roles for each contract
-        podcastBadges.grantRole(
-            SybelRoles.BADGE_UPDATER,
-            address(internalTokens)
-        );
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(rewarder));
+        podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(updater));
         emit ContractAddressChanged(newAddress, "podcast_badges");
     }
 }

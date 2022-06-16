@@ -88,6 +88,8 @@ contract PodcastBadges is IPodcastBadges, AccessControlPausable {
     function getPaymentBadge(uint256 podcastId, uint256 listenCount)
         external
         override
+        onlyRole(SybelRoles.BADGE_UPDATER)
+        whenNotPaused
         returns (PodcastPaymentBadge memory)
     {
         // TODO : All this logic should be triggered from the rewarder contract ?? Or from the updater one ?

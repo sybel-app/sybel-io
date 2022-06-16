@@ -10,4 +10,6 @@ library SybelRoles {
     bytes32 public constant MINTER = keccak256("MINTER");
     // The role required to launch the reward for users
     bytes32 public constant REWARDER = keccak256("REWARDER");
+    // The role required to launch the reward for users
+    bytes32 public constant ADMIN = 0x00;
 }

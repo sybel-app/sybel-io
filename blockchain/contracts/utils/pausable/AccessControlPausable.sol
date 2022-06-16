@@ -9,6 +9,10 @@ import "./IPausable.sol";
  * @dev Represent a pausable contract
  */
 abstract contract AccessControlPausable is IPausable, Pausable, AccessControl {
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    }
+
     /**
      * @dev Pause the contracts
      */
