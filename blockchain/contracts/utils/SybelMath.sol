@@ -8,9 +8,11 @@ library SybelMath {
 
     // The mask for the different podcast specfic types
     uint256 public constant TOKEN_TYPE_NFT_MASK = 1;
-    uint256 public constant TOKEN_TYPE_EPIC_MASK = 2;
-    uint256 public constant TOKEN_TYPE_RARE_MASK = 3;
-    uint256 public constant TOKEN_TYPE_CLASSIC_MASK = 4;
+    uint256 public constant TOKEN_TYPE_STANDART_MASK = 2;
+    uint256 public constant TOKEN_TYPE_CLASSIC_MASK = 3;
+    uint256 public constant TOKEN_TYPE_RARE_MASK = 4;
+    uint256 public constant TOKEN_TYPE_EPIC_MASK = 5;
+    uint256 public constant TOKEN_TYPE_LEGENDARY_MASK = 6;
 
     // The decimals for each emitted token
     uint8 public constant DECIMALS_COUNT = 6;
@@ -37,6 +39,17 @@ library SybelMath {
     /**
      * @dev Build the id for a classic NFT id
      */
+    function buildStandartNftId(uint256 _podcastId)
+        public
+        pure
+        returns (uint256)
+    {
+        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_STANDART_MASK;
+    }
+
+    /**
+     * @dev Build the id for a classic NFT id
+     */
     function buildClassicNftId(uint256 _podcastId)
         public
         pure
@@ -57,6 +70,17 @@ library SybelMath {
      */
     function buildEpicNftId(uint256 _podcastId) public pure returns (uint256) {
         return (_podcastId << ID_OFFSET) | TOKEN_TYPE_EPIC_MASK;
+    }
+
+    /**
+     * @dev Build the id for a epic NFT id
+     */
+    function buildLegendaryNftId(uint256 _podcastId)
+        public
+        pure
+        returns (uint256)
+    {
+        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_LEGENDARY_MASK;
     }
 
     /**
@@ -95,7 +119,7 @@ library SybelMath {
         uint256 tokenType = extractTokenType(_id);
         return
             tokenType > TOKEN_TYPE_NFT_MASK &&
-            tokenType <= TOKEN_TYPE_CLASSIC_MASK;
+            tokenType <= TOKEN_TYPE_LEGENDARY_MASK;
     }
 
     /**

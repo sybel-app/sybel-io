@@ -13,6 +13,7 @@ contract InternalTokens is ERC1155, AccessControlPausable {
     uint256 public constant TOKEN_TYPE_UTILITY = 0; // Fungible
 
     // The cap for each mintable token type
+    uint256 public constant TOKEN_LEGENDARY_CAP = 10;
     uint256 public constant TOKEN_EPIC_CAP = 50;
     uint256 public constant TOKEN_RARE_CAP = 200;
     uint256 public constant TOKEN_CLASSIC_CAP = 1000;
@@ -38,6 +39,7 @@ contract InternalTokens is ERC1155, AccessControlPausable {
         uint256 classicAmount,
         uint256 rareAmount,
         uint256 epicAmount,
+        uint256 legendaryAmount,
         address owner
     );
 
@@ -66,6 +68,7 @@ contract InternalTokens is ERC1155, AccessControlPausable {
         uint256 _classicSupply,
         uint256 _rareSupply,
         uint256 _epicSupply,
+        uint256 _legendarySupply,
         bytes calldata _data,
         address _podcastOwnerAddress
     ) external onlyRole(SybelRoles.MINTER) whenNotPaused returns (uint256) {
@@ -84,6 +87,10 @@ contract InternalTokens is ERC1155, AccessControlPausable {
         require(
             _epicSupply <= TOKEN_EPIC_CAP,
             "SYB: Cannot add podcast with that much epic supply !"
+        );
+        require(
+            _legendarySupply <= TOKEN_LEGENDARY_CAP,
+            "SYB: Cannot add podcast with that much legendary supply !"
         );
 
         // Get the next podcast id and increment the current podcast token id
@@ -105,12 +112,16 @@ contract InternalTokens is ERC1155, AccessControlPausable {
         tokenSupplies[SybelMath.buildEpicNftId(id)] = _epicSupply;
         availableSupplies[SybelMath.buildEpicNftId(id)] = _epicSupply;
 
+        tokenSupplies[SybelMath.buildLegendaryNftId(id)] = _legendarySupply;
+        availableSupplies[SybelMath.buildLegendaryNftId(id)] = _legendarySupply;
+
         // Emit that our podcast is now minted
         emit PodcastMinted(
             id,
             _classicSupply,
             _rareSupply,
             _epicSupply,
+            _legendarySupply,
             _podcastOwnerAddress
         );
 

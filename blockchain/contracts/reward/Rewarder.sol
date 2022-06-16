@@ -53,7 +53,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     /**
      * @dev Pay a user for all the listening he have done on different podcast
      */
-    function getPaymentBadges(
+    function payUser(
         address _listener,
         uint256[] calldata _podcastIds,
         uint256[] calldata _listenCounts
@@ -69,19 +69,23 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
         // Iterate over each podcast
         for (uint256 i = 0; i < _podcastIds.length; ++i) {
             // Find the balance of the listener for this podcast
-            ListenerBalanceOnPodcast[]
-                memory balances = getListenerBalanceForPodcast(
+            (
+                ListenerBalanceOnPodcast[] memory balances,
+                bool hasAtLeastOneBalance
+            ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
+            // If no balance mint a standart NFT
+            if (!hasAtLeastOneBalance) {
+                internalTokens.mintSNft(
+                    _listener,
+                    SybelMath.buildStandartNftId(_podcastIds[i]),
+                    1
+                );
+                // And then recompute his balance
+                (balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
                     _listener,
                     _podcastIds[i]
                 );
-            // Check if the user as at least on balance on a token types
-            bool hasAtLeastOneBalance = false;
-            for (uint256 j = 0; i < balances.length; ++i) {
-                hasAtLeastOneBalance =
-                    hasAtLeastOneBalance ||
-                    balances[j].balance > 0;
             }
-            // TODO : If no balance mint a standart NFT
             // If he as at least one balance
             if (hasAtLeastOneBalance) {
                 mintForUser(
@@ -112,6 +116,10 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
         uint256 listenerMultiplier = listenerBadges.getMultiplier(_listener);
         // Mint each token for each fraction
         for (uint256 i = 0; i < _balances.length; ++i) {
+            if (_balances[i].balance <= 0) {
+                // Jump this iteration if the user havn't go any balance of this token types
+                continue;
+            }
             // Compute the amount for the owner and the users
             uint256 amountToMintOnAThousand = _balances[i].balance *
                 tokenTypesToEarnMultiplier[_balances[i].tokenType] *
@@ -119,23 +127,23 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
                 podcastBadge.multiplier *
                 listenerMultiplier *
                 _listenCount;
-            // Check if we need to mint something
-            if (amountToMintOnAThousand > 0) {
-                // Get the ratio between the user and the owner of the podcast (on a thousand)
-                uint256 ratioOwnerUser = tokenTypesToRatio[
-                    _balances[i].tokenType
-                ];
-                // Compute the right amount to mint
-                uint256 amountToMint = amountToMintOnAThousand / 1000;
-                uint256 amountForOwner = (amountToMint * ratioOwnerUser) / 100;
-                uint256 amountForListener = amountToMint - amountForOwner;
-                // Mint the TSE for the listener and the owner of the podcast
-                internalTokens.mintUtility(_listener, amountForListener);
-                internalTokens.mintUtility(
-                    podcastBadge.ownerAddress,
-                    amountForOwner
-                );
+            // Jump this iteration if we got not token to mint
+            if (amountToMintOnAThousand <= 0) {
+                // Jump this iteration if the user havn't go any balance of this token types
+                continue;
             }
+            // Get the ratio between the user and the owner of the podcast (on a thousand)
+            uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
+            // Compute the right amount to mint
+            uint256 amountToMint = amountToMintOnAThousand / 1000;
+            uint256 amountForOwner = (amountToMint * ratioOwnerUser) / 100;
+            uint256 amountForListener = amountToMint - amountForOwner;
+            // Mint the TSE for the listener and the owner of the podcast
+            internalTokens.mintUtility(_listener, amountForListener);
+            internalTokens.mintUtility(
+                podcastBadge.ownerAddress,
+                amountForOwner
+            );
         }
     }
 
@@ -145,27 +153,32 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     function getListenerBalanceForPodcast(address _listener, uint256 _podcastId)
         private
         view
-        returns (ListenerBalanceOnPodcast[] memory)
+        returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
     {
         // The different types we will fetch
-        uint256[] memory types = new uint256[](3);
-        types[0] = SybelMath.TOKEN_TYPE_EPIC_MASK;
-        types[1] = SybelMath.TOKEN_TYPE_RARE_MASK;
-        types[2] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
+        uint256[] memory types = new uint256[](5);
+        types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
+        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
+        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
+        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
+        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
         // Build our initial balance map
         ListenerBalanceOnPodcast[]
             memory balances = new ListenerBalanceOnPodcast[](types.length);
+        // Boolean used to know if the user have a balance
+        bool hasAtLeastOneBalance = false;
         // Iterate over each types to find the balances
         for (uint256 i = 0; i < types.length; ++i) {
-            balances[i] = ListenerBalanceOnPodcast(
-                types[i],
-                internalTokens.balanceOf(
-                    _listener,
-                    SybelMath.buildSnftId(_podcastId, types[i])
-                )
+            // Get the balance and build our balance on podcast object
+            uint256 balance = internalTokens.balanceOf(
+                _listener,
+                SybelMath.buildSnftId(_podcastId, types[i])
             );
+            balances[i] = ListenerBalanceOnPodcast(types[i], balance);
+            // Update our has at least one balance object
+            hasAtLeastOneBalance = hasAtLeastOneBalance || balance > 0;
         }
-        return balances;
+        return (balances, hasAtLeastOneBalance);
     }
 
     struct ListenerBalanceOnPodcast {

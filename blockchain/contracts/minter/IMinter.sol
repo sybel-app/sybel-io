@@ -16,6 +16,7 @@ interface IMinter is IPausable, IPaymentBadgeAccessor {
         uint256 _classicSupply,
         uint256 _rareSupply,
         uint256 _epicSupply,
+        uint256 _legendarySupply,
         bytes calldata _data,
         address _podcastOwnerAddress
     ) external;

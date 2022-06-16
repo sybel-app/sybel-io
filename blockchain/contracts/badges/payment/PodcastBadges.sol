@@ -39,8 +39,8 @@ contract PodcastBadges is IPodcastBadges, AccessControlPausable {
     function updateFromTransaction(
         address from,
         address to,
-        uint256[] memory ids,
-        uint256[] memory
+        uint256[] calldata ids,
+        uint256[] calldata
     ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {

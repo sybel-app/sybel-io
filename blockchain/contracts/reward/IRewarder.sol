@@ -12,7 +12,7 @@ interface IRewarder is IPausable, IPaymentBadgeAccessor {
     /**
      * @dev Pay a user for all the listening he have done on different podcast
      */
-    function getPaymentBadges(
+    function payUser(
         address _listener,
         uint256[] calldata _podcastIds,
         uint256[] calldata _listenCounts

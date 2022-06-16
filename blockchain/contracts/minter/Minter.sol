@@ -49,6 +49,7 @@ contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
         uint256 _classicSupply,
         uint256 _rareSupply,
         uint256 _epicSupply,
+        uint256 _legendarySupply,
         bytes calldata _data,
         address _podcastOwnerAddress
     ) external override onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
@@ -57,6 +58,7 @@ contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
             _classicSupply,
             _rareSupply,
             _epicSupply,
+            _legendarySupply,
             _data,
             _podcastOwnerAddress
         );

@@ -183,6 +183,11 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
 
         console.log(address(rewarder));
 
+        // Grand the admin roles and each sub contracts
+        rewarder.grantRole(SybelRoles.ADMIN, _msgSender());
+        minter.grantRole(SybelRoles.ADMIN, _msgSender());
+        updater.grantRole(SybelRoles.ADMIN, _msgSender());
+
         // Grand the updater roles on all the contract from this one
         rewarder.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
         minter.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
