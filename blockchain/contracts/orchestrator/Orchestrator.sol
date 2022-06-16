@@ -207,9 +207,13 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
      * @dev Update the roles on our internal token (need to happen post creation, since at start we don't have the right roles on it)
      */
     function updateInternalTokenRole() external onlyOwner whenNotPaused {
+        // This contract can update the address known by the internal tokens
         internalTokens.grantRole(SybelRoles.ADDRESS_UPDATER, address(this));
+        // Update the updater address on the intenral tokens
         internalTokens.updateUpdaterAddr(address(updater));
-        internalTokens.grantRole(SybelRoles.MINTER, address(updater));
+        // Grand the minting roles on the minter and rewarder contract
+        internalTokens.grantRole(SybelRoles.MINTER, address(minter));
+        internalTokens.grantRole(SybelRoles.MINTER, address(rewarder));
     }
 
     /**
