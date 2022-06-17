@@ -11,3 +11,15 @@ node_modules/
 # Environment variables
 .env
 .DS_Store
+
+# Log files
+*.log
+
+# VS code files
+.vscode/
+
+# Blockchain parts
+blockchain/artifacts/
+blockchain/cache/
+blockchain/contracts/artifacts/
+blockchain/typechain-types/
