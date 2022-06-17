@@ -229,16 +229,19 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Pause the previous rewarder
         if (address(rewarder) != address(0)) {
             rewarder.pause();
-            // TODO : If too much increase in gas fee not needed
+            // TODO : If too much increase in gas fee not needed (since contract is already paused)
             podcastBadges.revokeRole(
                 SybelRoles.BADGE_UPDATER,
                 address(rewarder)
             );
+            internalTokens.revokeRole(SybelRoles.MINTER, address(rewarder));
         }
         // Update our rewarder
         rewarder = IRewarder(newRewarderAddr);
         // Grant updater roles on podcast badges
         podcastBadges.grantRole(SybelRoles.BADGE_UPDATER, address(rewarder));
+        // Grant the minting role on the internal tokens
+        internalTokens.grantRole(SybelRoles.MINTER, address(rewarder));
         // TODO : Send the update to the concerned contract, and grant the right roles
         emit ContractAddressChanged(newRewarderAddr, "rewarder");
     }
@@ -256,6 +259,8 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Pause the previous minter
         if (address(minter) != address(0)) {
             minter.pause();
+            // TODO : If too much increase in gas fee not needed (since contract is already paused)
+            internalTokens.revokeRole(SybelRoles.MINTER, address(updater));
         }
         // Update our minter
         minter = IMinter(newMinterAddr);
@@ -278,6 +283,15 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Pause the previous updater
         if (address(updater) != address(0)) {
             updater.pause();
+            // TODO : If too much increase in gas fee not needed (since contract is already paused)
+            podcastBadges.revokeRole(
+                SybelRoles.BADGE_UPDATER,
+                address(updater)
+            );
+            listenerBadges.revokeRole(
+                SybelRoles.BADGE_UPDATER,
+                address(updater)
+            );
         }
         // Update our updater
         updater = IUpdater(newUpdaterAddr);
