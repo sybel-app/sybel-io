@@ -22,22 +22,14 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
 
     hre.tracer.enabled = true;
 
-    // Deploy our libs
-    const SybelMathFactory = await ethers.getContractFactory("SybelMath");
-    const sybelMath = await SybelMathFactory.deploy();
-    console.log("Sybel math deployed to " + sybelMath.address);
+    // Deploy our roles libs (just use to access the roles, not really needed)
     const SybelRolesFactory = await ethers.getContractFactory("SybelRoles");
     const sybelRoles = (await SybelRolesFactory.deploy()) as SybelRoles;
     console.log("Sybel roles deployed to " + sybelRoles.address);
 
     // Deploy our internal token contract
     const internalTokensFactory = await ethers.getContractFactory(
-      "SybelInternalTokens",
-      {
-        libraries: {
-          SybelMath: sybelMath.address,
-        },
-      }
+      "SybelInternalTokens"
     );
     const internalToken = (await upgrades.deployProxy(
       internalTokensFactory

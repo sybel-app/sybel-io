@@ -171,7 +171,7 @@ contract Rewarder is
         returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
     {
         // The different types we will fetch
-        uint256[] memory types = new uint256[](5);
+        uint8[] memory types = new uint8[](5);
         types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
         types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
         types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
