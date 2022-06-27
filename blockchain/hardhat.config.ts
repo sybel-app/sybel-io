@@ -21,7 +21,7 @@ task("accounts", "Prints the list of accounts", async (_, hre) => {
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 export default {
-  solidity: "0.8.4",
+  solidity: "0.8.15",
   settings: {
     optimizer: {
       enabled: true,
