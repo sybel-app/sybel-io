@@ -31,23 +31,23 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     const internalTokensFactory = await ethers.getContractFactory(
       "SybelInternalTokens"
     );
-    const internalToken = (await upgrades.deployProxy(
-      internalTokensFactory
-    )) as SybelInternalTokens;
+    const internalToken = (await upgrades.deployProxy(internalTokensFactory, {
+      kind: "uups",
+    })) as SybelInternalTokens;
     console.log("Internal tokens deployed to " + internalToken.address);
 
     // Deploy our tse token contract
     const tseFactory = await ethers.getContractFactory("TokenSybelEcosystem");
-    const tseToken = (await upgrades.deployProxy(
-      tseFactory
-    )) as TokenSybelEcosystem;
+    const tseToken = (await upgrades.deployProxy(tseFactory, {
+      kind: "uups",
+    })) as TokenSybelEcosystem;
     console.log("TSE token deployed to " + tseToken.address);
 
     // Deploy our smt token contract
     const smtFactory = await ethers.getContractFactory("SybelMediaToken");
-    const smtToken = (await upgrades.deployProxy(
-      smtFactory
-    )) as SybelMediaToken;
+    const smtToken = (await upgrades.deployProxy(smtFactory, {
+      kind: "uups",
+    })) as SybelMediaToken;
     console.log("SMT token deployed to " + smtToken.address);
 
     // Deploy our podcast badges contracts
