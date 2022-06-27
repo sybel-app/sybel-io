@@ -14,12 +14,7 @@ import "../utils/SybelRoles.sol";
 abstract contract MintingAccessControlUpgradeable is
     SybelAccessControlUpgradeable
 {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize() public virtual override initializer {
+    function initialize() public virtual override {
         super.initialize();
 
         _grantRole(SybelRoles.MINTER, msg.sender);

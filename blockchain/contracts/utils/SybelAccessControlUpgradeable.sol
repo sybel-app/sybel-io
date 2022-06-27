@@ -17,12 +17,7 @@ abstract contract SybelAccessControlUpgradeable is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize() public virtual initializer {
+    function initialize() public virtual {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();

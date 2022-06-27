@@ -7,12 +7,13 @@ import "../utils/MintingAccessControlUpgradeable.sol";
 import "../updater/IUpdater.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
+/// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract SybelInternalTokens is
     ERC1155Upgradeable,
     MintingAccessControlUpgradeable
 {
     // The current podcast token id
-    uint256 private _currentPodcastTokenID = 1;
+    uint256 private _currentPodcastTokenID;
 
     // Available supply of each tokens (classic, rare and epic only) by they id
     mapping(uint256 => uint256) private _availableSupplies;
@@ -30,6 +31,9 @@ contract SybelInternalTokens is
             "https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json"
         );
         super.initialize();
+
+        // Set the initial podcast id
+        _currentPodcastTokenID = 1;
     }
 
     /**

@@ -6,6 +6,7 @@ import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
+/// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract TokenSybelEcosystem is
     ERC20Upgradeable,
     MintingAccessControlUpgradeable

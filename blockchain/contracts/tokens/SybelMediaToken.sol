@@ -6,9 +6,10 @@ import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
+/// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract SybelMediaToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
     // The supply available for minting
-    uint256 private _availableSupply = 3000000000**decimals();
+    uint256 private _availableSupply;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -18,6 +19,9 @@ contract SybelMediaToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
     function initialize() public override initializer {
         __ERC20_init("Sybel Media Token", "SMT");
         super.initialize();
+
+        // set the initial available supply
+        _availableSupply = 3000000000**decimals();
     }
 
     function decimals() public pure override returns (uint8) {
