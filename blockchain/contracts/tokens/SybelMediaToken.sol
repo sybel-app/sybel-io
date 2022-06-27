@@ -6,46 +6,56 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "../utils/SybelMath.sol";
+import "../utils/SybelAccessControlUpgradeable.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 contract SybelMediaToken is
     Initializable,
     ERC20Upgradeable,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    UUPSUpgradeable
+    SybelAccessControlUpgradeable
 {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
+    // The supply available for minting
+    uint256 private _availableSupply = 3000000000**decimals();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() public override initializer {
         __ERC20_init("Sybel Media Token", "SMT");
-        __Pausable_init();
-        __AccessControl_init();
-        __UUPSUpgradeable_init();
+        super.initialize();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
+    function decimals() public pure override returns (uint8) {
+        return SybelMath.DECIMALS_COUNT;
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
+    /**
+     * @dev Allow only the minter role
+     */
+    modifier onlyMinter() {
+        _checkRole(MINTER_ROLE);
+        _;
     }
 
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    /**
+     * @dev Mint new SMT
+     */
+    function mint(address to, uint256 amount) public onlyMinter {
+        // Ensure we got enough supply
+        require(
+            amount < _availableSupply,
+            "SYB: Not enough remaining token to perform the minting"
+        );
         _mint(to, amount);
+        // Decrease the available supply
+        _availableSupply -= amount;
     }
 
     function _beforeTokenTransfer(
@@ -54,11 +64,12 @@ contract SybelMediaToken is
         uint256 amount
     ) internal override whenNotPaused {
         super._beforeTokenTransfer(from, to, amount);
+        if (to == address(0)) {
+            // In the case of a mint, ensure we got enoguh supply
+            require(
+                amount < _availableSupply,
+                "SYB: Not enough remaining token to perform the minting"
+            );
+        }
     }
-
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
 }

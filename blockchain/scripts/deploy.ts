@@ -50,7 +50,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log("Internal tokens deployed to " + internalTokens.address);
 
     // Deploy our podcast handler contract
-    // TODO : should pass the internal tokens and governance token address as param
     const orchestratorFactory = await ethers.getContractFactory(
       "Orchestrator",
       {
@@ -70,6 +69,17 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
 
     // Update the internal token rights
     await orchestrator.updateInternalTokenRole();
+
+    // Call to the rewarded contract and mint some tokens
+    const rewarderFactory = await ethers.getContractFactory("Rewarder", {
+      libraries: {
+        SybelMath: sybelMath.address,
+      },
+    });
+    const deployer = (await orchestratorFactory.deploy(
+      governanceToken.address,
+      internalTokens.address
+    )) as Rewarder;
 
     console.log(
       "Podcast handler roles granted on the internal tokens contract"

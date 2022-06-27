@@ -128,7 +128,7 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
     /**
      * @dev Access our governance token
      */
-    GovernanceToken private governanceToken;
+    // GovernanceToken private governanceToken;
 
     /**
      * @dev Access our rewarder contract
@@ -167,7 +167,7 @@ contract Orchestrator is IOrchestrator, OwnerPausable {
         // Find our internal token provider contract
         internalTokens = InternalTokens(internalTokenAddr);
         // Find our governance token provider contract
-        governanceToken = GovernanceToken(governanceTokenAddr);
+        // governanceToken = GovernanceToken(governanceTokenAddr);
         // Create our initial rewarder, minter and updater contract
         rewarder = new Rewarder(governanceTokenAddr, internalTokenAddr);
         emit ContractAddressChanged(address(rewarder), "rewarder");

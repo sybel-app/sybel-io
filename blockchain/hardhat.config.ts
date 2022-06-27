@@ -5,6 +5,7 @@ import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-tracer";
+import "@openzeppelin/hardhat-upgrades";
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -23,7 +24,7 @@ export default {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 1000,
+      runs: 200,
     },
   },
   paths: {

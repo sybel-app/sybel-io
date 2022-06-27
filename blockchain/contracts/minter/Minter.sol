@@ -6,7 +6,6 @@ import "../badges/access/PaymentBadgesAccessor.sol";
 import "../utils/pausable/AccessControlPausable.sol";
 import "../utils/SybelMath.sol";
 import "../tokens/InternalTokens.sol";
-import "../tokens/GovernanceToken.sol";
 
 /**
  * @dev Represent our minter contract
@@ -30,7 +29,7 @@ contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
     /**
      * @dev Access our governance token
      */
-    GovernanceToken private governanceToken;
+    // GovernanceToken private governanceToken;
 
     /**
      * @dev Build our podcast handler from the deployed governance and internal token contracts
@@ -39,7 +38,7 @@ contract Minter is IMinter, AccessControlPausable, PaymentBadgesAccessor {
         // Find our internal token provider contract
         internalTokens = InternalTokens(internalTokenAddr);
         // Find our governance token provider contract
-        governanceToken = GovernanceToken(governanceTokenAddr);
+        // governanceToken = GovernanceToken(governanceTokenAddr);
     }
 
     /**
