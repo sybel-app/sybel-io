@@ -2,17 +2,12 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 import "../updater/IUpdater.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 contract SybelInternalTokens is
-    Initializable,
     ERC1155Upgradeable,
     MintingAccessControlUpgradeable
 {
@@ -51,32 +46,40 @@ contract SybelInternalTokens is
     /**
      * @dev Mint a new podcast, return the id of the built podcast
      */
-    function mintPodcast(
-        uint256 _classicSupply,
-        uint256 _rareSupply,
-        uint256 _epicSupply,
-        uint256 _legendarySupply,
-        bytes calldata _data,
-        address _podcastOwnerAddress
-    ) external onlyMinter whenNotPaused returns (uint256) {
+    function mintNewPodcast(address _podcastOwnerAddress)
+        external
+        onlyMinter
+        whenNotPaused
+        returns (uint256)
+    {
         // Get the next podcast id and increment the current podcast token id
         uint256 id = _currentPodcastTokenID + 1;
         _currentPodcastTokenID++;
 
         // Mint the podcast nft into the podcast owner wallet directly
-        _availableSupplies[SybelMath.buildNftId(id)] = 1;
-        _mint(_podcastOwnerAddress, SybelMath.buildNftId(id), 1, _data);
-
-        // Save the supplies for each token types
-        _availableSupplies[SybelMath.buildClassicNftId(id)] = _classicSupply;
-        _availableSupplies[SybelMath.buildRareNftId(id)] = _rareSupply;
-        _availableSupplies[SybelMath.buildEpicNftId(id)] = _epicSupply;
-        _availableSupplies[
-            SybelMath.buildLegendaryNftId(id)
-        ] = _legendarySupply;
+        uint256 nftId = SybelMath.buildNftId(id);
+        _availableSupplies[nftId] = 1;
+        _mint(_podcastOwnerAddress, nftId, 1, new bytes(0x0));
 
         // Return the podcast id
         return id;
+    }
+
+    /**
+     * @dev Set the supply for each token ids
+     */
+    function setSupplyBatch(
+        uint256[] calldata _ids,
+        uint256[] calldata _supplies
+    ) external onlyMinter whenNotPaused {
+        require(
+            _ids.length == _supplies.length,
+            "SYB: Can't set the supply for id and supplies of different length"
+        );
+        // Iterate over each ids
+        for (uint256 i = 0; i < _ids.length; ++i) {
+            _availableSupplies[_ids[i]] = _supplies[i];
+        }
     }
 
     /**

@@ -15,7 +15,6 @@ interface IMinter is IPausable {
         uint256 _rareSupply,
         uint256 _epicSupply,
         uint256 _legendarySupply,
-        bytes calldata _data,
         address _podcastOwnerAddress
     ) external;
 

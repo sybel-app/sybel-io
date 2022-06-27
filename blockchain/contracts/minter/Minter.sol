@@ -73,7 +73,6 @@ contract Minter is
         uint256 _rareSupply,
         uint256 _epicSupply,
         uint256 _legendarySupply,
-        bytes calldata _data,
         address _podcastOwnerAddress
     ) external override onlyMinter whenNotPaused {
         require(
@@ -96,15 +95,22 @@ contract Minter is
             _legendarySupply <= TOKEN_LEGENDARY_CAP,
             "SYB: Cannot add podcast with that much legendary supply !"
         );
-        // Try to mint the podcast
-        uint256 podcastId = sybelInternalTokens.mintPodcast(
-            _classicSupply,
-            _rareSupply,
-            _epicSupply,
-            _legendarySupply,
-            _data,
+        // Try to mint the new podcast
+        uint256 podcastId = sybelInternalTokens.mintNewPodcast(
             _podcastOwnerAddress
         );
+        // Then set the supply for each token types
+        uint256[] memory ids = new uint256[](4);
+        ids[0] = SybelMath.buildClassicNftId(podcastId);
+        ids[1] = SybelMath.buildRareNftId(podcastId);
+        ids[2] = SybelMath.buildRareNftId(podcastId);
+        ids[3] = SybelMath.buildLegendaryNftId(podcastId);
+        uint256[] memory supplies = new uint256[](4);
+        supplies[0] = _classicSupply;
+        supplies[1] = _rareSupply;
+        supplies[2] = _epicSupply;
+        supplies[3] = _legendarySupply;
+        sybelInternalTokens.setSupplyBatch(ids, supplies);
         // Emit the event
         emit PodcastMinted(
             podcastId,
