@@ -6,18 +6,17 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./pausable/IPausable.sol";
+import "./IPausable.sol";
+import "../utils/SybelRoles.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 abstract contract SybelAccessControlUpgradeable is
     Initializable,
+    IPausable,
     PausableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -28,16 +27,16 @@ abstract contract SybelAccessControlUpgradeable is
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(SybelRoles.ADMIN, msg.sender);
+        _grantRole(SybelRoles.PAUSER, msg.sender);
+        _grantRole(SybelRoles.UPGRADER, msg.sender);
     }
 
     /**
      * @dev Allow only the pauser role
      */
     modifier onlyPauser() {
-        _checkRole(PAUSER_ROLE);
+        _checkRole(SybelRoles.PAUSER);
         _;
     }
 
@@ -45,21 +44,21 @@ abstract contract SybelAccessControlUpgradeable is
      * @dev Allow only the upgrader role
      */
     modifier onlyUpgrader() {
-        _checkRole(UPGRADER_ROLE);
+        _checkRole(SybelRoles.UPGRADER);
         _;
     }
 
     /**
      * @dev Pause this smart contract
      */
-    function pause() public onlyPauser {
+    function pause() public override onlyPauser {
         _pause();
     }
 
     /**
      * @dev Un pause this smart contract
      */
-    function unpause() public onlyPauser {
+    function unpause() public override onlyPauser {
         _unpause();
     }
 

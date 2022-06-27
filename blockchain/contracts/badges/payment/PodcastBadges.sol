@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "./IPodcastBadges.sol";
 import "./models/PodcastBadge.sol";
 import "./models/PodcastPaymentBadge.sol";
 import "../../utils/SybelMath.sol";
 import "../../utils/SybelRoles.sol";
-import "../../utils/pausable/AccessControlPausable.sol";
+import "../../utils/SybelAccessControlUpgradeable.sol";
 
 /**
  * @dev Handle the computation of our listener badges
  */
-contract PodcastBadges is IPodcastBadges, AccessControlPausable {
+/// @custom:security-contact crypto-support@sybel.co
+contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     // Map podcast id to Podcast badge
     mapping(uint256 => PodcastBadge) podcastBadges;
 
@@ -20,6 +21,20 @@ contract PodcastBadges is IPodcastBadges, AccessControlPausable {
 
     // Token tyes to investment coefficient
     mapping(uint256 => uint256) public typesToCoefficients;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() public override initializer {
+        super.initialize();
+
+        // TODO : Initial types to coef ??
+
+        // Grant the badge updater role to the contract deployer
+        _grantRole(SybelRoles.BADGE_UPDATER, msg.sender);
+    }
 
     /**
      * @dev Update the podcast internal coefficient

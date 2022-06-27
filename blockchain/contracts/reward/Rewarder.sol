@@ -1,18 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "./IRewarder.sol";
 import "../badges/access/PaymentBadgesAccessor.sol";
-import "../utils/pausable/AccessControlPausable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
-import "../tokens/InternalTokens.sol";
+import "../tokens/SybelInternalTokens.sol";
+import "../tokens/TokenSybelEcosystem.sol";
 import "../badges/payment/models/PodcastPaymentBadge.sol";
+import "../utils/SybelAccessControlUpgradeable.sol";
 
 /**
  * @dev Represent our rewarder contract
  */
-contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
+/// @custom:security-contact crypto-support@sybel.co
+contract Rewarder is
+    IRewarder,
+    SybelAccessControlUpgradeable,
+    PaymentBadgesAccessor
+{
     // Our base reward amount for podcast listen and owner
     uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
     uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
@@ -30,23 +36,36 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     mapping(uint256 => uint256) tokenTypesToEarnMultiplier;
 
     /**
-     * @dev Access our internal token
+     * @dev Access our internal tokens
      */
-    InternalTokens private internalTokens;
+    SybelInternalTokens private sybelInternalTokens;
 
     /**
      * @dev Access our governance token
      */
-    // GovernanceToken private governanceToken;
+    TokenSybelEcosystem private tokenSybelEcosystem;
 
-    /**
-     * @dev Build our podcast handler from the deployed governance and internal token contracts
-     */
-    constructor(address governanceTokenAddr, address internalTokenAddr) {
-        // Find our internal token provider contract
-        internalTokens = InternalTokens(internalTokenAddr);
-        // Find our governance token provider contract
-        // governanceToken = GovernanceToken(governanceTokenAddr);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        address tseAddr,
+        address internalTokenAddr,
+        address listenerBadgesAddr,
+        address podcastBadgesAddr
+    ) public initializer {
+        super.initialize();
+        _PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
+
+        // Grant the rewarder role to the contract deployer
+        _grantRole(SybelRoles.REWARDER, msg.sender);
+
+        // TODO : Add initial ratio and earn multiplier ??
+
+        sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
+        tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
     }
 
     /**
@@ -74,7 +93,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
             ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
             // If no balance mint a standart NFT
             if (!hasAtLeastOneBalance) {
-                internalTokens.mintSNft(
+                sybelInternalTokens.mint(
                     _listener,
                     SybelMath.buildStandartNftId(_podcastIds[i]),
                     1
@@ -138,11 +157,8 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
             uint256 amountForOwner = (amountToMint * ratioOwnerUser) / 100;
             uint256 amountForListener = amountToMint - amountForOwner;
             // Mint the TSE for the listener and the owner of the podcast
-            internalTokens.mintUtility(_listener, amountForListener);
-            internalTokens.mintUtility(
-                podcastBadge.ownerAddress,
-                amountForOwner
-            );
+            tokenSybelEcosystem.mint(_listener, amountForListener);
+            tokenSybelEcosystem.mint(podcastBadge.ownerAddress, amountForOwner);
         }
     }
 
@@ -169,7 +185,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
         // Iterate over each types to find the balances
         for (uint256 i = 0; i < types.length; ++i) {
             // Get the balance and build our balance on podcast object
-            uint256 balance = internalTokens.balanceOf(
+            uint256 balance = sybelInternalTokens.balanceOf(
                 _listener,
                 SybelMath.buildSnftId(_podcastId, types[i])
             );

@@ -10,21 +10,18 @@ import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
-contract SybelMediaToken is
+contract TokenSybelEcosystem is
     Initializable,
     ERC20Upgradeable,
     MintingAccessControlUpgradeable
 {
-    // The supply available for minting
-    uint256 private _availableSupply = 3000000000**decimals();
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
     function initialize() public override initializer {
-        __ERC20_init("Sybel Media Token", "SMT");
+        __ERC20_init("Token Sybel Ecosystem", "TSE");
         super.initialize();
     }
 
@@ -33,12 +30,17 @@ contract SybelMediaToken is
     }
 
     /**
-     * @dev Mint new SMT
+     * @dev Mint some TSE
      */
     function mint(address to, uint256 amount) public onlyMinter {
         _mint(to, amount);
-        // Decrease the available supply
-        _availableSupply -= amount;
+    }
+
+    /**
+     * @dev Burn some TSE
+     */
+    function burn(address from, uint256 amount) public onlyMinter {
+        _burn(from, amount);
     }
 
     function _beforeTokenTransfer(
@@ -46,13 +48,6 @@ contract SybelMediaToken is
         address to,
         uint256 amount
     ) internal override whenNotPaused {
-        if (to == address(0)) {
-            // In the case of a mint, ensure we got enoguh supply
-            require(
-                amount < _availableSupply,
-                "SYB: Not enough remaining token to perform the minting"
-            );
-        }
         super._beforeTokenTransfer(from, to, amount);
     }
 }
