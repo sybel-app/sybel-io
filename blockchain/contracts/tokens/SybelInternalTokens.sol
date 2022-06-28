@@ -18,6 +18,9 @@ contract SybelInternalTokens is
     // Available supply of each tokens (classic, rare and epic only) by they id
     mapping(uint256 => uint256) private _availableSupplies;
 
+    // Tell us if that token is supply aware or not
+    mapping(uint256 => bool) private _isSupplyAware;
+
     // Access our updater contract
     IUpdater private updater;
 
@@ -26,11 +29,11 @@ contract SybelInternalTokens is
         _disableInitializers();
     }
 
-    function initialize() public override initializer {
+    function initialize() public initializer {
         __ERC1155_init(
             "https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json"
         );
-        super.initialize();
+        __MintingAccessControlUpgradeable_init();
 
         // Set the initial podcast id
         _currentPodcastTokenID = 1;
@@ -62,6 +65,7 @@ contract SybelInternalTokens is
 
         // Mint the podcast nft into the podcast owner wallet directly
         uint256 nftId = SybelMath.buildNftId(id);
+        _isSupplyAware[nftId] = true;
         _availableSupplies[nftId] = 1;
         _mint(_podcastOwnerAddress, nftId, 1, new bytes(0x0));
 
@@ -83,6 +87,7 @@ contract SybelInternalTokens is
         // Iterate over each ids
         for (uint256 i = 0; i < _ids.length; ++i) {
             _availableSupplies[_ids[i]] = _supplies[i];
+            _isSupplyAware[_ids[i]] = true;
         }
     }
 
@@ -98,12 +103,13 @@ contract SybelInternalTokens is
         bytes memory
     ) internal view override whenNotPaused {
         for (uint256 i = 0; i < ids.length; ++i) {
-            // Ensure we got enought supply before minting the token
             if (from == address(0)) {
-                require(
-                    amounts[i] < _availableSupplies[ids[i]],
-                    "SYB: Not enough available supply for mint"
-                );
+                // Ensure we got enought supply before minting the token
+                /*require(
+                    _isSupplyAware[ids[i]] &&
+                        amounts[i] <= _availableSupplies[ids[i]],
+                    "SYB: Not enough available supply for mint for id"
+                );*/
             }
         }
     }
@@ -123,14 +129,17 @@ contract SybelInternalTokens is
         updater.updateFromTransaction(operator, from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
-            // If we got a from address,so not a minted token
+            bool isSupplyAware = _isSupplyAware[ids[i]];
             if (from == address(0)) {
-                // Update the token available supplies (cause if the from is address 0, it's mean we have mint this token)
-                // Only perform the update for podcast related token, since we don't need to know the supply of all the other token
-                _availableSupplies[ids[i]] -= amounts[i];
+                // If it's a minted token
+                if (isSupplyAware) {
+                    _availableSupplies[ids[i]] -= amounts[i];
+                }
             } else if (to == address(0)) {
-                // Update the supply by adding the amount of token burned
-                _availableSupplies[ids[i]] += amounts[i];
+                // If it's a burned token
+                if (isSupplyAware) {
+                    _availableSupplies[ids[i]] += amounts[i];
+                }
             }
         }
     }

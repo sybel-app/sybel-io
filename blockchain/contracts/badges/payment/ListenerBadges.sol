@@ -20,8 +20,8 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public override initializer {
-        super.initialize();
+    function initialize() public initializer {
+        __SybelAccessControlUpgradeable_init();
 
         // Grant the badge updater role to the contract deployer
         _grantRole(SybelRoles.BADGE_UPDATER, msg.sender);

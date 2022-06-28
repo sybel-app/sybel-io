@@ -16,9 +16,9 @@ contract SybelMediaToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public override initializer {
+    function initialize() public initializer {
         __ERC20_init("Sybel Media Token", "SMT");
-        super.initialize();
+        __MintingAccessControlUpgradeable_init();
 
         // set the initial available supply
         _availableSupply = 3000000000**decimals();

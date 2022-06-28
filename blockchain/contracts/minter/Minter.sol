@@ -56,8 +56,8 @@ contract Minter is
         address listenerBadgesAddr,
         address podcastBadgesAddr
     ) public initializer {
-        super.initialize();
-        _PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
+        __MintingAccessControlUpgradeable_init();
+        __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
         // TODO : Add initial ratio and earn multiplier ??
 
@@ -103,7 +103,7 @@ contract Minter is
         uint256[] memory ids = new uint256[](4);
         ids[0] = SybelMath.buildClassicNftId(podcastId);
         ids[1] = SybelMath.buildRareNftId(podcastId);
-        ids[2] = SybelMath.buildRareNftId(podcastId);
+        ids[2] = SybelMath.buildEpicNftId(podcastId);
         ids[3] = SybelMath.buildLegendaryNftId(podcastId);
         uint256[] memory supplies = new uint256[](4);
         supplies[0] = _classicSupply;

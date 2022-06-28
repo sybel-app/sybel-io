@@ -27,8 +27,8 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public override initializer {
-        super.initialize();
+    function initialize() public initializer {
+        __SybelAccessControlUpgradeable_init();
 
         // TODO : Initial types to coef ??
 

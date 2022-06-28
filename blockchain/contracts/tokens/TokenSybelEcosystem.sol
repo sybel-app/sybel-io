@@ -16,9 +16,9 @@ contract TokenSybelEcosystem is
         _disableInitializers();
     }
 
-    function initialize() public override initializer {
+    function initialize() public initializer {
         __ERC20_init("Token Sybel Ecosystem", "TSE");
-        super.initialize();
+        __MintingAccessControlUpgradeable_init();
     }
 
     function decimals() public pure override returns (uint8) {

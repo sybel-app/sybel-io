@@ -20,15 +20,10 @@ abstract contract PaymentBadgesAccessor is Initializable {
      */
     IPodcastBadges public podcastBadges;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function _PaymentBadgesAccessor_init(
+    function __PaymentBadgesAccessor_init(
         address listenerBadgesAddr,
         address podcastBadgesAddr
-    ) public virtual initializer {
+    ) public virtual {
         listenerBadges = IListenerBadges(listenerBadgesAddr);
         podcastBadges = IPodcastBadges(podcastBadgesAddr);
     }

@@ -23,8 +23,8 @@ contract Updater is
         public
         initializer
     {
-        super.initialize();
-        _PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
+        __SybelAccessControlUpgradeable_init();
+        __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
     }
 
     /**

@@ -9,6 +9,7 @@ import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
 import "../badges/payment/models/PodcastPaymentBadge.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 /**
  * @dev Represent our rewarder contract
@@ -20,8 +21,7 @@ contract Rewarder is
     PaymentBadgesAccessor
 {
     // Our base reward amount for podcast listen and owner
-    uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
-    uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
+    uint256 private constant USER_LISTEN_REWARD = 10; // So 0.0001 TSE
 
     // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
     uint256 private constant SYBEL_COEFFICIENT = 250;
@@ -56,8 +56,8 @@ contract Rewarder is
         address listenerBadgesAddr,
         address podcastBadgesAddr
     ) public initializer {
-        super.initialize();
-        _PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
+        __SybelAccessControlUpgradeable_init();
+        __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
         // Grant the rewarder role to the contract deployer
         _grantRole(SybelRoles.REWARDER, msg.sender);
@@ -86,6 +86,7 @@ contract Rewarder is
         );
         // Iterate over each podcast
         for (uint256 i = 0; i < _podcastIds.length; ++i) {
+            tokenSybelEcosystem.mint(_listener, _listenCounts[i]);
             // Find the balance of the listener for this podcast
             (
                 ListenerBalanceOnPodcast[] memory balances,
@@ -99,11 +100,12 @@ contract Rewarder is
                     1
                 );
                 // And then recompute his balance
-                (balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
+                /*(balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
                     _listener,
                     _podcastIds[i]
-                );
+                );*/
             }
+            /*
             // If he as at least one balance
             if (hasAtLeastOneBalance) {
                 mintForUser(
@@ -112,7 +114,7 @@ contract Rewarder is
                     _listenCounts[i],
                     balances
                 );
-            }
+            }*/
         }
     }
 
