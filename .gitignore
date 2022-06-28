@@ -23,3 +23,9 @@ blockchain/artifacts/
 blockchain/cache/
 blockchain/contracts/artifacts/
 blockchain/typechain-types/
+
+# local files
+sybel-io-*.json
+
+blockchain/.openzeppelin/unknwon-*.json
+blockchain/.deps/*

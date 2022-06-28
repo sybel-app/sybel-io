@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
-import "../badges/access/IPaymentBadgeAccessor.sol";
-import "../utils/pausable/IPausable.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../utils/IPausable.sol";
 
 /**
  * @dev Represent our minter contract
  */
-interface IMinter is IPausable, IPaymentBadgeAccessor {
+interface IMinter is IPausable {
     /**
      * @dev Add a new podcast to our eco system
      */
@@ -17,7 +15,6 @@ interface IMinter is IPausable, IPaymentBadgeAccessor {
         uint256 _rareSupply,
         uint256 _epicSupply,
         uint256 _legendarySupply,
-        bytes calldata _data,
         address _podcastOwnerAddress
     ) external;
 

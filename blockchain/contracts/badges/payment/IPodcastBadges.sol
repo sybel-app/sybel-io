@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "./models/PodcastBadge.sol";
 import "./models/PodcastPaymentBadge.sol";
-import "../../utils/pausable/IPausable.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../../utils/IPausable.sol";
 
 /**
  * @dev Represent our podcast badge contract
  */
-interface IPodcastBadges is IPausable, IAccessControl {
+interface IPodcastBadges is IPausable {
     /**
      * @dev Update the podcast custom coefficient
      */
@@ -36,7 +35,7 @@ interface IPodcastBadges is IPausable, IAccessControl {
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 podcastId, uint256 listenCount)
+    function getPaymentBadge(uint256 podcastId, uint16 listenCount)
         external
         returns (PodcastPaymentBadge memory);
 }

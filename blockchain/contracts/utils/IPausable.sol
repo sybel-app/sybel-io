@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 /**
  * @dev Represent a pausable contract
  */
 interface IPausable {
-
     /**
      * @dev Pause the contract
      */
@@ -15,5 +14,4 @@ interface IPausable {
      * @dev Resume the contract
      */
     function unpause() external;
-
 }

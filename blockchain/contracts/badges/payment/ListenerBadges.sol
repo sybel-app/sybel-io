@@ -1,18 +1,31 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "./IListenerBadges.sol";
 import "./models/ListenerBadge.sol";
 import "../../utils/SybelMath.sol";
 import "../../utils/SybelRoles.sol";
-import "../../utils/pausable/AccessControlPausable.sol";
+import "../../utils/SybelAccessControlUpgradeable.sol";
 
 /**
  * @dev Handle the computation of our listener badges
  */
-contract ListenerBadges is IListenerBadges, AccessControlPausable {
+/// @custom:security-contact crypto-support@sybel.co
+contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     // Map of user address to listener badge
     mapping(address => ListenerBadge) listenerBadges;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() public initializer {
+        __SybelAccessControlUpgradeable_init();
+
+        // Grant the badge updater role to the contract deployer
+        _grantRole(SybelRoles.BADGE_UPDATER, msg.sender);
+    }
 
     /**
      * @dev Update the listener snft amount

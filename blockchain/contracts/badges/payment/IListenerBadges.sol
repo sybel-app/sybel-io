@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "./models/ListenerBadge.sol";
-import "../../utils/pausable/IPausable.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import "../../utils/IPausable.sol";
 
 /**
  * @dev Represent our lisener badge handler class
  */
-interface IListenerBadges is IPausable, IAccessControl {
+interface IListenerBadges is IPausable {
     /**
      * @dev Update the listener custom coefficient
      */

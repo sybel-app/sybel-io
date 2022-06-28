@@ -1,53 +1,83 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "./IRewarder.sol";
 import "../badges/access/PaymentBadgesAccessor.sol";
-import "../utils/pausable/AccessControlPausable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
-import "../tokens/InternalTokens.sol";
-import "../tokens/GovernanceToken.sol";
+import "../tokens/SybelInternalTokens.sol";
+import "../tokens/TokenSybelEcosystem.sol";
 import "../badges/payment/models/PodcastPaymentBadge.sol";
+import "../utils/SybelAccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev Represent our rewarder contract
  */
-contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
+/// @custom:security-contact crypto-support@sybel.co
+contract Rewarder is
+    IRewarder,
+    SybelAccessControlUpgradeable,
+    PaymentBadgesAccessor
+{
     // Our base reward amount for podcast listen and owner
-    uint256 private constant USER_LISTEN_REWARD = 10**3; // So 0.001 TSE
-    uint256 private OWNER_LISTEN_REWARD = SybelMath.DECIMALS / 10; // So 0.1 TSE
+    uint64 private constant USER_LISTEN_REWARD = 100; // So 0.001 TSE
 
     // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
-    uint256 private constant SYBEL_COEFFICIENT = 250;
+    uint16 private constant SYBEL_COEFFICIENT = 250;
 
     // Maximum data we can treat in a batch manner
-    uint256 private constant MAX_BATCH_AMOUNT = 20;
+    uint8 private constant MAX_BATCH_AMOUNT = 20;
 
     // Map between tokens types to ratio (in percent)
-    mapping(uint256 => uint256) tokenTypesToRatio;
+    mapping(uint256 => uint8) tokenTypesToRatio;
 
-    // Map between tokens types to earn multiplier (in perthrousand)
-    mapping(uint256 => uint256) tokenTypesToEarnMultiplier;
+    // Map between tokens types to earn multiplier (in percent)
+    mapping(uint256 => uint16) tokenTypesToEarnMultiplier;
 
     /**
-     * @dev Access our internal token
+     * @dev Access our internal tokens
      */
-    InternalTokens private internalTokens;
+    SybelInternalTokens private sybelInternalTokens;
 
     /**
      * @dev Access our governance token
      */
-    GovernanceToken private governanceToken;
+    TokenSybelEcosystem private tokenSybelEcosystem;
 
-    /**
-     * @dev Build our podcast handler from the deployed governance and internal token contracts
-     */
-    constructor(address governanceTokenAddr, address internalTokenAddr) {
-        // Find our internal token provider contract
-        internalTokens = InternalTokens(internalTokenAddr);
-        // Find our governance token provider contract
-        governanceToken = GovernanceToken(governanceTokenAddr);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        address tseAddr,
+        address internalTokenAddr,
+        address listenerBadgesAddr,
+        address podcastBadgesAddr
+    ) public initializer {
+        __SybelAccessControlUpgradeable_init();
+        __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
+
+        // Grant the rewarder role to the contract deployer
+        _grantRole(SybelRoles.REWARDER, msg.sender);
+
+        // Add the initial token types to earn multiplier
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_STANDART_MASK] = 10; // x0.1
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 100; // x1
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_RARE_MASK] = 200; // x2
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_EPIC_MASK] = 500; // x5
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 2000; // x20
+        // Add the initial token types to ratio
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_STANDART_MASK] = 1; // 1% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 5; // 5% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_RARE_MASK] = 10; // 10% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_EPIC_MASK] = 25; // 25% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 50; // 50% for user
+
+        sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
+        tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
     }
 
     /**
@@ -56,7 +86,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     function payUser(
         address _listener,
         uint256[] calldata _podcastIds,
-        uint256[] calldata _listenCounts
+        uint16[] calldata _listenCounts
     ) external override onlyRole(SybelRoles.REWARDER) whenNotPaused {
         require(
             _podcastIds.length == _listenCounts.length,
@@ -75,7 +105,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
             ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
             // If no balance mint a standart NFT
             if (!hasAtLeastOneBalance) {
-                internalTokens.mintSNft(
+                sybelInternalTokens.mint(
                     _listener,
                     SybelMath.buildStandartNftId(_podcastIds[i]),
                     1
@@ -104,7 +134,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
     function mintForUser(
         address _listener,
         uint256 _podcastId,
-        uint256 _listenCount,
+        uint16 _listenCount,
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
@@ -121,29 +151,26 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
                 continue;
             }
             // Compute the amount for the owner and the users
-            uint256 amountToMintOnAThousand = _balances[i].balance *
+            uint256 amountToMintOnCent = _balances[i].balance *
                 tokenTypesToEarnMultiplier[_balances[i].tokenType] *
                 USER_LISTEN_REWARD *
                 podcastBadge.multiplier *
                 listenerMultiplier *
                 _listenCount;
             // Jump this iteration if we got not token to mint
-            if (amountToMintOnAThousand <= 0) {
+            if (amountToMintOnCent <= 0) {
                 // Jump this iteration if the user havn't go any balance of this token types
                 continue;
             }
             // Get the ratio between the user and the owner of the podcast (on a thousand)
             uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
             // Compute the right amount to mint
-            uint256 amountToMint = amountToMintOnAThousand / 1000;
-            uint256 amountForOwner = (amountToMint * ratioOwnerUser) / 100;
-            uint256 amountForListener = amountToMint - amountForOwner;
+            uint256 amountToMint = amountToMintOnCent / 100;
+            uint256 amountForListener = (amountToMint * ratioOwnerUser) / 100;
+            uint256 amountForOwner = amountToMint - amountForListener;
             // Mint the TSE for the listener and the owner of the podcast
-            internalTokens.mintUtility(_listener, amountForListener);
-            internalTokens.mintUtility(
-                podcastBadge.ownerAddress,
-                amountForOwner
-            );
+            tokenSybelEcosystem.mint(_listener, amountForListener);
+            tokenSybelEcosystem.mint(podcastBadge.ownerAddress, amountForOwner);
         }
     }
 
@@ -156,7 +183,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
         returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
     {
         // The different types we will fetch
-        uint256[] memory types = new uint256[](5);
+        uint8[] memory types = new uint8[](5);
         types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
         types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
         types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
@@ -170,7 +197,7 @@ contract Rewarder is IRewarder, AccessControlPausable, PaymentBadgesAccessor {
         // Iterate over each types to find the balances
         for (uint256 i = 0; i < types.length; ++i) {
             // Get the balance and build our balance on podcast object
-            uint256 balance = internalTokens.balanceOf(
+            uint256 balance = sybelInternalTokens.balanceOf(
                 _listener,
                 SybelMath.buildSnftId(_podcastId, types[i])
             );

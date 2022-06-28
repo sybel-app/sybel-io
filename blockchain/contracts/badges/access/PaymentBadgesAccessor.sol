@@ -1,25 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./IPaymentBadgeAccessor.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../payment/IListenerBadges.sol";
 import "../payment/IPodcastBadges.sol";
-import "../../utils/SybelRoles.sol";
 
 /**
- * @dev Represent a pausable contract
+ * @dev Represent a contract that can access the badges
  */
-abstract contract PaymentBadgesAccessor is
-    IPaymentBadgeAccessor,
-    AccessControl
-{
-    // Allow only the address updater role
-    modifier onlyAddressUpdater() {
-        _checkRole(SybelRoles.ADDRESS_UPDATER);
-        _;
-    }
-
+/// @custom:security-contact crypto-support@sybel.co
+abstract contract PaymentBadgesAccessor is Initializable {
     /**
      * @dev Access our listener badges
      */
@@ -30,25 +20,11 @@ abstract contract PaymentBadgesAccessor is
      */
     IPodcastBadges public podcastBadges;
 
-    /**
-     * @dev Update our listener badges address
-     */
-    function updateListenerBadgesAddress(address newAddress)
-        external
-        override
-        onlyAddressUpdater
-    {
-        listenerBadges = IListenerBadges(newAddress);
-    }
-
-    /**
-     * @dev Update our podcast badges address
-     */
-    function updatePodcastBadgesAddress(address newAddress)
-        external
-        override
-        onlyAddressUpdater
-    {
-        podcastBadges = IPodcastBadges(newAddress);
+    function __PaymentBadgesAccessor_init(
+        address listenerBadgesAddr,
+        address podcastBadgesAddr
+    ) public virtual {
+        listenerBadges = IListenerBadges(listenerBadgesAddr);
+        podcastBadges = IPodcastBadges(podcastBadgesAddr);
     }
 }
