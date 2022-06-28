@@ -1,9 +1,7 @@
 // This script can be used to deploy the "PodcastHandler" contract using Web3 library.
 import { ethers, upgrades } from "hardhat";
 
-import { Bytes, Contract } from "ethers";
-
-const hre = require("hardhat");
+import { Contract } from "ethers";
 
 import { SybelInternalTokens } from "../typechain-types/contracts/tokens/SybelInternalTokens";
 import { SybelMediaToken } from "../typechain-types/contracts/tokens/SybelMediaToken";
@@ -73,7 +71,7 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
       listenerBadges.address,
       podcastBadges.address,
     ]);
-    console.log("Minter deployed to " + updater.address);
+    console.log("Minter deployed to " + minter.address);
 
     // Set the updater address on the internal tokens
     await internalToken.updateUpdaterAddr(updater.address);
@@ -86,36 +84,10 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
 
     // Grand the badges updater roles
     await updater.grantRole(sybelRoles.BADGE_UPDATER(), internalToken.address);
-    await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await listenerBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
+    await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
+    await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), rewarder.address); // The rewarder has this role since he update the badges on each listen payment
     console.log("All roles granted with success");
-
-    // Get the 5 first accounts
-    const accounts = (await hre.ethers.getSigners()).slice(0, 5);
-
-    // Listen on podcast mint event
-    const podcastMintEventFilter = minter.filters.PodcastMinted();
-    minter.on(podcastMintEventFilter, async (_podcastId) => {
-      console.log("New podcast minted with id " + _podcastId);
-      // Pay some random listening time on each account
-      /*for (const account of accounts) {
-        await rewarder.payUser(account.address, [_podcastId], [3]);
-        console.log(
-          "Payed the user " +
-            account.address +
-            " on podcast " +
-            _podcastId +
-            " for 3 listen"
-        );
-      }*/
-    });
-
-    // Mint a podcast per account
-    for (const account of accounts) {
-      // Mint podcast
-      await minter.addPodcast(1000, 100, 10, 5, account.address);
-      console.log("New podcast minted for the owner " + account.address);
-    }
   } catch (e: any) {
     console.log(e.message);
   }
@@ -126,7 +98,21 @@ async function deployContract<Type extends Contract>(
   args?: unknown[]
 ): Promise<Type> {
   const contractFactory = await ethers.getContractFactory(name);
-  return (await upgrades.deployProxy(contractFactory, args, {
+  const contract = (await upgrades.deployProxy(contractFactory, args, {
     kind: "uups",
   })) as Type;
+  await contract.deployed();
+  return contract;
+}
+
+function generateRandomListenCountArray(podcastIdsCount: number): number[] {
+  return [...Array(podcastIdsCount).keys()].map((_) => {
+    return getRandomInt();
+  });
+}
+
+function getRandomInt(): number {
+  const min = Math.ceil(1);
+  const max = Math.floor(20);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

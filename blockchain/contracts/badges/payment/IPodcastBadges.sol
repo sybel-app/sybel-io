@@ -35,7 +35,7 @@ interface IPodcastBadges is IPausable {
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 podcastId, uint256 listenCount)
+    function getPaymentBadge(uint256 podcastId, uint16 listenCount)
         external
         returns (PodcastPaymentBadge memory);
 }

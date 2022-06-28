@@ -104,12 +104,12 @@ contract SybelInternalTokens is
     ) internal view override whenNotPaused {
         for (uint256 i = 0; i < ids.length; ++i) {
             if (from == address(0)) {
-                // Ensure we got enought supply before minting the token
-                /*require(
-                    _isSupplyAware[ids[i]] &&
+                if (_isSupplyAware[ids[i]]) {
+                    require(
                         amounts[i] <= _availableSupplies[ids[i]],
-                    "SYB: Not enough available supply for mint for id"
-                );*/
+                        "SYB: Not enough available supply for mint for id"
+                    );
+                }
             }
         }
     }

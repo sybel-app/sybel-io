@@ -13,6 +13,6 @@ interface IRewarder is IPausable {
     function payUser(
         address _listener,
         uint256[] calldata _podcastIds,
-        uint256[] calldata _listenCounts
+        uint16[] calldata _listenCounts
     ) external;
 }

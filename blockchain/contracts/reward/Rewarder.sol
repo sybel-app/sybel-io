@@ -10,6 +10,7 @@ import "../tokens/TokenSybelEcosystem.sol";
 import "../badges/payment/models/PodcastPaymentBadge.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev Represent our rewarder contract
@@ -21,19 +22,19 @@ contract Rewarder is
     PaymentBadgesAccessor
 {
     // Our base reward amount for podcast listen and owner
-    uint256 private constant USER_LISTEN_REWARD = 10; // So 0.0001 TSE
+    uint64 private constant USER_LISTEN_REWARD = 100; // So 0.001 TSE
 
     // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
-    uint256 private constant SYBEL_COEFFICIENT = 250;
+    uint16 private constant SYBEL_COEFFICIENT = 250;
 
     // Maximum data we can treat in a batch manner
-    uint256 private constant MAX_BATCH_AMOUNT = 20;
+    uint8 private constant MAX_BATCH_AMOUNT = 20;
 
     // Map between tokens types to ratio (in percent)
-    mapping(uint256 => uint256) tokenTypesToRatio;
+    mapping(uint256 => uint8) tokenTypesToRatio;
 
-    // Map between tokens types to earn multiplier (in perthrousand)
-    mapping(uint256 => uint256) tokenTypesToEarnMultiplier;
+    // Map between tokens types to earn multiplier (in percent)
+    mapping(uint256 => uint16) tokenTypesToEarnMultiplier;
 
     /**
      * @dev Access our internal tokens
@@ -62,7 +63,18 @@ contract Rewarder is
         // Grant the rewarder role to the contract deployer
         _grantRole(SybelRoles.REWARDER, msg.sender);
 
-        // TODO : Add initial ratio and earn multiplier ??
+        // Add the initial token types to earn multiplier
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_STANDART_MASK] = 10; // x0.1
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 100; // x1
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_RARE_MASK] = 200; // x2
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_EPIC_MASK] = 500; // x5
+        tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 2000; // x20
+        // Add the initial token types to ratio
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_STANDART_MASK] = 1; // 1% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 5; // 5% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_RARE_MASK] = 10; // 10% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_EPIC_MASK] = 25; // 25% for user
+        tokenTypesToRatio[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 50; // 50% for user
 
         sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
         tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
@@ -74,7 +86,7 @@ contract Rewarder is
     function payUser(
         address _listener,
         uint256[] calldata _podcastIds,
-        uint256[] calldata _listenCounts
+        uint16[] calldata _listenCounts
     ) external override onlyRole(SybelRoles.REWARDER) whenNotPaused {
         require(
             _podcastIds.length == _listenCounts.length,
@@ -86,7 +98,6 @@ contract Rewarder is
         );
         // Iterate over each podcast
         for (uint256 i = 0; i < _podcastIds.length; ++i) {
-            tokenSybelEcosystem.mint(_listener, _listenCounts[i]);
             // Find the balance of the listener for this podcast
             (
                 ListenerBalanceOnPodcast[] memory balances,
@@ -100,12 +111,11 @@ contract Rewarder is
                     1
                 );
                 // And then recompute his balance
-                /*(balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
+                (balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
                     _listener,
                     _podcastIds[i]
-                );*/
+                );
             }
-            /*
             // If he as at least one balance
             if (hasAtLeastOneBalance) {
                 mintForUser(
@@ -114,7 +124,7 @@ contract Rewarder is
                     _listenCounts[i],
                     balances
                 );
-            }*/
+            }
         }
     }
 
@@ -124,7 +134,7 @@ contract Rewarder is
     function mintForUser(
         address _listener,
         uint256 _podcastId,
-        uint256 _listenCount,
+        uint16 _listenCount,
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
@@ -141,23 +151,23 @@ contract Rewarder is
                 continue;
             }
             // Compute the amount for the owner and the users
-            uint256 amountToMintOnAThousand = _balances[i].balance *
+            uint256 amountToMintOnCent = _balances[i].balance *
                 tokenTypesToEarnMultiplier[_balances[i].tokenType] *
                 USER_LISTEN_REWARD *
                 podcastBadge.multiplier *
                 listenerMultiplier *
                 _listenCount;
             // Jump this iteration if we got not token to mint
-            if (amountToMintOnAThousand <= 0) {
+            if (amountToMintOnCent <= 0) {
                 // Jump this iteration if the user havn't go any balance of this token types
                 continue;
             }
             // Get the ratio between the user and the owner of the podcast (on a thousand)
             uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
             // Compute the right amount to mint
-            uint256 amountToMint = amountToMintOnAThousand / 1000;
-            uint256 amountForOwner = (amountToMint * ratioOwnerUser) / 100;
-            uint256 amountForListener = amountToMint - amountForOwner;
+            uint256 amountToMint = amountToMintOnCent / 100;
+            uint256 amountForListener = (amountToMint * ratioOwnerUser) / 100;
+            uint256 amountForOwner = amountToMint - amountForListener;
             // Mint the TSE for the listener and the owner of the podcast
             tokenSybelEcosystem.mint(_listener, amountForListener);
             tokenSybelEcosystem.mint(podcastBadge.ownerAddress, amountForOwner);
