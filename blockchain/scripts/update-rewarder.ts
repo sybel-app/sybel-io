@@ -13,8 +13,8 @@ import { rewarderAddress } from "./addresses";
 
     // Deploy our rewarder contract
     const rewarder = await updateContract<Rewarder>(
-      rewarderAddress,
-      "Rewarder"
+      "Rewarder",
+      rewarderAddress
     );
     console.log("Rewarder updated to " + rewarder.address);
   } catch (e: any) {
@@ -23,8 +23,8 @@ import { rewarderAddress } from "./addresses";
 })();
 
 async function updateContract<Type extends Contract>(
-  proxyAddress: string,
-  name: string
+  name: string,
+  proxyAddress: string
 ): Promise<Type> {
   const contractFactory = await ethers.getContractFactory(name);
   const contract = (await upgrades.upgradeProxy(
