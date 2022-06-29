@@ -10,10 +10,10 @@ interface IListenerBadges is IPausable {
     /**
      * @dev Update the listener custom coefficient
      */
-    function updateBadge(address listener, uint64 coefficient) external;
+    function updateBadge(address _listener, uint64 _badge) external;
 
     /**
      * @dev Find the badge for the given listener
      */
-    function getBadge(address listener) external view returns (uint64);
+    function getBadge(address _listener) external view returns (uint64);
 }

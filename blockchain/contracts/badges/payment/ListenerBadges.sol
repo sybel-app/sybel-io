@@ -29,24 +29,29 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Update the listener snft amount
      */
-    function updateBadge(address listener, uint64 coefficient)
+    function updateBadge(address _listener, uint64 _badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        listenerBadges[listener] = coefficient;
+        listenerBadges[_listener] = _badge;
     }
 
     /**
      * @dev Find the badge for the given lsitener
      */
-    function getBadge(address listener)
+    function getBadge(address _listener)
         external
         view
         override
         returns (uint64)
     {
-        return listenerBadges[listener];
+        uint64 listenerBadge = listenerBadges[_listener];
+        if (listenerBadge == 0) {
+            // If the badge of this listener isn't set yet, set it to default
+            listenerBadge = 1;
+        }
+        return listenerBadge;
     }
 }

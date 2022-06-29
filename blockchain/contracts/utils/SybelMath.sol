@@ -16,7 +16,7 @@ library SybelMath {
 
     // The decimals for each emitted token
     uint8 public constant DECIMALS_COUNT = 6;
-    uint256 public constant DECIMALS = 10**DECIMALS_COUNT;
+    uint64 public constant DECIMALS = 1000000;
 
     /**
      * @dev Build the id for a S FNT

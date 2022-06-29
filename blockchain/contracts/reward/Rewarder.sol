@@ -23,17 +23,14 @@ contract Rewarder is
     // Our base reward amount for podcast listen and owner
     uint64 private constant USER_LISTEN_REWARD = 100; // So 0.001 TSE
 
-    // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
-    uint16 private constant SYBEL_COEFFICIENT = 250;
-
     // Maximum data we can treat in a batch manner
     uint8 private constant MAX_BATCH_AMOUNT = 20;
 
     // Map between tokens types to ratio (in percent)
-    mapping(uint256 => uint8) tokenTypesToRatio;
+    mapping(uint8 => uint8) tokenTypesToRatio;
 
     // Map between tokens types to earn multiplier (in percent)
-    mapping(uint256 => uint16) tokenTypesToEarnMultiplier;
+    mapping(uint8 => uint16) tokenTypesToEarnMultiplier;
 
     /**
      * @dev Access our internal tokens
@@ -163,6 +160,7 @@ contract Rewarder is
                 // Jump this iteration if the user havn't go any balance of this token types
                 continue;
             }
+
             // Get the ratio between the user and the owner of the podcast (on a thousand)
             uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
             // Compute the right amount to mint
@@ -211,7 +209,7 @@ contract Rewarder is
     }
 
     struct ListenerBalanceOnPodcast {
-        uint256 tokenType;
+        uint8 tokenType;
         uint256 balance;
     }
 }

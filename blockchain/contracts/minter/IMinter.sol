@@ -19,9 +19,9 @@ interface IMinter is IPausable {
     ) external;
 
     /**
-     * @dev Mint a new s nft
+     * @dev Mint a new fraction of nft
      */
-    function mintSNFT(
+    function mintFraction(
         uint256 _id,
         address _to,
         uint256 _amount

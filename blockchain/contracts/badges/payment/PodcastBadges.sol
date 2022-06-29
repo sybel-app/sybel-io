@@ -32,33 +32,33 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Update the podcast internal coefficient
      */
-    function updateBadge(uint256 podcastId, uint64 badge)
+    function updateBadge(uint256 _podcastId, uint64 _badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        podcastBadges[podcastId] = badge;
+        podcastBadges[_podcastId] = _badge;
     }
 
     /**
      * @dev Update the badges from a transaction record
      */
     function updateFromTransaction(
-        address from,
-        address to,
-        uint256[] calldata ids,
+        address _from,
+        address _to,
+        uint256[] calldata _ids,
         uint256[] calldata
     ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
-        for (uint256 i = 0; i < ids.length; ++i) {
+        for (uint256 i = 0; i < _ids.length; ++i) {
             if (
-                from != address(0) &&
-                to != address(0) &&
-                SybelMath.isPodcastNft(ids[i])
+                _from != address(0) &&
+                _to != address(0) &&
+                SybelMath.isPodcastNft(_ids[i])
             ) {
                 // If this token is a podcast NFT, change the owner of this podcast
-                uint256 podcastId = SybelMath.extractPodcastId(ids[i]);
-                owners[podcastId] = to;
+                uint256 podcastId = SybelMath.extractPodcastId(_ids[i]);
+                owners[podcastId] = _to;
             }
         }
     }
@@ -73,6 +73,11 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
         whenNotPaused
         returns (uint64, address)
     {
-        return (podcastBadges[_podcastId], owners[_podcastId]);
+        uint64 podcastBadge = podcastBadges[_podcastId];
+        if (podcastBadge == 0) {
+            // If the badge of this podcast isn't set yet, set it to default
+            podcastBadge = SybelMath.DECIMALS;
+        }
+        return (podcastBadge, owners[_podcastId]);
     }
 }

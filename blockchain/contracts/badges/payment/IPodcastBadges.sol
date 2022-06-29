@@ -10,22 +10,22 @@ interface IPodcastBadges is IPausable {
     /**
      * @dev Update the listener custom coefficient
      */
-    function updateBadge(uint256 podcastId, uint64 coefficient) external;
+    function updateBadge(uint256 _podcastId, uint64 _badge) external;
 
     /**
      * @dev Update the badges from a transaction record (so just check if the owner of a podcast changed)
      */
     function updateFromTransaction(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
+        address _from,
+        address _to,
+        uint256[] memory _ids,
+        uint256[] memory _amounts
     ) external;
 
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 podcastId)
+    function getPaymentBadge(uint256 _podcastId)
         external
         returns (uint64, address);
 }
