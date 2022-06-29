@@ -7,7 +7,6 @@ import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
-import "../badges/payment/models/PodcastPaymentBadge.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "hardhat/console.sol";
@@ -69,6 +68,7 @@ contract Rewarder is
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_RARE_MASK] = 200; // x2
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_EPIC_MASK] = 500; // x5
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 2000; // x20
+
         // Add the initial token types to ratio
         tokenTypesToRatio[SybelMath.TOKEN_TYPE_STANDART_MASK] = 1; // 1% for user
         tokenTypesToRatio[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 5; // 5% for user
@@ -138,12 +138,13 @@ contract Rewarder is
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
-        PodcastPaymentBadge memory podcastBadge = podcastBadges.getPaymentBadge(
-            _podcastId,
-            _listenCount
+        uint64 podcastBadge;
+        address podcastOwner;
+        (podcastBadge, podcastOwner) = podcastBadges.getPaymentBadge(
+            _podcastId
         );
         // Get the listener multiplier
-        uint256 listenerMultiplier = listenerBadges.getMultiplier(_listener);
+        uint64 listenerBadge = listenerBadges.getBadge(_listener);
         // Mint each token for each fraction
         for (uint256 i = 0; i < _balances.length; ++i) {
             if (_balances[i].balance <= 0) {
@@ -154,8 +155,8 @@ contract Rewarder is
             uint256 amountToMintOnCent = _balances[i].balance *
                 tokenTypesToEarnMultiplier[_balances[i].tokenType] *
                 USER_LISTEN_REWARD *
-                podcastBadge.multiplier *
-                listenerMultiplier *
+                podcastBadge *
+                listenerBadge *
                 _listenCount;
             // Jump this iteration if we got not token to mint
             if (amountToMintOnCent <= 0) {
@@ -170,7 +171,7 @@ contract Rewarder is
             uint256 amountForOwner = amountToMint - amountForListener;
             // Mint the TSE for the listener and the owner of the podcast
             tokenSybelEcosystem.mint(_listener, amountForListener);
-            tokenSybelEcosystem.mint(podcastBadge.ownerAddress, amountForOwner);
+            tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
         }
     }
 
@@ -195,7 +196,8 @@ contract Rewarder is
         // Boolean used to know if the user have a balance
         bool hasAtLeastOneBalance = false;
         // Iterate over each types to find the balances
-        for (uint256 i = 0; i < types.length; ++i) {
+        for (uint8 i = 0; i < types.length; ++i) {
+            // TODO : Batch balances of to be more memory efficient
             // Get the balance and build our balance on podcast object
             uint256 balance = sybelInternalTokens.balanceOf(
                 _listener,

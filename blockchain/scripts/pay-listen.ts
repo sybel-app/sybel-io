@@ -50,7 +50,7 @@ import { minterAddress, rewarderAddress, tseAddress } from "./addresses";
           " for listens " +
           listens +
           " new TSE balance " +
-          balance.toNumber() / decimals
+          balance.toNumber() / (10 ^ decimals)
       );
     }
 
@@ -61,7 +61,7 @@ import { minterAddress, rewarderAddress, tseAddress } from "./addresses";
         "User " +
           account.address +
           " have " +
-          balance.toNumber() / decimals +
+          balance.toNumber() / (10 ^ decimals) +
           "TSE"
       );
     }

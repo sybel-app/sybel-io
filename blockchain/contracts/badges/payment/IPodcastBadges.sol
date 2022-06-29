@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "./models/PodcastBadge.sol";
-import "./models/PodcastPaymentBadge.sol";
 import "../../utils/IPausable.sol";
 
 /**
@@ -10,12 +8,12 @@ import "../../utils/IPausable.sol";
  */
 interface IPodcastBadges is IPausable {
     /**
-     * @dev Update the podcast custom coefficient
+     * @dev Update the listener custom coefficient
      */
-    function updateCoefficient(uint256 podcastId, uint256 coefficient) external;
+    function updateBadge(uint256 podcastId, uint64 coefficient) external;
 
     /**
-     * @dev Update the badges from a transaction record
+     * @dev Update the badges from a transaction record (so just check if the owner of a podcast changed)
      */
     function updateFromTransaction(
         address from,
@@ -25,17 +23,9 @@ interface IPodcastBadges is IPausable {
     ) external;
 
     /**
-     * @dev Find the badge for the given podcast
-     */
-    function getBadge(uint256 podcastId)
-        external
-        view
-        returns (PodcastBadge memory);
-
-    /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 podcastId, uint16 listenCount)
+    function getPaymentBadge(uint256 podcastId)
         external
-        returns (PodcastPaymentBadge memory);
+        returns (uint64, address);
 }
