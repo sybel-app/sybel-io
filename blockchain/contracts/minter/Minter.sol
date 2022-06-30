@@ -149,7 +149,7 @@ contract Minter is
         // Check if the user have enough the balance
         uint256 tseBalance = tokenSybelEcosystem.balanceOf(_to);
         require(
-            tseBalance >= totalCost,
+            tseBalance <= totalCost,
             "SYB: Not enough balance to pay for this fraction"
         );
         // Mint his Fraction of NFT

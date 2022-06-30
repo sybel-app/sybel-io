@@ -7,6 +7,7 @@ import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./SeriesInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
+import computeMintingBadge from "./ComputeMintingBadge";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
 
 /**
@@ -51,6 +52,13 @@ export const analytics = analyticsUrlFunction();
  * @returns {void}
  */
 export const getSeries = getSeriesFunction();
+/**
+ * @function
+ * @param {functions.https.Request} request
+ * @param {functions.Response<any>} response
+ * @returns {void}
+ */
+export const computeBadge = computeMintingBadge();
 
 /**
  * Refresh the user balance function
