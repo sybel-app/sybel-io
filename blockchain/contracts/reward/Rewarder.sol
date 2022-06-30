@@ -142,6 +142,9 @@ contract Rewarder is
         );
         // Get the listener multiplier
         uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        // Amout we will mint for user and for owner
+        uint256 amountForListener = 0;
+        uint256 amountForOwner = 0;
         // Mint each token for each fraction
         for (uint256 i = 0; i < _balances.length; ++i) {
             if (_balances[i].balance <= 0) {
@@ -165,12 +168,12 @@ contract Rewarder is
             uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
             // Compute the right amount to mint
             uint256 amountToMint = amountToMintOnCent / 100;
-            uint256 amountForListener = (amountToMint * ratioOwnerUser) / 100;
-            uint256 amountForOwner = amountToMint - amountForListener;
-            // Mint the TSE for the listener and the owner of the podcast
-            tokenSybelEcosystem.mint(_listener, amountForListener);
-            tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
+            amountForListener += (amountToMint * ratioOwnerUser) / 100;
+            amountForOwner += amountToMint - amountForListener;
         }
+        // Mint the TSE for the listener and the owner of the podcast
+        tokenSybelEcosystem.mint(_listener, amountForListener);
+        tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
     }
 
     /**
@@ -182,12 +185,9 @@ contract Rewarder is
         returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
     {
         // The different types we will fetch
-        uint8[] memory types = new uint8[](5);
-        types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
-        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
-        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
-        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
-        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
+        uint8[] memory types = SybelMath.payableTokenTypes();
+        // Build the ids for eachs types
+        uint256[] memory tokenIds = SybelMath.buildSnftIds(_podcastId, types);
         // Build our initial balance map
         ListenerBalanceOnPodcast[]
             memory balances = new ListenerBalanceOnPodcast[](types.length);
@@ -199,7 +199,7 @@ contract Rewarder is
             // Get the balance and build our balance on podcast object
             uint256 balance = sybelInternalTokens.balanceOf(
                 _listener,
-                SybelMath.buildSnftId(_podcastId, types[i])
+                tokenIds[i]
             );
             balances[i] = ListenerBalanceOnPodcast(types[i], balance);
             // Update our has at least one balance object

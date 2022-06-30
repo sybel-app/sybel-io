@@ -12,4 +12,7 @@ node_modules/
 .env
 .DS_Store 
 
+# Generated types
+src/generated-types/
+
 sybel-bigquery.json

@@ -1,11 +1,10 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import Web3 from "web3";
+import { ethers } from "ethers";
 import * as admin from "firebase-admin";
 import { getWalletForUser } from "./utils/UserUtils";
 
 const db = admin.firestore();
-const web3 = new Web3(process.env.NODE || "http://localhost:3000/");
 
 /**
  * @function
@@ -39,9 +38,12 @@ export default () =>
           functions.logger.debug(
             "The user havn't got a wallet yet, create him new one"
           );
-          const newWallet = web3.eth.accounts.create();
+          const newWallet = ethers.Wallet.createRandom();
+          //newWallet.encrypt();
+          //Wallet.fromEncryptedJson();
           const newWalletDto = {
             id,
+            mnemonic: newWallet.mnemonic,
             address: newWallet.address,
             privateKey: newWallet.privateKey,
           };

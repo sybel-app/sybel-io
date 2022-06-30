@@ -22,7 +22,7 @@ export default () =>
           return;
         }
 
-        // Get
+        // Get the id
         const id = request.body.id;
         logger.debug(`Will refresh the user balance ${id}`);
 

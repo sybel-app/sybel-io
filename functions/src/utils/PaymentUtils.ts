@@ -1,15 +1,8 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import Web3 from "web3";
-import { AbiItem } from "web3-utils";
-import Transaction from "ethereumjs-tx/dist/transaction";
-import Common, { CustomChain } from "@ethereumjs/common";
-import abi from "../abi.json";
+import { ethers } from "ethers";
+import { Rewarder__factory } from "../generated-types";
 import Wallet from "../model/Wallet";
-
-// Import web3
-const web3 = new Web3(process.env.NODE || "http://localhost:3000/");
-const common = Common.custom(CustomChain.PolygonMumbai);
 
 // Firebase logger
 const logger = functions.logger;
@@ -33,45 +26,21 @@ export async function payWallet(
     return false;
   }
   try {
-    const tokenContract = new web3.eth.Contract(
-      abi as AbiItem[],
-      process.env.SYBEL
-    );
-    const bufferedPrivateKey = Buffer.from(process.env.SYBELPRIVK || "", "hex");
-    const count = await web3.eth.getTransactionCount(
-      process.env.SYBELPUBK || ""
-    );
-    // Create the transaction
-    const rawTransaction = {
-      from: process.env.SYBELPUBK,
-      gasPrice: web3.utils.toHex(20 * 1e9),
-      gasLimit: web3.utils.toHex(210000),
-      to: process.env.SYBEL,
-      value: "0x0",
-      data: tokenContract.methods
-        .transferToken(walletAddress, listenCount)
-        .encodeABI(),
-      nonce: web3.utils.toHex(count),
-    };
+    // Build our provider
+    const provider = new ethers.providers.JsonRpcProvider(process.env.SYBEL);
+    // Find our rewarder contract
+    const rewarderContract = Rewarder__factory.connect("address", provider);
+    // Ask him to pay the user
+    // TODO : Should have listener id, list of podcast id and listen of listen count
+    // TODO : Should have the sybel priv key account to perform the signing
+    const paymentTx = await rewarderContract.payUser(walletAddress, [], []);
 
-    // Build the transaction object and sign it
-    const transaction = new Transaction(rawTransaction, {
-      common: common as any, // eslint-disable-line
-    });
-    transaction.sign(bufferedPrivateKey);
-
-    // Send it to the blockchain and wait for the receipt
-    const receipt = await web3.eth.sendSignedTransaction(
-      "0x" + transaction.serialize().toString("hex")
-    );
     logger.debug(
-      `Tx from ${process.env.SYBELPUBK} to ${walletAddress} done !`,
-      transaction,
-      receipt
+      `Payment transaction for user ${walletAddress} done, payment data ${paymentTx.data} on block  ${paymentTx.blockNumber} : ${paymentTx.blockHash} !`,
+      paymentTx
     );
 
-    // Return the status of the transaction
-    return receipt.status;
+    return true;
   } catch (exception) {
     logger.warn("Error when paying the wallet " + walletAddress, exception);
     return false;
