@@ -152,12 +152,12 @@ contract Rewarder is
                 continue;
             }
             // Compute the amount for the owner and the users
-            uint256 amountToMintOnCent = _balances[i].balance *
+            uint256 amountToMintOnCent = (_balances[i].balance *
                 tokenTypesToEarnMultiplier[_balances[i].tokenType] *
                 USER_LISTEN_REWARD *
                 podcastBadge *
                 listenerBadge *
-                _listenCount;
+                _listenCount) / SybelMath.DECIMALS;
             // Jump this iteration if we got not token to mint
             if (amountToMintOnCent <= 0) {
                 // Jump this iteration if the user havn't go any balance of this token types

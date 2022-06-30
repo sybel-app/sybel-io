@@ -16,7 +16,7 @@ abstract contract SybelAccessControlUpgradeable is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-    function __SybelAccessControlUpgradeable_init() public onlyInitializing {
+    function __SybelAccessControlUpgradeable_init() internal onlyInitializing {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();

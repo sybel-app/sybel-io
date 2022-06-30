@@ -1,8 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { ethers } from "ethers";
-import { Rewarder__factory } from "../generated-types";
 import Wallet from "../model/Wallet";
+import { rewarder } from "./Contract";
 
 // Firebase logger
 const logger = functions.logger;
@@ -26,14 +25,10 @@ export async function payWallet(
     return false;
   }
   try {
-    // Build our provider
-    const provider = new ethers.providers.JsonRpcProvider(process.env.SYBEL);
-    // Find our rewarder contract
-    const rewarderContract = Rewarder__factory.connect("address", provider);
     // Ask him to pay the user
     // TODO : Should have listener id, list of podcast id and listen of listen count
     // TODO : Should have the sybel priv key account to perform the signing
-    const paymentTx = await rewarderContract.payUser(walletAddress, [], []);
+    const paymentTx = await rewarder.payUser(walletAddress, [], []);
 
     logger.debug(
       `Payment transaction for user ${walletAddress} done, payment data ${paymentTx.data} on block  ${paymentTx.blockNumber} : ${paymentTx.blockHash} !`,

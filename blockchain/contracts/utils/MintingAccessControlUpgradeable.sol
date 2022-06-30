@@ -8,7 +8,10 @@ import "../utils/SybelRoles.sol";
 abstract contract MintingAccessControlUpgradeable is
     SybelAccessControlUpgradeable
 {
-    function __MintingAccessControlUpgradeable_init() public onlyInitializing {
+    function __MintingAccessControlUpgradeable_init()
+        internal
+        onlyInitializing
+    {
         __SybelAccessControlUpgradeable_init();
 
         _grantRole(SybelRoles.MINTER, msg.sender);

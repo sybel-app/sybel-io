@@ -8,6 +8,7 @@ import { SybelMediaToken } from "../typechain-types/contracts/tokens/SybelMediaT
 import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSybelEcosystem";
 import { ListenerBadges } from "../typechain-types/contracts/badges/payment/ListenerBadges";
 import { PodcastBadges } from "../typechain-types/contracts/badges/payment/PodcastBadges";
+import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Updater } from "../typechain-types/contracts/updater/Updater";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
@@ -47,6 +48,11 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log("Listener badges deployed to " + listenerBadges.address);
     const podcastBadges = await deployContract<PodcastBadges>("PodcastBadges");
     console.log("Podcast badges deployed to " + podcastBadges.address);
+    console.log("Listener badges deployed to " + listenerBadges.address);
+    const factionCostBadges = await deployContract<FractionCostBadges>(
+      "FractionCostBadges"
+    );
+    console.log("Fraction badges deployed to " + factionCostBadges.address);
 
     // Deploy our rewarder contract
     const rewarder = await deployContract<Rewarder>("Rewarder", [
@@ -70,6 +76,7 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
       internalToken.address,
       listenerBadges.address,
       podcastBadges.address,
+      factionCostBadges.address,
     ]);
     console.log("Minter deployed to " + minter.address);
 

@@ -1,7 +1,6 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import { ethers } from "ethers";
-import { TokenSybelEcosystem__factory } from "./generated-types";
+import { tseToken } from "./utils/Contract";
 
 /**
  * @function
@@ -19,15 +18,6 @@ export default () =>
         } else {
           const address = request.body.address;
           try {
-            // Build our provider
-            const provider = new ethers.providers.JsonRpcProvider(
-              process.env.SYBEL
-            );
-            // Find our tse token contract
-            const tseToken = TokenSybelEcosystem__factory.connect(
-              "test",
-              provider
-            );
             // Get the balance of TSE on our contract
             const balance = await tseToken.balanceOf(address);
             // And send the response
