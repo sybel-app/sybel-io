@@ -39,13 +39,15 @@ export default () =>
             "The user havn't got a wallet yet, create him new one"
           );
           const newWallet = ethers.Wallet.createRandom();
-          //newWallet.encrypt();
-          //Wallet.fromEncryptedJson();
+          // Encrypt it and save it
+          const encryptedWallet = await newWallet.encrypt(
+            process.env.SYBEL_ENCRYPTION_KEY as string
+          );
+          // Build the dto we will stor ein firebase
           const newWalletDto = {
             id,
-            mnemonic: newWallet.mnemonic,
+            encryptedWallet: encryptedWallet,
             address: newWallet.address,
-            privateKey: newWallet.privateKey,
           };
 
           // Save the fresh wallet in our database and send it back

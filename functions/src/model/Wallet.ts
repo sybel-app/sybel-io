@@ -1,7 +1,6 @@
 interface Wallet {
-  mnemonic: string;
   address: string;
-  privateKey: string;
+  encryptedWallet: string;
   id: string;
 }
 
