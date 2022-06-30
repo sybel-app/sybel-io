@@ -1,11 +1,10 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import Web3 from "web3";
+import { ethers } from "ethers";
 import * as admin from "firebase-admin";
 import { getWalletForUser } from "./utils/UserUtils";
 
 const db = admin.firestore();
-const web3 = new Web3(process.env.NODE || "http://localhost:3000/");
 
 /**
  * @function
@@ -39,11 +38,16 @@ export default () =>
           functions.logger.debug(
             "The user havn't got a wallet yet, create him new one"
           );
-          const newWallet = web3.eth.accounts.create();
+          const newWallet = ethers.Wallet.createRandom();
+          // Encrypt it and save it
+          const encryptedWallet = await newWallet.encrypt(
+            process.env.SYBEL_ENCRYPTION_KEY as string
+          );
+          // Build the dto we will stor ein firebase
           const newWalletDto = {
             id,
+            encryptedWallet: encryptedWallet,
             address: newWallet.address,
-            privateKey: newWallet.privateKey,
           };
 
           // Save the fresh wallet in our database and send it back

@@ -1,0 +1,2 @@
+# Ignore the generated typechain types
+src/generated-types/

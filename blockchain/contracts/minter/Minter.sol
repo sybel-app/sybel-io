@@ -3,6 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./IMinter.sol";
 import "../badges/access/PaymentBadgesAccessor.sol";
+import "../badges/cost/IFractionCostBadges.sol";
 import "../utils/SybelMath.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
@@ -34,6 +35,11 @@ contract Minter is
     TokenSybelEcosystem private tokenSybelEcosystem;
 
     /**
+     * @dev Access our fraction cost badges
+     */
+    IFractionCostBadges public fractionCostBadges;
+
+    /**
      * @dev Event emitted when a new podcast is minted
      */
     event PodcastMinted(
@@ -45,6 +51,11 @@ contract Minter is
         address owner
     );
 
+    /**
+     * @dev Event emitted when a new fraction of podcast is minted
+     */
+    event FractionMinted(uint256 fractionId, address user, uint256 cost);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -54,15 +65,15 @@ contract Minter is
         address tseAddr,
         address internalTokenAddr,
         address listenerBadgesAddr,
-        address podcastBadgesAddr
+        address podcastBadgesAddr,
+        address fractionCostBadgesAddr
     ) public initializer {
         __MintingAccessControlUpgradeable_init();
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
-        // TODO : Add initial ratio and earn multiplier ??
-
         sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
         tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
+        fractionCostBadges = IFractionCostBadges(fractionCostBadgesAddr);
     }
 
     /**
@@ -127,16 +138,25 @@ contract Minter is
     /**
      * @dev Mint a new s nft
      */
-    function mintSNFT(
+    function mintFraction(
         uint256 _id,
         address _to,
         uint256 _amount
     ) external override onlyMinter whenNotPaused {
-        // TODO : Call the cost badges to determine the prices
-        // TODO : Check the to wallet, if he have enough supply
-        // TODO : Burn it's TSE associated to the cost
-        // TBD : Ask matt for computation rules
-        // Ask the internal tokens
+        // Get the cost of the fraction
+        uint64 fractionCost = fractionCostBadges.getBadge(_id);
+        uint256 totalCost = fractionCost * _amount;
+        // Check if the user have enough the balance
+        uint256 tseBalance = tokenSybelEcosystem.balanceOf(_to);
+        require(
+            tseBalance >= totalCost,
+            "SYB: Not enough balance to pay for this fraction"
+        );
+        // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
+        // Burn his TSE token
+        tokenSybelEcosystem.burn(_to, totalCost);
+        // Emit the event
+        emit FractionMinted(_id, _to, totalCost);
     }
 }

@@ -2,8 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "./IPodcastBadges.sol";
-import "./models/PodcastBadge.sol";
-import "./models/PodcastPaymentBadge.sol";
 import "../../utils/SybelMath.sol";
 import "../../utils/SybelRoles.sol";
 import "../../utils/SybelAccessControlUpgradeable.sol";
@@ -14,13 +12,10 @@ import "../../utils/SybelAccessControlUpgradeable.sol";
 /// @custom:security-contact crypto-support@sybel.co
 contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     // Map podcast id to Podcast badge
-    mapping(uint256 => PodcastBadge) podcastBadges;
+    mapping(uint256 => uint64) podcastBadges;
 
     // Id of podcast to owner of podcast
     mapping(uint256 => address) public owners;
-
-    // Token types to investment coefficient
-    mapping(uint8 => uint16) public typesToCoefficients;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -30,13 +25,6 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     function initialize() public initializer {
         __SybelAccessControlUpgradeable_init();
 
-        // Initial types to coef
-        typesToCoefficients[SybelMath.TOKEN_TYPE_STANDART_MASK] = 0;
-        typesToCoefficients[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 5;
-        typesToCoefficients[SybelMath.TOKEN_TYPE_RARE_MASK] = 10;
-        typesToCoefficients[SybelMath.TOKEN_TYPE_EPIC_MASK] = 25;
-        typesToCoefficients[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 50;
-
         // Grant the badge updater role to the contract deployer
         _grantRole(SybelRoles.BADGE_UPDATER, msg.sender);
     }
@@ -44,124 +32,48 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Update the podcast internal coefficient
      */
-    function updateCoefficient(uint256 podcastId, uint256 coefficient)
+    function updateBadge(uint256 _podcastId, uint64 _badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        podcastBadges[podcastId].coefficient = coefficient;
+        podcastBadges[_podcastId] = _badge;
     }
 
     /**
      * @dev Update the badges from a transaction record
      */
     function updateFromTransaction(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts
+        address,
+        address _to,
+        uint256[] calldata _ids,
+        uint256[] calldata
     ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
-        // In the case we are sending the token to a given wallet
-        for (uint256 i = 0; i < ids.length; ++i) {
-            // Handling investor array update, and token supplies
-            if (SybelMath.isPodcastRelatedToken(ids[i])) {
-                // Get the id of the podcast
-                uint256 podcastId = SybelMath.extractPodcastId(ids[i]);
-                // Get the type of the token
-                uint8 tokenTypes = SybelMath.extractTokenType(ids[i]);
-                // If that was a freshly minted token, and not a burn one, update the coefficient
-                if (from == address(0)) {
-                    // Compute the coefficient from the token types and append it to our current one
-                    uint256 coefficientDifference = (typesToCoefficients[
-                        tokenTypes
-                    ] * amounts[i]);
-                    if (coefficientDifference > 0) {
-                        podcastBadges[podcastId]
-                            .investmentCoefficient += coefficientDifference;
-                    }
-                } else if (to == address(0)) {
-                    // In the case it's a burned token, decrease the coefficient
-                    uint256 coefficientDifference = (typesToCoefficients[
-                        tokenTypes
-                    ] * amounts[i]);
-                    if (coefficientDifference > 0) {
-                        podcastBadges[podcastId]
-                            .investmentCoefficient -= coefficientDifference;
-                    }
-                }
-            } else if (SybelMath.isPodcastNft(ids[i])) {
+        for (uint256 i = 0; i < _ids.length; ++i) {
+            if (_to != address(0) && SybelMath.isPodcastNft(_ids[i])) {
                 // If this token is a podcast NFT, change the owner of this podcast
-                uint256 podcastId = SybelMath.extractPodcastId(ids[i]);
-                owners[podcastId] = to;
+                uint256 podcastId = SybelMath.extractPodcastId(_ids[i]);
+                owners[podcastId] = _to;
             }
         }
     }
 
     /**
-     * @dev Find the badge for the given podcast
+     * @dev Get the payment badges for the given informations
      */
-    function getBadge(uint256 podcastId)
+    function getPaymentBadge(uint256 _podcastId)
         external
         view
         override
-        returns (PodcastBadge memory)
-    {
-        return podcastBadges[podcastId];
-    }
-
-    /**
-     * @dev Get the payment badges for the given informations
-     */
-    function getPaymentBadge(uint256 _podcastId, uint16 _listenCount)
-        external
-        override
-        onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
-        returns (PodcastPaymentBadge memory)
+        returns (uint64, address)
     {
-        // TODO : All this logic should be triggered from the rewarder contract ?? Or from the updater one ?
-        // TODO : Should we remarge the rewarder contract with the updater one ?
-        // TODO : Advantage of separate updater -> internal tokens doesn't havn't to know the existance of the rewarder, so we are more flexible on update of this contract
-        PodcastBadge memory podcastBadge = podcastBadges[_podcastId];
-        // Assert that the podcast timestamp was refreshed less than a week ago
-        uint256 dayBetweenPodcast = computeDayBetweenTimestamp(
-            podcastBadge.lastWeekTimestamp,
-            block.timestamp
-        );
-        if (dayBetweenPodcast >= 7) {
-            // If the listen period is superior to a week, update the listen count values
-            podcastBadge.lastWeekListenCount = podcastBadge
-                .currentWeekListenCount;
-            podcastBadge.currentWeekListenCount = 0;
-            podcastBadge.lastWeekTimestamp = block.timestamp;
+        uint64 podcastBadge = podcastBadges[_podcastId];
+        if (podcastBadge == 0) {
+            // If the badge of this podcast isn't set yet, set it to default
+            podcastBadge = SybelMath.DECIMALS;
         }
-        // In all the case, increment the current week listen count
-        podcastBadge.currentWeekListenCount += _listenCount;
-
-        // Once we've done that, compute the multiplier to be applied
-        // TBD : This formula isn't really fixed, we have some other paramter to take in account, check with Matt
-        uint256 multiplier = (1 + podcastBadge.lastWeekListenCount) *
-            (1 + podcastBadge.investmentCoefficient) *
-            (1 + podcastBadge.coefficient);
-
-        // Update the podcast bades
-        podcastBadges[_podcastId] = podcastBadge;
-
-        // TODO : Check the rarest token the user got for this podcast
-        // TODO : Should be checked before ? Or saved in a mapp ? Like userAddress to (podcastId to rarestTokenType) ??
-        // TODO : The mapping will be great to perform chained call to balanceOf on different token types (at least 5 call), for each token types
-        return PodcastPaymentBadge(owners[_podcastId], multiplier);
-    }
-
-    /**
-     * @dev Compute the delay in day between two timestamp
-     */
-    function computeDayBetweenTimestamp(
-        uint256 initialTimestamp,
-        uint256 finalTimestamp
-    ) private pure returns (uint256) {
-        // TODO : Safe math
-        return (finalTimestamp - initialTimestamp) / 60 / 60 / 24;
+        return (podcastBadge, owners[_podcastId]);
     }
 }

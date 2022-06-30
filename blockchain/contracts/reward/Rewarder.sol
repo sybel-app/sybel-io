@@ -7,7 +7,6 @@ import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
-import "../badges/payment/models/PodcastPaymentBadge.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "hardhat/console.sol";
@@ -24,17 +23,14 @@ contract Rewarder is
     // Our base reward amount for podcast listen and owner
     uint64 private constant USER_LISTEN_REWARD = 100; // So 0.001 TSE
 
-    // Our coefficient, should be updatable (and moved to the listener and podcast badges directly ?)
-    uint16 private constant SYBEL_COEFFICIENT = 250;
-
     // Maximum data we can treat in a batch manner
     uint8 private constant MAX_BATCH_AMOUNT = 20;
 
     // Map between tokens types to ratio (in percent)
-    mapping(uint256 => uint8) tokenTypesToRatio;
+    mapping(uint8 => uint8) tokenTypesToRatio;
 
     // Map between tokens types to earn multiplier (in percent)
-    mapping(uint256 => uint16) tokenTypesToEarnMultiplier;
+    mapping(uint8 => uint16) tokenTypesToEarnMultiplier;
 
     /**
      * @dev Access our internal tokens
@@ -69,6 +65,7 @@ contract Rewarder is
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_RARE_MASK] = 200; // x2
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_EPIC_MASK] = 500; // x5
         tokenTypesToEarnMultiplier[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] = 2000; // x20
+
         // Add the initial token types to ratio
         tokenTypesToRatio[SybelMath.TOKEN_TYPE_STANDART_MASK] = 1; // 1% for user
         tokenTypesToRatio[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 5; // 5% for user
@@ -138,12 +135,16 @@ contract Rewarder is
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
-        PodcastPaymentBadge memory podcastBadge = podcastBadges.getPaymentBadge(
-            _podcastId,
-            _listenCount
+        uint64 podcastBadge;
+        address podcastOwner;
+        (podcastBadge, podcastOwner) = podcastBadges.getPaymentBadge(
+            _podcastId
         );
         // Get the listener multiplier
-        uint256 listenerMultiplier = listenerBadges.getMultiplier(_listener);
+        // uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        // Amout we will mint for user and for owner
+        uint256 amountForListener = 0;
+        uint256 amountForOwner = 0;
         // Mint each token for each fraction
         for (uint256 i = 0; i < _balances.length; ++i) {
             if (_balances[i].balance <= 0) {
@@ -151,27 +152,26 @@ contract Rewarder is
                 continue;
             }
             // Compute the amount for the owner and the users
-            uint256 amountToMintOnCent = _balances[i].balance *
-                tokenTypesToEarnMultiplier[_balances[i].tokenType] *
+            uint256 amountToMintOnCent = (_balances[i].balance *
                 USER_LISTEN_REWARD *
-                podcastBadge.multiplier *
-                listenerMultiplier *
-                _listenCount;
+                podcastBadge *
+                _listenCount) / SybelMath.DECIMALS;
             // Jump this iteration if we got not token to mint
             if (amountToMintOnCent <= 0) {
                 // Jump this iteration if the user havn't go any balance of this token types
                 continue;
             }
+
             // Get the ratio between the user and the owner of the podcast (on a thousand)
             uint256 ratioOwnerUser = tokenTypesToRatio[_balances[i].tokenType];
             // Compute the right amount to mint
             uint256 amountToMint = amountToMintOnCent / 100;
-            uint256 amountForListener = (amountToMint * ratioOwnerUser) / 100;
-            uint256 amountForOwner = amountToMint - amountForListener;
-            // Mint the TSE for the listener and the owner of the podcast
-            tokenSybelEcosystem.mint(_listener, amountForListener);
-            tokenSybelEcosystem.mint(podcastBadge.ownerAddress, amountForOwner);
+            amountForListener += (amountToMint * ratioOwnerUser) / 100;
+            amountForOwner += amountToMint - amountForListener;
         }
+        // Mint the TSE for the listener and the owner of the podcast
+        tokenSybelEcosystem.mint(_listener, amountForListener);
+        tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
     }
 
     /**
@@ -183,23 +183,21 @@ contract Rewarder is
         returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
     {
         // The different types we will fetch
-        uint8[] memory types = new uint8[](5);
-        types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
-        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
-        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
-        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
-        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
+        uint8[] memory types = SybelMath.payableTokenTypes();
+        // Build the ids for eachs types
+        uint256[] memory tokenIds = SybelMath.buildSnftIds(_podcastId, types);
         // Build our initial balance map
         ListenerBalanceOnPodcast[]
             memory balances = new ListenerBalanceOnPodcast[](types.length);
         // Boolean used to know if the user have a balance
         bool hasAtLeastOneBalance = false;
         // Iterate over each types to find the balances
-        for (uint256 i = 0; i < types.length; ++i) {
+        for (uint8 i = 0; i < types.length; ++i) {
+            // TODO : Batch balances of to be more memory efficient
             // Get the balance and build our balance on podcast object
             uint256 balance = sybelInternalTokens.balanceOf(
                 _listener,
-                SybelMath.buildSnftId(_podcastId, types[i])
+                tokenIds[i]
             );
             balances[i] = ListenerBalanceOnPodcast(types[i], balance);
             // Update our has at least one balance object
@@ -209,7 +207,7 @@ contract Rewarder is
     }
 
     struct ListenerBalanceOnPodcast {
-        uint256 tokenType;
+        uint8 tokenType;
         uint256 balance;
     }
 }

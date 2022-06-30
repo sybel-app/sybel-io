@@ -2,7 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "./IListenerBadges.sol";
-import "./models/ListenerBadge.sol";
 import "../../utils/SybelMath.sol";
 import "../../utils/SybelRoles.sol";
 import "../../utils/SybelAccessControlUpgradeable.sol";
@@ -13,7 +12,7 @@ import "../../utils/SybelAccessControlUpgradeable.sol";
 /// @custom:security-contact crypto-support@sybel.co
 contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     // Map of user address to listener badge
-    mapping(address => ListenerBadge) listenerBadges;
+    mapping(address => uint64) listenerBadges;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -30,46 +29,29 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Update the listener snft amount
      */
-    function updateCoefficient(address listener, uint256 coefficient)
+    function updateBadge(address _listener, uint64 _badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        listenerBadges[listener].coefficient = coefficient;
+        listenerBadges[_listener] = _badge;
     }
-
-    /**
-     * @dev Update the badges from a transaction record
-     */
-    function updateFromTransaction(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {}
 
     /**
      * @dev Find the badge for the given lsitener
      */
-    function getBadge(address listener)
+    function getBadge(address _listener)
         external
         view
         override
-        returns (ListenerBadge memory)
+        returns (uint64)
     {
-        return listenerBadges[listener];
-    }
-
-    /**
-     * @dev Get the multiplier for the given listener
-     */
-    function getMultiplier(address listener)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return 1 + listenerBadges[listener].coefficient;
+        uint64 listenerBadge = listenerBadges[_listener];
+        if (listenerBadge == 0) {
+            // If the badge of this listener isn't set yet, set it to default
+            listenerBadge = 1;
+        }
+        return listenerBadge;
     }
 }

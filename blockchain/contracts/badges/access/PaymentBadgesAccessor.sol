@@ -23,7 +23,7 @@ abstract contract PaymentBadgesAccessor is Initializable {
     function __PaymentBadgesAccessor_init(
         address listenerBadgesAddr,
         address podcastBadgesAddr
-    ) public virtual {
+    ) internal onlyInitializing {
         listenerBadges = IListenerBadges(listenerBadgesAddr);
         podcastBadges = IPodcastBadges(podcastBadgesAddr);
     }

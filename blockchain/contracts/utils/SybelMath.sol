@@ -16,7 +16,7 @@ library SybelMath {
 
     // The decimals for each emitted token
     uint8 public constant DECIMALS_COUNT = 6;
-    uint256 public constant DECIMALS = 10**DECIMALS_COUNT;
+    uint64 public constant DECIMALS = 1000000;
 
     /**
      * @dev Build the id for a S FNT
@@ -27,6 +27,21 @@ library SybelMath {
         returns (uint256)
     {
         return (_podcastId << ID_OFFSET) | _type;
+    }
+
+    /**
+     * @dev Build the id for a S FNT
+     */
+    function buildSnftIds(uint256 _podcastId, uint8[] memory _types)
+        internal
+        pure
+        returns (uint256[] memory)
+    {
+        uint256[] memory tokenIds = new uint256[](_types.length);
+        for (uint8 i = 0; i < _types.length; ++i) {
+            tokenIds[i] = buildSnftId(_podcastId, _types[i]);
+        }
+        return tokenIds;
     }
 
     /**
@@ -89,6 +104,31 @@ library SybelMath {
         returns (uint256)
     {
         return (_podcastId << ID_OFFSET) | TOKEN_TYPE_LEGENDARY_MASK;
+    }
+
+    /**
+     * @dev Build a list of all the buyable token types
+     */
+    function buyableTokenTypes() internal pure returns (uint8[] memory) {
+        uint8[] memory types = new uint8[](4);
+        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
+        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
+        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
+        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
+        return types;
+    }
+
+    /**
+     * @dev Build a list of all the payable token types
+     */
+    function payableTokenTypes() internal pure returns (uint8[] memory) {
+        uint8[] memory types = new uint8[](5);
+        types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
+        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
+        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
+        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
+        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
+        return types;
     }
 
     /**

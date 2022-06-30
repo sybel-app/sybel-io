@@ -1,6 +1,6 @@
 interface Wallet {
   address: string;
-  privateKey: string;
+  encryptedWallet: string;
   id: string;
 }
 

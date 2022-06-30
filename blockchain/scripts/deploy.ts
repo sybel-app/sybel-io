@@ -1,5 +1,6 @@
 // This script can be used to deploy the "PodcastHandler" contract using Web3 library.
 import { ethers, upgrades } from "hardhat";
+import * as fs from "fs";
 
 import { Contract } from "ethers";
 
@@ -8,6 +9,7 @@ import { SybelMediaToken } from "../typechain-types/contracts/tokens/SybelMediaT
 import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSybelEcosystem";
 import { ListenerBadges } from "../typechain-types/contracts/badges/payment/ListenerBadges";
 import { PodcastBadges } from "../typechain-types/contracts/badges/payment/PodcastBadges";
+import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Updater } from "../typechain-types/contracts/updater/Updater";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
@@ -47,6 +49,11 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log("Listener badges deployed to " + listenerBadges.address);
     const podcastBadges = await deployContract<PodcastBadges>("PodcastBadges");
     console.log("Podcast badges deployed to " + podcastBadges.address);
+    console.log("Listener badges deployed to " + listenerBadges.address);
+    const factionCostBadges = await deployContract<FractionCostBadges>(
+      "FractionCostBadges"
+    );
+    console.log("Fraction badges deployed to " + factionCostBadges.address);
 
     // Deploy our rewarder contract
     const rewarder = await deployContract<Rewarder>("Rewarder", [
@@ -70,6 +77,7 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
       internalToken.address,
       listenerBadges.address,
       podcastBadges.address,
+      factionCostBadges.address,
     ]);
     console.log("Minter deployed to " + minter.address);
 
@@ -87,7 +95,28 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     await listenerBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), rewarder.address); // The rewarder has this role since he update the badges on each listen payment
+
     console.log("All roles granted with success");
+
+    // Build our deplyoed address object
+    const addresses = new DeployedAddress(
+      sybelRoles.address,
+      internalToken.address,
+      tseToken.address,
+      smtToken.address,
+      listenerBadges.address,
+      podcastBadges.address,
+      factionCostBadges.address,
+      rewarder.address,
+      updater.address,
+      minter.address
+    );
+    fs.writeFileSync("addresses.json", addresses.toJson());
+
+    // Gas used : 382 191 of 388 162
+    // Without user and earn multiplier : 354 360 of 359 896
+    // With only one iteration of balanceOf (and mint standart) : 487 463 of 495 079
+    // With only one iteration of balanceOf : 237 857 of 241 573
   } catch (e: any) {
     console.log(e.message);
   }
@@ -105,14 +134,22 @@ async function deployContract<Type extends Contract>(
   return contract;
 }
 
-function generateRandomListenCountArray(podcastIdsCount: number): number[] {
-  return [...Array(podcastIdsCount).keys()].map((_) => {
-    return getRandomInt();
-  });
-}
+// Immutable data object
+class DeployedAddress {
+  constructor(
+    readonly sybelRolesAddr: String,
+    readonly internalTokenAddr: String,
+    readonly tseTokenAddr: String,
+    readonly smtTokenAddr: String,
+    readonly listenBadgesAddr: String,
+    readonly podcastBadgesAddr: String,
+    readonly fractionCostBadgesAddr: String,
+    readonly rewarderAddr: String,
+    readonly updaterAddr: String,
+    readonly minterAddr: String
+  ) {}
 
-function getRandomInt(): number {
-  const min = Math.ceil(1);
-  const max = Math.floor(20);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  toJson(): string {
+    return JSON.stringify(this);
+  }
 }

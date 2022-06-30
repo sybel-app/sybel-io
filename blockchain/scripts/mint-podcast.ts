@@ -7,14 +7,14 @@ const hre = require("hardhat");
 
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 
-import { minterAddress } from "./addresses";
+import { minterAddr } from "../addresses.json";
 
 (async () => {
   try {
     console.log("Minting some podcast");
 
     // Find our minter contract
-    const minter = await findContract<Minter>("Minter", minterAddress);
+    const minter = await findContract<Minter>("Minter", minterAddr);
 
     // Get the 5 first accounts
     const accounts = (await hre.ethers.getSigners()).slice(0, 5);
