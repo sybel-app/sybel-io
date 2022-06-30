@@ -141,7 +141,7 @@ contract Rewarder is
             _podcastId
         );
         // Get the listener multiplier
-        uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        // uint64 listenerBadge = listenerBadges.getBadge(_listener);
         // Amout we will mint for user and for owner
         uint256 amountForListener = 0;
         uint256 amountForOwner = 0;
@@ -153,10 +153,8 @@ contract Rewarder is
             }
             // Compute the amount for the owner and the users
             uint256 amountToMintOnCent = (_balances[i].balance *
-                tokenTypesToEarnMultiplier[_balances[i].tokenType] *
                 USER_LISTEN_REWARD *
                 podcastBadge *
-                listenerBadge *
                 _listenCount) / SybelMath.DECIMALS;
             // Jump this iteration if we got not token to mint
             if (amountToMintOnCent <= 0) {

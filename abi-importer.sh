@@ -9,3 +9,6 @@ cp  blockchain/artifacts/contracts/*/**/*.json abi/
 
 # Remove dbg file
 rm -r abi/*.dbg.json
+
+# Import the addresses.json
+cp blockchain/addresses.json functions/src/utils/

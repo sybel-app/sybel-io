@@ -1,5 +1,6 @@
 // This script can be used to deploy the "PodcastHandler" contract using Web3 library.
 import { ethers, upgrades } from "hardhat";
+import * as fs from "fs";
 
 import { Contract } from "ethers";
 
@@ -94,7 +95,28 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     await listenerBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), rewarder.address); // The rewarder has this role since he update the badges on each listen payment
+
     console.log("All roles granted with success");
+
+    // Build our deplyoed address object
+    const addresses = new DeployedAddress(
+      sybelRoles.address,
+      internalToken.address,
+      tseToken.address,
+      smtToken.address,
+      listenerBadges.address,
+      podcastBadges.address,
+      factionCostBadges.address,
+      rewarder.address,
+      updater.address,
+      minter.address
+    );
+    fs.writeFileSync("addresses.json", addresses.toJson());
+
+    // Gas used : 382 191 of 388 162
+    // Without user and earn multiplier : 354 360 of 359 896
+    // With only one iteration of balanceOf (and mint standart) : 487 463 of 495 079
+    // With only one iteration of balanceOf : 237 857 of 241 573
   } catch (e: any) {
     console.log(e.message);
   }
@@ -112,14 +134,22 @@ async function deployContract<Type extends Contract>(
   return contract;
 }
 
-function generateRandomListenCountArray(podcastIdsCount: number): number[] {
-  return [...Array(podcastIdsCount).keys()].map((_) => {
-    return getRandomInt();
-  });
-}
+// Immutable data object
+class DeployedAddress {
+  constructor(
+    readonly sybelRolesAddr: String,
+    readonly internalTokenAddr: String,
+    readonly tseTokenAddr: String,
+    readonly smtTokenAddr: String,
+    readonly listenBadgesAddr: String,
+    readonly podcastBadgesAddr: String,
+    readonly fractionCostBadgesAddr: String,
+    readonly rewarderAddr: String,
+    readonly updaterAddr: String,
+    readonly minterAddr: String
+  ) {}
 
-function getRandomInt(): number {
-  const min = Math.ceil(1);
-  const max = Math.floor(20);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  toJson(): string {
+    return JSON.stringify(this);
+  }
 }

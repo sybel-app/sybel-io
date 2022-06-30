@@ -9,7 +9,7 @@ import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSy
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
 
-import { minterAddress, rewarderAddress, tseAddress } from "./addresses";
+import { minterAddr, rewarderAddr, tseTokenAddr } from "../addresses.json";
 
 (async () => {
   try {
@@ -18,10 +18,10 @@ import { minterAddress, rewarderAddress, tseAddress } from "./addresses";
     // Find our required contracts
     const tseToken = await findContract<TokenSybelEcosystem>(
       "TokenSybelEcosystem",
-      tseAddress
+      tseTokenAddr
     );
-    const rewarder = await findContract<Rewarder>("Rewarder", rewarderAddress);
-    const minter = await findContract<Minter>("Minter", minterAddress);
+    const rewarder = await findContract<Rewarder>("Rewarder", rewarderAddr);
+    const minter = await findContract<Minter>("Minter", minterAddr);
 
     // Get all the first accounts
     const accounts = await hre.ethers.getSigners();
