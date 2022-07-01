@@ -4,7 +4,7 @@ import {
   SybelInternalTokens__factory,
   TokenSybelEcosystem__factory,
 } from "../generated-types";
-import { ethers } from "ethers";
+import { ethers, Wallet } from "ethers";
 import {
   rewarderAddr,
   tseTokenAddr,
@@ -13,9 +13,12 @@ import {
   internalTokenAddr,
 } from "./addresses.json";
 import { FractionCostBadges__factory } from "../generated-types/factories/FractionCostBadges__factory";
+import { FractionCostBadges } from "../generated-types/FractionCostBadges";
 
 // Build our provider
-const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545/");
+const provider = new ethers.providers.JsonRpcProvider(
+  process.env.HARDHAT_LOCAL_NODE
+);
 
 // Access our tse token contract
 export const tseToken = TokenSybelEcosystem__factory.connect(
@@ -40,3 +43,14 @@ export const fractionCostBadges = FractionCostBadges__factory.connect(
   fractionCostBadgesAddr,
   provider
 );
+
+export async function fractionCostBadgesConnected(): Promise<FractionCostBadges> {
+  const sybelWallet = new Wallet(
+    process.env.HARDHAT_LOCAL_TEST_WALLET!,
+    provider
+  );
+  return FractionCostBadges__factory.connect(
+    fractionCostBadgesAddr,
+    sybelWallet
+  );
+}

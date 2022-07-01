@@ -17,6 +17,10 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     // Id of podcast to owner of podcast
     mapping(uint256 => address) public owners;
 
+    event PodcastBadgeUpdated(uint256 id, uint64 badge);
+
+    event PodcastOwnerUpdated(uint256 id, address owner);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -39,6 +43,7 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
         whenNotPaused
     {
         podcastBadges[_podcastId] = _badge;
+        emit PodcastBadgeUpdated(_podcastId, _badge);
     }
 
     /**
@@ -55,6 +60,7 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
                 // If this token is a podcast NFT, change the owner of this podcast
                 uint256 podcastId = SybelMath.extractPodcastId(_ids[i]);
                 owners[podcastId] = _to;
+                emit PodcastOwnerUpdated(podcastId, _to);
             }
         }
     }

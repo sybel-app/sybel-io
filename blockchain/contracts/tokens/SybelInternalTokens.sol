@@ -24,6 +24,11 @@ contract SybelInternalTokens is
     // Access our updater contract
     IUpdater private updater;
 
+    /**
+     * @dev Event emitted when a new fraction of podcast is minted
+     */
+    event SuplyUpdated(uint256 id, uint256 supply);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -88,6 +93,8 @@ contract SybelInternalTokens is
         for (uint256 i = 0; i < _ids.length; ++i) {
             _availableSupplies[_ids[i]] = _supplies[i];
             _isSupplyAware[_ids[i]] = true;
+            // Emit the supply update event
+            emit SuplyUpdated(_ids[i], _supplies[i]);
         }
     }
 
@@ -103,13 +110,11 @@ contract SybelInternalTokens is
         bytes memory
     ) internal view override whenNotPaused {
         for (uint256 i = 0; i < ids.length; ++i) {
-            if (from == address(0)) {
-                if (_isSupplyAware[ids[i]]) {
-                    require(
-                        amounts[i] <= _availableSupplies[ids[i]],
-                        "SYB: Not enough available supply for mint for id"
-                    );
-                }
+            if (from == address(0) && _isSupplyAware[ids[i]]) {
+                require(
+                    amounts[i] <= _availableSupplies[ids[i]],
+                    "SYB: Not enough available supply for mint for id"
+                );
             }
         }
     }
@@ -130,16 +135,12 @@ contract SybelInternalTokens is
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
             bool isSupplyAware = _isSupplyAware[ids[i]];
-            if (from == address(0)) {
+            if (from == address(0) && isSupplyAware) {
                 // If it's a minted token
-                if (isSupplyAware) {
-                    _availableSupplies[ids[i]] -= amounts[i];
-                }
-            } else if (to == address(0)) {
+                _availableSupplies[ids[i]] -= amounts[i];
+            } else if (to == address(0) && isSupplyAware) {
                 // If it's a burned token
-                if (isSupplyAware) {
-                    _availableSupplies[ids[i]] += amounts[i];
-                }
+                _availableSupplies[ids[i]] += amounts[i];
             }
         }
     }

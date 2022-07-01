@@ -8,6 +8,7 @@ import "../utils/SybelMath.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev Represent our minter contract
@@ -54,7 +55,12 @@ contract Minter is
     /**
      * @dev Event emitted when a new fraction of podcast is minted
      */
-    event FractionMinted(uint256 fractionId, address user, uint256 cost);
+    event FractionMinted(
+        uint256 fractionId,
+        address user,
+        uint256 amount,
+        uint256 cost
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -146,10 +152,14 @@ contract Minter is
         // Get the cost of the fraction
         uint64 fractionCost = fractionCostBadges.getBadge(_id);
         uint256 totalCost = fractionCost * _amount;
+        console.log("Will mint for a cost of ");
+        console.log(totalCost);
         // Check if the user have enough the balance
         uint256 tseBalance = tokenSybelEcosystem.balanceOf(_to);
+        console.log("Current user balance ");
+        console.log(tseBalance);
         require(
-            tseBalance <= totalCost,
+            tseBalance >= totalCost,
             "SYB: Not enough balance to pay for this fraction"
         );
         // Mint his Fraction of NFT
@@ -157,6 +167,6 @@ contract Minter is
         // Burn his TSE token
         tokenSybelEcosystem.burn(_to, totalCost);
         // Emit the event
-        emit FractionMinted(_id, _to, totalCost);
+        emit FractionMinted(_id, _to, _amount, totalCost);
     }
 }

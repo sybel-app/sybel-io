@@ -7,8 +7,13 @@ const hre = require("hardhat");
 
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSybelEcosystem";
+import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 
-import { minterAddr, tseTokenAddr } from "../addresses.json";
+import {
+  minterAddr,
+  tseTokenAddr,
+  fractionCostBadgesAddr,
+} from "../addresses.json";
 
 (async () => {
   try {
@@ -20,9 +25,13 @@ import { minterAddr, tseTokenAddr } from "../addresses.json";
       "TokenSybelEcosystem",
       tseTokenAddr
     );
+    const fractionContract = await findContract<FractionCostBadges>(
+      "FractionCostBadges",
+      fractionCostBadgesAddr
+    );
 
-    // Get the 5 first accounts
-    const accounts = (await hre.ethers.getSigners()).slice(0, 5);
+    // Get 5 accounts
+    const accounts = (await hre.ethers.getSigners()).slice(5, 10);
 
     // Get the last minted podcast id
     const podcastMintEventFilter = minter.filters.PodcastMinted();
@@ -33,25 +42,47 @@ import { minterAddr, tseTokenAddr } from "../addresses.json";
       return podcastMintedEvent.args.baseId;
     });
     for (const podcastId of podcastIds) {
-      const fractionId = podcastId.shl(4).or(BigNumber.from(3));
       // Mint a classic fraction per account on the first minted podcast
       for (const account of accounts) {
-        // Give the user 10 TSE
-        await tseContract.mint(account.address, 100 * 10e6);
-        // Mint some fraction
-        await minter.mintFraction(fractionId, account.address, 1);
-        console.log(
-          "New fraction of podcast minted for the user " +
-            account.address +
-            " on fraction " +
-            fractionId
+        const tokenType = getRandomTokenType();
+        const fractionId = podcastId.shl(4).or(BigNumber.from(tokenType));
+        // Get the price of this fraction
+        const initialPrice = await fractionContract.initialFractionCost(
+          tokenType
         );
+        console.log(
+          "Initial price of the fraction " +
+            fractionId +
+            " is " +
+            initialPrice / 1e6 +
+            "TSE"
+        );
+        // Give the user 10 TSE
+        await tseContract.mint(account.address, 10 * 1e6);
+        try {
+          // Mint some fraction
+          await minter.mintFraction(fractionId, account.address, 1);
+          console.log(
+            "New fraction of podcast minted for the user " +
+              account.address +
+              " on fraction " +
+              fractionId
+          );
+        } catch (e: unknown) {
+          console.log("Error during the mint process");
+        }
       }
     }
   } catch (e: any) {
     console.log(e.message);
   }
 })();
+
+function getRandomTokenType(): number {
+  const min = Math.ceil(3);
+  const max = Math.floor(6);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 async function findContract<Type extends Contract>(
   name: string,
