@@ -22,10 +22,8 @@ export const rewarder = Rewarder__factory.connect(rewarderAddr, provider);
 
 //  Access our minter contract with a test wallet
 // TODO : Replace this wallet with the sybel wallet witch will pay gas fee
-export const getMinterConnected = Minter__factory.connect(
-  minterAddr,
-  new ethers.Wallet(
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-    provider
-  )
-);
+export const getMinterConnected = () =>
+  Minter__factory.connect(
+    minterAddr,
+    new ethers.Wallet(process.env.HARDHAT_TEST_WALLET!, provider)
+  );

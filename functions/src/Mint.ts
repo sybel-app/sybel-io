@@ -3,7 +3,7 @@ import cors from "cors";
 import { buildFractionId, tokenTypesData } from "./utils/SybelMath";
 import { Storage } from "@google-cloud/storage";
 import { getMinterConnected } from "./utils/Contract";
-import { nftJson } from "./utils/GenerateJson";
+import { NftJson } from "./utils/GenerateJson";
 import { getWalletForUser } from "./utils/UserUtils";
 
 const storage = new Storage();
@@ -52,17 +52,17 @@ export default () =>
             background_color: string;
           } = request.body.rss;
           try {
-            const podcastMintedFilter =
-              getMinterConnected.filters.PodcastMinted();
+            const minterConnected = getMinterConnected();
+            const podcastMintedFilter = minterConnected.filters.PodcastMinted();
             // Podcast Minted
-            await getMinterConnected.addPodcast(
+            await minterConnected.addPodcast(
               supply[0],
               supply[1],
               supply[2],
               supply[3],
               creatorWallet!.address
             );
-            const filteredEvents = await getMinterConnected.queryFilter(
+            const filteredEvents = await minterConnected.queryFilter(
               podcastMintedFilter
             );
             // Generation of 4 JSON per podcast
@@ -73,7 +73,7 @@ export default () =>
                   filteredEvents[filteredEvents.length - 1].args[3],
                   eachTokenType.rarityNumber
                 ).toNumber();
-                const fnft = new nftJson(
+                const fnft = new NftJson(
                   fractionId,
                   image,
                   name,

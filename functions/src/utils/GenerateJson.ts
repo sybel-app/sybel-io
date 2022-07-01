@@ -1,7 +1,7 @@
 import rgb2hex from "rgb2hex";
 
 // Immutable data object
-export class nftJson {
+export class NftJson {
   constructor(
     readonly id: number,
     readonly image: string,
