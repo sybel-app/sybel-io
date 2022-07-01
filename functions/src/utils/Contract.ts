@@ -3,6 +3,7 @@ import {
   Rewarder__factory,
   SybelInternalTokens__factory,
   TokenSybelEcosystem__factory,
+  Minter__factory,
 } from "../generated-types";
 import { ethers, Wallet } from "ethers";
 import {
@@ -54,3 +55,11 @@ export async function fractionCostBadgesConnected(): Promise<FractionCostBadges>
     sybelWallet
   );
 }
+
+//  Access our minter contract with a test wallet
+// TODO : Replace this wallet with the sybel wallet witch will pay gas fee
+export const getMinterConnected = () =>
+  Minter__factory.connect(
+    minterAddr,
+    new ethers.Wallet(process.env.HARDHAT_TEST_WALLET!, provider)
+  );
