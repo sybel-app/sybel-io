@@ -1,62 +1,13 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import { ethers } from "ethers";
-import { minterAddr } from "./utils/addresses.json";
-import { Minter__factory as MinterFactory } from "./generated-types";
-import { buildFractionId } from "./utils/SybelMath";
+import { buildFractionId, tokenTypesData } from "./utils/SybelMath";
 import { Storage } from "@google-cloud/storage";
-import rgb2hex from "rgb2hex";
+import { getMinterConnected } from "./utils/Contract";
+import { nftJson } from "./utils/GenerateJson";
+import { getWalletForUser } from "./utils/UserUtils";
 
 const storage = new Storage();
 const bucket = storage.bucket("gs://sybel-io.appspot.com");
-
-// Finding Minter Contract
-async function findContract() {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.HARDHAT_LOCAL_NODE
-  );
-  const wallet = new ethers.Wallet(
-    process.env.HARDHAT_LOCAL_TEST_WALLET!,
-    provider
-  );
-  const minterContract = MinterFactory.connect(minterAddr, wallet);
-  return minterContract;
-}
-//Generate the JSON
-const generateJson = (
-  id: number,
-  image: string,
-  name: string,
-  description: string,
-  background_color: string,
-  index: number
-) => {
-  return {
-    id,
-    image,
-    name,
-    description,
-    background_color: rgb2hex(background_color).hex,
-    attributes: [
-      {
-        trait_type: "Rarity",
-        value:
-          index === 0
-            ? "Standart"
-            : index === 1
-            ? "Common"
-            : index === 2
-            ? "Rare"
-            : index === 3
-            ? "Epic"
-            : index === 4
-            ? "Legendary"
-            : "X",
-      },
-      { trait_type: "Type", value: "Podcast" },
-    ],
-  };
-};
 
 /**
  * @function
@@ -76,14 +27,18 @@ export default () =>
         // Our route require the from address, the supply of different rarity token,
         //  and rss informations to generate the json
         if (
-          !request.body.from ||
+          !request.body.id ||
           !request.body.supply ||
           !request.body.rss ||
-          request.body.supply.length != 5
+          request.body.supply.length != 4
         ) {
           response.status(500).send({ error: "missing arguments" });
         } else {
-          const from: string = request.body.from;
+          const id: string = request.body.id;
+          const creatorWallet = await getWalletForUser(id);
+          if (!creatorWallet) {
+            response.status(404).send({ error: "Can't access to the wallet" });
+          }
           const supply: number[] = request.body.supply;
           const {
             image,
@@ -97,43 +52,48 @@ export default () =>
             background_color: string;
           } = request.body.rss;
           try {
-            const minter = await findContract();
-            const filter = minter.filters.PodcastMinted();
-            await minter.queryFilter(filter);
+            const podcastMintedFilter =
+              getMinterConnected.filters.PodcastMinted();
             // Podcast Minted
-            await minter.addPodcast(
+            await getMinterConnected.addPodcast(
+              supply[0],
               supply[1],
               supply[2],
               supply[3],
-              supply[4],
-              from
+              creatorWallet!.address
             );
-            const result = await minter.queryFilter(filter);
+            const filteredEvents = await getMinterConnected.queryFilter(
+              podcastMintedFilter
+            );
             // Generation of 4 JSON per podcast
-            supply.map(async (each, index) => {
-              // finding id of the nft fraction
-              const id = buildFractionId(
-                result[result.length - 1].args[3],
-                index + 2
-              );
-              if (!!each) {
-                const fnft = generateJson(
-                  id.toNumber(),
+            Promise.all(
+              tokenTypesData.map(async (eachTokenType) => {
+                // finding id of the nft fraction
+                const fractionId = buildFractionId(
+                  filteredEvents[filteredEvents.length - 1].args[3],
+                  eachTokenType.rarityNumber
+                ).toNumber();
+                const fnft = new nftJson(
+                  fractionId,
                   image,
                   name,
                   description,
                   background_color,
-                  index
+                  eachTokenType.rarity
                 );
-                const json = JSON.stringify(fnft);
-                await uploadFile(json, id.toNumber() + "_" + (index + 2));
-              }
-            });
-            response.json({
-              transactionHash: result[result.length - 1].transactionHash,
-              from: result[result.length - 1].args[1],
-              to: result[result.length - 1].args[2],
-            });
+                await uploadFile(
+                  fnft.toJson(),
+                  fractionId + "_" + eachTokenType.rarityNumber
+                );
+              })
+            ).then(() =>
+              response.json({
+                transactionHash:
+                  filteredEvents[filteredEvents.length - 1].transactionHash,
+                from: filteredEvents[filteredEvents.length - 1].args[1],
+                to: filteredEvents[filteredEvents.length - 1].args[2],
+              })
+            );
           } catch (error) {
             response.status(500).send({ error });
           }
