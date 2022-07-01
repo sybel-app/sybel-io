@@ -7,7 +7,6 @@ import {
 } from "./utils/Contract";
 import { buildFractionId, BUYABLE_TOKEN_TYPES } from "./utils/SybelMath";
 import { BigNumber } from "ethers";
-import { SuplyUpdatedEvent } from "./generated-types/SybelInternalTokens";
 
 /**
  * @function
@@ -50,8 +49,13 @@ export default () =>
       const twoWeekAgoTimestamp = Math.floor(
         oneWeekAgoTimestamp - weekDurationInSec
       );
-      const threeWeekAgoTimestamp = Math.floor(
-        twoWeekAgoTimestamp - weekDurationInSec
+      const currentWeekPeriod = new TimestampPeriod(
+        oneWeekAgoTimestamp,
+        currentDayTimestamp
+      );
+      const lastWeekPeriod = new TimestampPeriod(
+        twoWeekAgoTimestamp,
+        oneWeekAgoTimestamp
       );
 
       // Iterate over each podcast to find the right values for the badges computation
@@ -118,36 +122,21 @@ export default () =>
           );
 
           // Extract all the data we need to perform the computation
-          const currentWeekFractionMint = countFractionForPeriod(
+          const fractionMintedForCostBadges = countFractionForPeriod(
             mintedFractionCountToTimestamp,
-            oneWeekAgoTimestamp,
-            currentDayTimestamp
-          ).toNumber();
-          const oneWeekAgoFractionMint = countFractionForPeriod(
-            mintedFractionCountToTimestamp,
-            twoWeekAgoTimestamp,
-            oneWeekAgoTimestamp
-          ).toNumber();
-          const twoWeekAgoFractionMint = countFractionForPeriod(
-            mintedFractionCountToTimestamp,
-            threeWeekAgoTimestamp,
-            twoWeekAgoTimestamp
-          ).toNumber();
-          const currentWeekSuppliedFraction = (
-            await countSupplyGivenForPeriod(
-              filteredSupplyEvent,
-              oneWeekAgoTimestamp,
-              currentDayTimestamp
-            )
-          ).toNumber();
+            currentWeekPeriod,
+            lastWeekPeriod
+          );
+          const totalFractionSuppliedAmount = filteredSupplyEvent.reduce(
+            (acc, supplyEvent) => acc + supplyEvent.args.supply.toNumber(),
+            0
+          );
 
           // Compute the new badge from all the info we gathered
           const newBadge = computeNewBadge(
             currentFractionCost,
-            currentWeekFractionMint,
-            currentWeekSuppliedFraction,
-            oneWeekAgoFractionMint,
-            twoWeekAgoFractionMint
+            totalFractionSuppliedAmount,
+            fractionMintedForCostBadges
           );
 
           // Send this new badge to the contracts
@@ -182,95 +171,95 @@ class FractionCountToTimestamp {
 }
 
 /**
- * Count the number of fraction emitted during the given period
- * @param {FractionCountToTimestamp} fractionToTimestamp The array oto filter
- * @param {number} initialPeriod The initial period
- * @param {number} lastPeriod The last period
- * @return {BigNumber} The number of fraction minted
+ * Simple class helping us to check for a timestamp period
  */
-function countFractionForPeriod(
-  fractionToTimestamp: FractionCountToTimestamp[],
-  initialPeriod: number,
-  lastPeriod: number
-): BigNumber {
-  const fractionInPeriod = fractionToTimestamp.filter((fractionToTimestamp) =>
-    isInPeriod(fractionToTimestamp.timestampInSec, initialPeriod, lastPeriod)
-  );
-  const fractionMintedInPeriod = fractionInPeriod
-    // Then reduce to get the total count
-    .reduce(
-      (acc, fractionToTimestamp) => acc.add(fractionToTimestamp.count),
-      BigNumber.from(0)
-    );
-  return fractionMintedInPeriod;
+class TimestampPeriod {
+  /**
+   * Constructor
+   */
+  constructor(readonly start: number, readonly end: number) {}
+
+  /**
+   * Check if a timestamp is in the given period
+   * @param {number} timestamp
+   * @return {boolean}
+   */
+  isInPeriod(timestamp: number): boolean {
+    return timestamp >= this.start && timestamp < this.end;
+  }
+}
+
+/**
+ * Get the number of fraction minted for the cost badges, with the total, the one for the current and last week
+ */
+class FractionMintedForCostBadges {
+  /**
+   * Constructor
+   */
+  constructor(
+    readonly total: number,
+    readonly currentWeek: number,
+    readonly lastWeek: number
+  ) {}
 }
 
 /**
  * Count the number of fraction emitted during the given period
- * @param {SuplyUpdatedEvent[]} supplyUpdatedEvents The array of supply updated event to check for
- * @param {number} initialPeriod The initial period
- * @param {number} lastPeriod The last period
- * @return {BigNumber} The number of token supplied
+ * @param {FractionCountToTimestamp} fractionToTimestamps The array oto filter
+ * @param {TimestampPeriod} currenWeekPeriod The initial period
+ * @param {TimestampPeriod} lastWeekPeriod The last period
+ * @return {FractionMintedForCostBadges} The number of fraction minted
  */
-async function countSupplyGivenForPeriod(
-  supplyUpdatedEvents: SuplyUpdatedEvent[],
-  initialPeriod: number,
-  lastPeriod: number
-): Promise<BigNumber> {
-  let freshSupply = BigNumber.from(0);
-  for (const supplyUpdatedEvent of supplyUpdatedEvents) {
-    const timestamp = (await supplyUpdatedEvent.getBlock()).timestamp;
-    if (isInPeriod(timestamp, initialPeriod, lastPeriod)) {
-      freshSupply = freshSupply.add(supplyUpdatedEvent.args.supply);
+function countFractionForPeriod(
+  fractionToTimestamps: FractionCountToTimestamp[],
+  currenWeekPeriod: TimestampPeriod,
+  lastWeekPeriod: TimestampPeriod
+): FractionMintedForCostBadges {
+  let totalAcc = 0;
+  let currentWeekAcc = 0;
+  let lastWeekAcc = 0;
+
+  for (const fractionToTimestamp of fractionToTimestamps) {
+    totalAcc += fractionToTimestamp.count.toNumber();
+    if (currenWeekPeriod.isInPeriod(fractionToTimestamp.timestampInSec)) {
+      currentWeekAcc += fractionToTimestamp.count.toNumber();
+    } else if (lastWeekPeriod.isInPeriod(fractionToTimestamp.timestampInSec)) {
+      lastWeekAcc += fractionToTimestamp.count.toNumber();
     }
   }
 
-  return freshSupply;
-}
-
-/**
- * Check if the given timestamp is in the given period
- * @param {number} timestamp the timestamp to check
- * @param {number} initialPeriod the start of the period to check for
- * @param {number} lastPeriod the end of the period to check for
- * @return {boolean} if the given timestamp is in the period
- */
-function isInPeriod(
-  timestamp: number,
-  initialPeriod: number,
-  lastPeriod: number
-): boolean {
-  return timestamp >= initialPeriod && timestamp < lastPeriod;
+  return new FractionMintedForCostBadges(totalAcc, currentWeekAcc, lastWeekAcc);
 }
 
 /**
  * Compute the new cost badge from all the required parameter
  * @param {BigNumber} previousBadgeCost
- * @param {BigNumber} thisWeekMintAmount
- * @param {BigNumber} thisWeekSuppliedAmount
- * @param {BigNumber} oneWeekAgoMintAmount
- * @param {BigNumber} twoWeekAgoMintAmount
+ * @param {BigNumber} totalSuppliedAmount
+ * @param {FractionMintedForCostBadges} fractionMintedForCostBadges
  * @return  {BigNumber} The new cost badge
  */
 function computeNewBadge(
   previousBadgeCost: BigNumber,
-  thisWeekMintAmount: number,
-  thisWeekSuppliedAmount: number,
-  oneWeekAgoMintAmount: number,
-  twoWeekAgoMintAmount: number
+  totalSuppliedAmount: number,
+  fractionMintedForCostBadges: FractionMintedForCostBadges
 ): BigNumber {
   let exponentPart = 0.3;
-  if (oneWeekAgoMintAmount > 0 && twoWeekAgoMintAmount > 0) {
-    exponentPart = exponentPart + oneWeekAgoMintAmount / twoWeekAgoMintAmount;
+  if (
+    fractionMintedForCostBadges.currentWeek > 0 &&
+    fractionMintedForCostBadges.lastWeek > 0
+  ) {
+    exponentPart =
+      exponentPart +
+      fractionMintedForCostBadges.currentWeek /
+        fractionMintedForCostBadges.lastWeek;
   }
-  functions.logger.info("exponent is " + exponentPart);
 
   let multiplicationPart = 0.5;
-  if (thisWeekMintAmount > 0 && thisWeekSuppliedAmount > 0) {
+  if (fractionMintedForCostBadges.total > 0 && totalSuppliedAmount > 0) {
     multiplicationPart =
-      multiplicationPart + thisWeekMintAmount / thisWeekSuppliedAmount;
+      multiplicationPart +
+      fractionMintedForCostBadges.total / totalSuppliedAmount;
   }
-  functions.logger.info("multiplier is " + multiplicationPart);
 
   return BigNumber.from(
     Math.floor(
