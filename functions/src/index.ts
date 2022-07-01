@@ -8,7 +8,8 @@ import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./SeriesInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
-
+import mintPodcast from "./Mint";
+  
 /**
  * @function
  * @param {functions.https.Request} request
@@ -51,6 +52,13 @@ export const analytics = analyticsUrlFunction();
  * @returns {void}
  */
 export const getSeries = getSeriesFunction();
+/**
+ * @function
+ * @param {functions.https.Request} request
+ * @param {functions.Response<any>} response
+ * @returns {void}
+ */
+export const mint = mintPodcast();
 
 /**
  * Refresh the user balance function
