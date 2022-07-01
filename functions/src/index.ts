@@ -7,6 +7,7 @@ import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./SeriesInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
+import computeMintingBadgeCron from "./ComputeMintingBadge";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
 import mintPodcast from "./Mint";
   
@@ -69,3 +70,8 @@ export const refreshBalance = refreshUserBalanceFunction();
  * Import the sybel listen event cron
  */
 export const importSybelListenEvent = importSybelListenEventCron();
+
+/**
+ * Compute the minting badge of each token fraction
+ */
+export const computeMintingBadge = computeMintingBadgeCron();

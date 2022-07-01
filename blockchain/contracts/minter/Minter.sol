@@ -54,7 +54,12 @@ contract Minter is
     /**
      * @dev Event emitted when a new fraction of podcast is minted
      */
-    event FractionMinted(uint256 fractionId, address user, uint256 cost);
+    event FractionMinted(
+        uint256 fractionId,
+        address user,
+        uint256 amount,
+        uint256 cost
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -85,7 +90,7 @@ contract Minter is
         uint256 _epicSupply,
         uint256 _legendarySupply,
         address _podcastOwnerAddress
-    ) external override onlyMinter whenNotPaused {
+    ) external override onlyMinter whenNotPaused returns (uint256) {
         require(
             _classicSupply > 0,
             "SYB: Cannot add podcast without classic supply !"
@@ -131,8 +136,8 @@ contract Minter is
             _legendarySupply,
             _podcastOwnerAddress
         );
-        // TODO : Do something with the podcast id ? Pay the podcaster directly ??
-        // TODO : Call the rewarder contract to pay the creator ??
+        // Return the minted podcast id
+        return podcastId;
     }
 
     /**
@@ -157,6 +162,6 @@ contract Minter is
         // Burn his TSE token
         tokenSybelEcosystem.burn(_to, totalCost);
         // Emit the event
-        emit FractionMinted(_id, _to, totalCost);
+        emit FractionMinted(_id, _to, _amount, totalCost);
     }
 }

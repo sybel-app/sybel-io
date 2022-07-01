@@ -17,8 +17,7 @@ contract FractionCostBadges is
     // Map f nft id to cost badge
     mapping(uint256 => uint64) fractionBadges;
 
-    // Initial fractions badges per token types
-    mapping(uint8 => uint64) initialFractionBadges;
+    event FractionCostBadgeUpdated(uint256 id, uint64 badge);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -27,19 +26,6 @@ contract FractionCostBadges is
 
     function initialize() public initializer {
         __SybelAccessControlUpgradeable_init();
-
-        // Build initial badges for each token types
-        initialFractionBadges[SybelMath.TOKEN_TYPE_STANDART_MASK] = 0; // 0 TSE
-        initialFractionBadges[SybelMath.TOKEN_TYPE_CLASSIC_MASK] = 500000; // 0.5 TSE
-        initialFractionBadges[SybelMath.TOKEN_TYPE_RARE_MASK] =
-            2 *
-            SybelMath.DECIMALS; // 2 TSE
-        initialFractionBadges[SybelMath.TOKEN_TYPE_EPIC_MASK] =
-            5 *
-            SybelMath.DECIMALS; // 5 TSE
-        initialFractionBadges[SybelMath.TOKEN_TYPE_LEGENDARY_MASK] =
-            10 *
-            SybelMath.DECIMALS; // 10 TSE
 
         // Grant the badge updater role to the contract deployer
         _grantRole(SybelRoles.BADGE_UPDATER, msg.sender);
@@ -55,6 +41,7 @@ contract FractionCostBadges is
         whenNotPaused
     {
         fractionBadges[_fractionId] = _badge;
+        emit FractionCostBadgeUpdated(_fractionId, _badge);
     }
 
     /**
@@ -71,8 +58,30 @@ contract FractionCostBadges is
         if (fractionBadge == 0) {
             // If the badge of this fraction isn't set yet, set it to default
             uint8 tokenType = SybelMath.extractTokenType(_fractionId);
-            fractionBadge = initialFractionBadges[tokenType];
+            fractionBadge = initialFractionCost(tokenType);
         }
         return fractionBadge;
+    }
+
+    /**
+     * @dev The initial cost of a fraction type
+     * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
+     */
+    function initialFractionCost(uint8 _tokenType)
+        public
+        pure
+        returns (uint32)
+    {
+        uint32 initialCost;
+        if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
+            initialCost = 500000; // 0.5 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
+            initialCost = 2000000; // 2 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
+            initialCost = 5000000; // 5 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
+            initialCost = 10000000; // 10 TSE
+        }
+        return initialCost;
     }
 }

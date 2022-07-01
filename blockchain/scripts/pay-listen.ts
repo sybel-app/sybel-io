@@ -35,8 +35,6 @@ import { minterAddr, rewarderAddr, tseTokenAddr } from "../addresses.json";
       return podcastMintedEvent.args.baseId;
     });
 
-    const decimals = await tseToken.decimals();
-
     // Pay some random listening time on each account
     for (const account of accounts) {
       const listens = generateRandomListenCountArray(podcastIds.length);
@@ -50,7 +48,7 @@ import { minterAddr, rewarderAddr, tseTokenAddr } from "../addresses.json";
           " for listens " +
           listens +
           " new TSE balance " +
-          balance.toNumber() / (10 ^ decimals)
+          balance.toNumber() / 1e6
       );
     }
 
@@ -58,11 +56,7 @@ import { minterAddr, rewarderAddr, tseTokenAddr } from "../addresses.json";
     for (const account of accounts) {
       const balance = await tseToken.balanceOf(account.address);
       console.log(
-        "User " +
-          account.address +
-          " have " +
-          balance.toNumber() / (10 ^ decimals) +
-          "TSE"
+        "User " + account.address + " have " + balance.toNumber() / 1e6 + "TSE"
       );
     }
   } catch (e: any) {
@@ -86,6 +80,6 @@ function generateRandomListenCountArray(podcastIdsCount: number): number[] {
 
 function getRandomInt(): number {
   const min = Math.ceil(1);
-  const max = Math.floor(20);
+  const max = 5;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
