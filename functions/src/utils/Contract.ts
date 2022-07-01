@@ -3,7 +3,6 @@ import {
   Rewarder__factory,
   SybelInternalTokens__factory,
   TokenSybelEcosystem__factory,
-  Minter__factory,
 } from "../generated-types";
 import { ethers, Wallet } from "ethers";
 import {
