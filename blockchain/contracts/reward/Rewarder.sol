@@ -8,8 +8,6 @@ import "../utils/SybelRoles.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev Represent our rewarder contract

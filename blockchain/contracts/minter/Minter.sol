@@ -8,7 +8,6 @@ import "../utils/SybelMath.sol";
 import "../tokens/SybelInternalTokens.sol";
 import "../tokens/TokenSybelEcosystem.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev Represent our minter contract
@@ -91,7 +90,7 @@ contract Minter is
         uint256 _epicSupply,
         uint256 _legendarySupply,
         address _podcastOwnerAddress
-    ) external override onlyMinter whenNotPaused {
+    ) external override onlyMinter whenNotPaused returns (uint256) {
         require(
             _classicSupply > 0,
             "SYB: Cannot add podcast without classic supply !"
@@ -137,8 +136,8 @@ contract Minter is
             _legendarySupply,
             _podcastOwnerAddress
         );
-        // TODO : Do something with the podcast id ? Pay the podcaster directly ??
-        // TODO : Call the rewarder contract to pay the creator ??
+        // Return the minted podcast id
+        return podcastId;
     }
 
     /**
@@ -152,12 +151,8 @@ contract Minter is
         // Get the cost of the fraction
         uint64 fractionCost = fractionCostBadges.getBadge(_id);
         uint256 totalCost = fractionCost * _amount;
-        console.log("Will mint for a cost of ");
-        console.log(totalCost);
         // Check if the user have enough the balance
         uint256 tseBalance = tokenSybelEcosystem.balanceOf(_to);
-        console.log("Current user balance ");
-        console.log(tseBalance);
         require(
             tseBalance >= totalCost,
             "SYB: Not enough balance to pay for this fraction"

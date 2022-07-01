@@ -101,7 +101,8 @@ export default () =>
             continue;
           }
 
-          functions.logger.debug("Finding the block timestamp");
+          // TODO : Should store the block number each time we perform this cron, this will prevent multiple call on getBlock().timestamp that is resources effective, and permit us to save on firebase cost and on infura cost
+          // Map each mint event to it's event with a timestamp
           const mintedFractionCountToTimestampAsync =
             filteredFractionMintEvent.map(
               async (transferEvent) =>
