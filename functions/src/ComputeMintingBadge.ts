@@ -115,7 +115,6 @@ export default () =>
                   (await transferEvent.getBlock()).timestamp
                 )
             );
-          functions.logger.debug("Finished to search for the block timestamp");
 
           const mintedFractionCountToTimestamp = await Promise.all(
             mintedFractionCountToTimestampAsync
@@ -248,16 +247,14 @@ function computeNewBadge(
     fractionMintedForCostBadges.currentWeek > 0 &&
     fractionMintedForCostBadges.lastWeek > 0
   ) {
-    exponentPart =
-      exponentPart +
+    exponentPart +=
       fractionMintedForCostBadges.currentWeek /
-        fractionMintedForCostBadges.lastWeek;
+      fractionMintedForCostBadges.lastWeek;
   }
 
   let multiplicationPart = 0.5;
   if (fractionMintedForCostBadges.total > 0 && totalSuppliedAmount > 0) {
-    multiplicationPart =
-      multiplicationPart +
+    multiplicationPart +=
       fractionMintedForCostBadges.total / totalSuppliedAmount;
   }
 
