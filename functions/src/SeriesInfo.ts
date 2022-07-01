@@ -48,6 +48,7 @@ export default () =>
                   const image = jObj.rss.channel.image.url;
                   const paletteData = await Vibrant.from(image).getPalette();
                   const title = jObj.rss.channel.title;
+                  const description = jObj.rss.channel.description;
                   const author = jObj.rss.channel["itunes:author"];
                   const background = `linear-gradient(rgb(${
                     paletteData.DarkMuted
@@ -87,15 +88,15 @@ export default () =>
                       : "#fff"
                   }))`;
                   const mainColor = `rgb(${
-                    paletteData.Vibrant ? paletteData.Vibrant.rgb[0] : "#fff"
+                    paletteData.Vibrant ? paletteData.Vibrant.rgb[0] : "0"
                   },${
-                    paletteData.Vibrant ? paletteData.Vibrant.rgb[1] : "#fff"
+                    paletteData.Vibrant ? paletteData.Vibrant.rgb[1] : "0"
                   },${
-                    paletteData.Vibrant ? paletteData.Vibrant.rgb[2] : "#fff"
+                    paletteData.Vibrant ? paletteData.Vibrant.rgb[2] : "0"
                   })`;
                   response
                     .status(200)
-                    .send({ title, background, mainColor, author, image });
+                    .send({ title, background, mainColor, author, image, description });
                 });
               }
             });
