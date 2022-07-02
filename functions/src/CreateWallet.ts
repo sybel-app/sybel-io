@@ -17,6 +17,12 @@ export default () =>
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
+        functions.logger.debug(
+          "Starting up the create wallet process with as param : " +
+            JSON.stringify(request.body),
+          request.body
+        );
+
         if (!request.body.id) {
           response.status(500).send({ error: "missing arguments" });
           return;
@@ -54,6 +60,11 @@ export default () =>
           await db.collection("wallet").add(newWalletDto);
           response.status(200).send(newWalletDto);
         } catch (error) {
+          functions.logger.debug(
+            "An error occured while creating the user wallet : " +
+              JSON.stringify(error),
+            error
+          );
           response.status(500).send(error);
         }
       });

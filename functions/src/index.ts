@@ -10,7 +10,7 @@ import refreshUserBalanceFunction from "./RefreshUserBalance";
 import computeMintingBadgeCron from "./ComputeMintingBadge";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
 import mintPodcast from "./Mint";
-  
+
 /**
  * @function
  * @param {functions.https.Request} request
@@ -73,5 +73,6 @@ export const importSybelListenEvent = importSybelListenEventCron();
 
 /**
  * Compute the minting badge of each token fraction
+ * TODO : Disabled for now, since not live
  */
-export const computeMintingBadge = computeMintingBadgeCron();
+// export const computeMintingBadge = computeMintingBadgeCron();
