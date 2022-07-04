@@ -31,6 +31,17 @@ contract Rewarder is
      */
     TokenSybelEcosystem private tokenSybelEcosystem;
 
+    /**
+     * @dev Event emitted when a user is rewarded for his listen
+     */
+    event UserRewarded(
+        uint256 podcastId,
+        address user,
+        uint256 listenCount,
+        uint256 amountPaid,
+        ListenerBalanceOnPodcast[] listenerBalance
+    );
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -180,6 +191,14 @@ contract Rewarder is
         // Mint the TSE for the listener and the owner of the podcast
         tokenSybelEcosystem.mint(_listener, amountForListener);
         tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
+        // Emit the reward event
+        emit UserRewarded(
+            _podcastId,
+            _listener,
+            _listenCount,
+            amountForListener,
+            _balances
+        );
     }
 
     /**

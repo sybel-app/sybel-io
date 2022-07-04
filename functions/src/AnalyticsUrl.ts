@@ -15,40 +15,51 @@ export default () =>
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
-        const batch = db.batch();
-        const collection = db.collection("listeningAnalytics");
+        // Extract the data from the request query
+        const requestDto: AnalyticsUrlRequestDto = {
+          rssUrl: request.query.rss as string,
+          userId: request.query.uid as string,
+          ownerId: request.query.oid as string,
+          seriesId: request.query.sid as string,
+        };
+
+        // Check that we got all of our param
         if (
-          !request.query.rss ||
-          !request.query.uid ||
-          !request.query.oid ||
-          !request.query.sid
+          !requestDto.rssUrl ||
+          !requestDto.userId ||
+          !requestDto.ownerId ||
+          !requestDto.seriesId
         ) {
           response.status(500).send({ error: "missing arguments" });
-        } else {
-          const rssUrl = request.query.rss;
-          const userId = request.query.uid;
-          const ownerId = request.query.oid;
-          const seriesId = request.query.sid;
-          if (request.headers["user-agent"]) {
-            try {
-              const newListen = {
-                rssUrl,
-                userId,
-                ownerId,
-                seriesId,
-                givenToOwner: false,
-                givenToUser: false,
-                date: admin.firestore.Timestamp.fromDate(new Date()),
-              };
-              batch.set(collection.doc(), newListen);
-              batch.commit();
-              response.redirect(rssUrl as string);
-            } catch (error) {
-              response.status(500).send(error);
-            }
-          } else {
-            response.redirect(rssUrl as string);
+          return;
+        }
+        // If we got the user agent defined keep going
+        // TODO : Why we need it ??
+        if (request.headers["user-agent"]) {
+          try {
+            // Access our db and prepare the batch we will use to save inside it
+            const collection = db.collection("listeningAnalytics");
+            const batch = db.batch();
+            // Create the new listen object we will store in our database
+            const newListen = {
+              rssUrl: requestDto.rssUrl,
+              userId: requestDto.userId,
+              ownerId: requestDto.ownerId,
+              seriesId: requestDto.seriesId,
+              givenToUser: false,
+              date: admin.firestore.Timestamp.fromDate(new Date()),
+            };
+            // Store it inside our db
+            batch.set(collection.doc(), newListen);
+            batch.commit();
+            // Redirect the user
+            response.redirect(requestDto.rssUrl);
+          } catch (error) {
+            response.status(500).send(error);
           }
+        } else {
+          // Redirect to the rss url
+          response.redirect(requestDto.rssUrl);
         }
       });
     });

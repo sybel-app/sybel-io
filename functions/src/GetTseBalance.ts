@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import { tseToken } from "./utils/Contract";
+import { getWalletForUser } from "./utils/UserUtils";
 
 /**
  * @function
@@ -13,21 +14,34 @@ export default () =>
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
-        if (!request.body.address) {
+        // Extract the user id from the request param
+        const userId = request.body.data.id;
+        if (!userId) {
           response.status(500).send({ error: "missing arguments" });
-        } else {
-          const address = request.body.address;
-          try {
-            // Get the balance of TSE on our contract
-            const balance = await tseToken.balanceOf(address);
-            // And send the response
-            response.status(200).send({
-              address: address,
-              balance: balance.toNumber() / 1e6,
-            });
-          } catch (error) {
-            response.status(500).send(error);
+          return;
+        }
+
+        try {
+          // Get the balance of TSE on our contract
+          const wallet = await getWalletForUser(userId);
+          if (!wallet) {
+            response
+              .status(404)
+              .send({ error: "no wallet found for the user" });
+            return;
           }
+          const balance = await tseToken.balanceOf(wallet.address);
+          // And send the response
+          response.status(200).send({
+            address: wallet.address,
+            balance: balance.toNumber() / 1e6,
+          });
+        } catch (error) {
+          functions.logger.debug(
+            "An error occured while fetching the tse balance of the user",
+            error
+          );
+          response.status(500).send(error);
         }
       });
     });

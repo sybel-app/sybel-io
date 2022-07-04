@@ -16,7 +16,7 @@ interface IMinter is IPausable {
         uint256 _epicSupply,
         uint256 _legendarySupply,
         address _podcastOwnerAddress
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev Mint a new fraction of nft

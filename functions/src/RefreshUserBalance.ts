@@ -16,31 +16,32 @@ export default () =>
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
-        // Check the parameter
-        if (!request.body.id) {
+        // Extract the user id from the request param
+        const userId = request.body.data.id;
+        if (!userId) {
           response.status(500).send({ error: "missing arguments" });
           return;
         }
-
-        // Get the id
-        const id = request.body.id;
-        logger.debug(`Will refresh the user balance ${id}`);
+        logger.debug(`Will refresh the user balance ${userId}`);
 
         try {
-          const userWallet = await getWalletForUser(id);
+          // Find the wallet for the user id
+          const userWallet = await getWalletForUser(userId);
           if (!userWallet) {
             logger.debug("Unable to find the user wallet, can't pay him");
             return;
           }
 
           // Update the owner and the user amounts
-          await countListenAndPayWallet(userWallet, "ownerId", "givenToOwner");
           await countListenAndPayWallet(userWallet, "userId", "givenToUser");
 
           // Send the response
           response.status(200);
         } catch (error) {
-          logger.warn("Unable refresh the amount for the user " + id, error);
+          logger.warn(
+            "Unable refresh the amount for the user " + userId,
+            error
+          );
           response.status(500).send(error);
         }
       });

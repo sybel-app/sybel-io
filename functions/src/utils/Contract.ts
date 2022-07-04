@@ -44,6 +44,7 @@ export const fractionCostBadges = FractionCostBadges__factory.connect(
   provider
 );
 
+// Access our fraction cost badge contract, connected on the sybe lwallet
 export async function fractionCostBadgesConnected(): Promise<FractionCostBadges> {
   const sybelWallet = new Wallet(
     process.env.HARDHAT_LOCAL_TEST_WALLET!,
