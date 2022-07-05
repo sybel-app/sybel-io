@@ -29,13 +29,11 @@ export function buildFractionId(
   return podcastId.shl(TOKEN_ID_OFFSET).or(BigNumber.from(tokenType));
 }
 
-const tokenTypesData: { rarity: string; rarityNumber: number }[] = [
-  { rarity: "Creator Nft", rarityNumber: TOKEN_TYPES_NFT },
-  { rarity: "Standart", rarityNumber: TOKEN_TYPES_STANDART },
-  { rarity: "Common", rarityNumber: TOKEN_TYPES_CLASSIC },
-  { rarity: "Rare", rarityNumber: TOKEN_TYPES_RARE },
-  { rarity: "Epic", rarityNumber: TOKEN_TYPES_EPIC },
-  { rarity: "Legendary", rarityNumber: TOKEN_TYPES_LEGENDARY },
+export const allTokenTypesToRarity: { rarity: string; tokenTypes: number }[] = [
+  { rarity: "Creator Nft", tokenTypes: TOKEN_TYPES_NFT },
+  { rarity: "Standart", tokenTypes: TOKEN_TYPES_STANDART },
+  { rarity: "Common", tokenTypes: TOKEN_TYPES_CLASSIC },
+  { rarity: "Rare", tokenTypes: TOKEN_TYPES_RARE },
+  { rarity: "Epic", tokenTypes: TOKEN_TYPES_EPIC },
+  { rarity: "Legendary", tokenTypes: TOKEN_TYPES_LEGENDARY },
 ];
-
-export { tokenTypesData };

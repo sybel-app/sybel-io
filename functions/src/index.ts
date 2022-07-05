@@ -1,23 +1,22 @@
 import * as admin from "firebase-admin";
 admin.initializeApp();
-import createWalletFunction from "./CreateWallet";
+import getOrCreateWalletFunction from "./GetOrCreateWallet";
 import getWalletFunction from "./GetWallet";
 import getBalanceFunction from "./GetTseBalance";
 import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
-import getSeriesFunction from "./SeriesInfo";
+import getSeriesFunction from "./ExtractPodcastInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
-import computeMintingBadgeCron from "./ComputeMintingBadge";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
-import mintPodcast from "./Mint";
-  
+import mintPodcast from "./MintPodcast";
+
 /**
  * @function
  * @param {functions.https.Request} request
  * @param {functions.Response<any>} response
  * @returns {void}
  */
-export const createWallet = createWalletFunction();
+export const getOrCreateWallet = getOrCreateWalletFunction();
 /**
  * @function
  * @param {functions.https.Request} request
@@ -73,5 +72,6 @@ export const importSybelListenEvent = importSybelListenEventCron();
 
 /**
  * Compute the minting badge of each token fraction
+ * TODO : Disabled for now, since not live
  */
-export const computeMintingBadge = computeMintingBadgeCron();
+// export const computeMintingBadge = computeMintingBadgeCron();

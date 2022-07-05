@@ -17,15 +17,16 @@ export default () =>
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
-        if (!request.body.id) {
+        // Extract the user id from the request param
+        const userId = request.body.data.id;
+        if (!userId) {
           response.status(500).send({ error: "missing arguments" });
           return;
         }
 
-        const id = request.body.id;
         try {
           // Check if the user already have a wallet
-          const currentWallet = await getWalletForUser(id);
+          const currentWallet = await getWalletForUser(userId);
           if (currentWallet != null) {
             functions.logger.debug(
               "The user already have a wallet, don't create a new one"
@@ -43,17 +44,23 @@ export default () =>
           const encryptedWallet = await newWallet.encrypt(
             process.env.SYBEL_ENCRYPTION_KEY as string
           );
-          // Build the dto we will stor ein firebase
-          const newWalletDto = {
-            id,
+
+          // Save the fresh wallet in our database
+          await db.collection("wallet").add({
+            userId,
             encryptedWallet: encryptedWallet,
             address: newWallet.address,
-          };
-
-          // Save the fresh wallet in our database and send it back
-          await db.collection("wallet").add(newWalletDto);
-          response.status(200).send(newWalletDto);
+          });
+          // Send the user id and public address in response
+          response.status(200).send({
+            id: userId,
+            address: newWallet.address,
+          });
         } catch (error) {
+          functions.logger.debug(
+            "An error occured while creating the user wallet",
+            error
+          );
           response.status(500).send(error);
         }
       });

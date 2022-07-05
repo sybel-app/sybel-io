@@ -15,16 +15,14 @@ export default () =>
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
         // Ensure we got the right param
-        if (!request.body.id) {
+        const userId = request.body.data.id;
+        if (!userId) {
           response.status(500).send({ error: "missing arguments" });
           return;
         }
 
-        // Extract the id from the request
-        const id = request.body.id;
-
         // Try to find the wallet
-        const wallet = await getWalletForUser(id);
+        const wallet = await getWalletForUser(userId);
         if (wallet != null) {
           response.status(200).send(wallet);
         } else {

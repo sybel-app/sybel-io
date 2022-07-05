@@ -1,4 +1,5 @@
 import {
+  Minter,
   Minter__factory,
   Rewarder__factory,
   SybelInternalTokens__factory,
@@ -44,6 +45,7 @@ export const fractionCostBadges = FractionCostBadges__factory.connect(
   provider
 );
 
+// Access our fraction cost badge contract, connected on the sybe lwallet
 export async function fractionCostBadgesConnected(): Promise<FractionCostBadges> {
   const sybelWallet = new Wallet(
     process.env.HARDHAT_LOCAL_TEST_WALLET!,
@@ -55,10 +57,11 @@ export async function fractionCostBadgesConnected(): Promise<FractionCostBadges>
   );
 }
 
-//  Access our minter contract with a test wallet
-// TODO : Replace this wallet with the sybel wallet witch will pay gas fee
-export const getMinterConnected = () =>
-  Minter__factory.connect(
-    minterAddr,
-    new ethers.Wallet(process.env.HARDHAT_TEST_WALLET!, provider)
+// Access our fraction cost badge contract, connected on the sybe lwallet
+export async function minterConnected(): Promise<Minter> {
+  const sybelWallet = new Wallet(
+    process.env.HARDHAT_LOCAL_TEST_WALLET!,
+    provider
   );
+  return Minter__factory.connect(minterAddr, sybelWallet);
+}
