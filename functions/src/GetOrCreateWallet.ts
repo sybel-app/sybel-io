@@ -31,7 +31,12 @@ export default () =>
             functions.logger.debug(
               "The user already have a wallet, don't create a new one"
             );
-            response.status(200).send(currentWallet);
+            response.status(200).send({
+              data: {
+                id: userId,
+                address: currentWallet.address,
+              },
+            });
             return;
           }
 
@@ -53,8 +58,10 @@ export default () =>
           });
           // Send the user id and public address in response
           response.status(200).send({
-            id: userId,
-            address: newWallet.address,
+            data: {
+              id: userId,
+              address: newWallet.address,
+            },
           });
         } catch (error) {
           functions.logger.debug(

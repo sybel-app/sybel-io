@@ -2,6 +2,9 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import WalletDbDto from "../types/db/WalletDbDto";
 import { rewarder } from "./Contract";
+import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
+import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
+import { DocumentData } from "@firebase/firestore";
 
 // Firebase logger
 const logger = functions.logger;
@@ -9,6 +12,7 @@ const logger = functions.logger;
 // Access our database
 const db = admin.firestore();
 const analyticsCollection = db.collection("listeningAnalytics");
+const mintedPodactCollection = db.collection("mintedPodcast");
 
 /**
  * Count the number of listen for a given wallet, matching the db properties
@@ -16,74 +20,88 @@ const analyticsCollection = db.collection("listeningAnalytics");
  * @param {string} paymentProperties The payment boolean properties to check in database
  */
 export async function countListenAndPayWallet(wallet: WalletDbDto) {
-  // Count the number of wallet for this owner
-  const countSnapshot = await analyticsCollection
+  // Get all the listen perform by this user and not payed
+  const userListenQuerySnapshot = await analyticsCollection
     .where("userId", "==", wallet.id)
     .where("givenToUser", "!=", true)
     .get();
-
-  const countLog: admin.firestore.QueryDocumentSnapshot<admin.firestore.DocumentData>[] =
+  const userListenDocuments: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
     [];
-  countSnapshot.forEach((doc) => countLog.push(doc));
-
-  const firstMappingResult = countLog.map((doc) => {
-    return {
-      seriesId: doc.seriesId as string,
-      listenCount: 1,
-    };
+  userListenQuerySnapshot.forEach((doc) => {
+    userListenDocuments.push(doc);
   });
 
-  // TODO : Group by series id (and count number of listen)
-  // TODO : Filter to get only the series that where minted on the blockchain
-  // TODO : Built the podcastId to listenCount array to be sent to the blockchain
+  // If the user havn't perform any listen operation, exit directly
+  if (userListenDocuments.length == 0) {
+    return;
+  }
 
-  // Pay him
-  const isPaymentsuccess = await payWallet(wallet.address, countLog.length);
+  // Get the list of all the known minted podcast
+  const allMintedPodcastSnapshot = await mintedPodactCollection.get();
+  const mintedPodcasts: MintedPodcastDbDto[] = [];
+  allMintedPodcastSnapshot.forEach((doc) => {
+    mintedPodcasts.push(doc.data() as MintedPodcastDbDto);
+  });
 
-  // If the payment was a success, update his pending owner transaction
-  if (isPaymentsuccess) {
-    logger.debug(
-      `Payed the used ${wallet.id} with success, update all his analytics row`
+  // Save an array of all the document we handled
+  const handledDocument: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
+    [];
+
+  // Reduce it to extract only a map of series id to listen count
+  const podcastIdToListenCountMap = userListenDocuments.reduce((acc, value) => {
+    const listenAnalitycs = value.data() as ListenAnalyticsDbDto;
+    // Check if that podcast is minted or not (if not, don't count his listen)
+    const matchingMintedPodcast = mintedPodcasts.find(
+      (mintedPodcast) => mintedPodcast.seriesId == listenAnalitycs.seriesId
     );
-    // Update all the row we counted
+    if (!matchingMintedPodcast) {
+      // If the podcast wasn't minted, don't include it in our map
+      return acc;
+    }
+    // Save the fact that we handled this document
+    handledDocument.push(value);
+
+    // Otherwise, increment the current listen count on this podcast
+    let currentListenCount = acc.get(matchingMintedPodcast.fractionBaseId);
+    if (!currentListenCount) {
+      currentListenCount = 0;
+    }
+    acc.set(matchingMintedPodcast.fractionBaseId, currentListenCount + 1);
+    return acc;
+  }, new Map<number, number>());
+
+  // Build the array we will send to the smart contract
+  const podcastIds: number[] = [];
+  const listenCounts: number[] = [];
+  podcastIdToListenCountMap.forEach((podcastId, listenCount) => {
+    podcastIds.push(podcastId);
+    listenCounts.push(listenCount);
+  });
+  logger.debug(
+    `Found ${podcastIdToListenCountMap.size} podcast to on which the user perform some listen to be payed`
+  );
+
+  // Try to pay him
+  try {
+    // Launch the transaction and wait for the receipt
+    const paymentTx = await rewarder.payUser(
+      wallet.address,
+      podcastIds,
+      listenCounts
+    );
+    const paymentTxReceipt = await paymentTx.wait();
+
+    logger.debug(
+      `Payed the used ${wallet.id} with success, on the tx hash ${paymentTxReceipt.blockHash}, block number ${paymentTxReceipt.blockNumber}`
+    );
+
+    // Update all the handled analytics row
     const batch = db.batch();
-    countLog.map(async (each) => {
+    handledDocument.map(async (each) => {
       batch.update(each.ref, "givenToUser", true);
     });
     batch.commit();
-  } else {
-    logger.debug(`Unable to pay the owner ${wallet.id}`);
-  }
-}
-
-/**
- * Pay a wallet for a given number of liste,
- * @param {string} walletAddress the wallet address to pay
- * @param {number} listenCount the number of listen to pay
- * @return {boolean} true if the payment was a success, false otherwise
- */
-export async function payWallet(
-  walletAddress: string,
-  listenCount: number
-): Promise<boolean> {
-  if (listenCount <= 0) {
-    logger.debug("No listen perform, so no payment to be done");
-    return false;
-  }
-  try {
-    // Ask him to pay the user
-    // TODO : Should have listener id, list of podcast id and listen of listen count
-    // TODO : Should have the sybel priv key account to perform the signing
-    const paymentTx = await rewarder.payUser(walletAddress, [], []);
-
-    logger.debug(
-      `Payment transaction for user ${walletAddress} done, payment data ${paymentTx.data} on block  ${paymentTx.blockNumber} : ${paymentTx.blockHash} !`,
-      paymentTx
-    );
-
-    return true;
-  } catch (exception) {
-    logger.warn("Error when paying the wallet " + walletAddress, exception);
-    return false;
+  } catch (exception: unknown) {
+    logger.warn(`Error when paying the user ${wallet.id}`, exception);
   }
 }
