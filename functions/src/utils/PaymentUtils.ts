@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import Wallet from "../model/Wallet";
+import WalletDbDto from "../types/db/WalletDbDto";
 import { rewarder } from "./Contract";
 
 // Firebase logger
@@ -12,23 +12,30 @@ const analyticsCollection = db.collection("listeningAnalytics");
 
 /**
  * Count the number of listen for a given wallet, matching the db properties
- * @param {Wallet} wallet The wallet to count listen and pay
- * @param {string} idProperties The wallet id properties to check for in the database
+ * @param {WalletDbDto} wallet The wallet to count listen and pay
  * @param {string} paymentProperties The payment boolean properties to check in database
  */
-export async function countListenAndPayWallet(
-  wallet: Wallet,
-  idProperties: string,
-  paymentProperties: string
-) {
+export async function countListenAndPayWallet(wallet: WalletDbDto) {
   // Count the number of wallet for this owner
   const countSnapshot = await analyticsCollection
     .where("userId", "==", wallet.id)
     .where("givenToUser", "!=", true)
     .get();
+
   const countLog: admin.firestore.QueryDocumentSnapshot<admin.firestore.DocumentData>[] =
     [];
   countSnapshot.forEach((doc) => countLog.push(doc));
+
+  const firstMappingResult = countLog.map((doc) => {
+    return {
+      seriesId: doc.seriesId as string,
+      listenCount: 1,
+    };
+  });
+
+  // TODO : Group by series id (and count number of listen)
+  // TODO : Filter to get only the series that where minted on the blockchain
+  // TODO : Built the podcastId to listenCount array to be sent to the blockchain
 
   // Pay him
   const isPaymentsuccess = await payWallet(wallet.address, countLog.length);
@@ -36,12 +43,12 @@ export async function countListenAndPayWallet(
   // If the payment was a success, update his pending owner transaction
   if (isPaymentsuccess) {
     logger.debug(
-      `Payed the used ${wallet.id} for props ${idProperties} with success, update all his analytics row`
+      `Payed the used ${wallet.id} with success, update all his analytics row`
     );
     // Update all the row we counted
     const batch = db.batch();
     countLog.map(async (each) => {
-      batch.update(each.ref, paymentProperties, true);
+      batch.update(each.ref, "givenToUser", true);
     });
     batch.commit();
   } else {

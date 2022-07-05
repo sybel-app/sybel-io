@@ -33,7 +33,7 @@ export default () =>
           }
 
           // Update the owner and the user amounts
-          await countListenAndPayWallet(userWallet, "userId", "givenToUser");
+          await countListenAndPayWallet(userWallet);
 
           // Send the response
           response.status(200);

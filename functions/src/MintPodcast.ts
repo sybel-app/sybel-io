@@ -1,12 +1,15 @@
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 import cors from "cors";
 import { buildFractionId, allTokenTypesToRarity } from "./utils/SybelMath";
 import { Storage } from "@google-cloud/storage";
 import { Event } from "ethers";
-import { NftMetadata } from "./utils/NftMetadata";
+import { NftMetadata } from "./model/NftMetadata";
 import { getWalletForUser } from "./utils/UserUtils";
 import { PodcastMintedEvent } from "./generated-types/Minter";
 import { minterConnected } from "./utils/Contract";
+import MintPodcastRequestDto from "./types/request/MintPodcastRequestDto";
+import MintedPodcastDbDto from "./types/db/MintedPodcastDbDto";
 
 /**
  * @function
@@ -72,6 +75,16 @@ export default () =>
           functions.logger.debug(
             `Found the mint podcast event from the tx ${mintPodcastTxReceipt.blockHash}, with podcast id ${mintPodcastEvent.args.baseId}  `
           );
+          // Create the object we will store in our database, and save it
+          const mintedPodcast: MintedPodcastDbDto = {
+            seriesId: requestDto.id,
+            fractionBaseId: mintPodcastEvent.args.baseId.toNumber(),
+            txBlockNumber: mintPodcastTxReceipt.blockNumber,
+            txBlockHash: mintPodcastTxReceipt.blockHash,
+          };
+          const collection = admin.firestore().collection("mintedPodcast");
+          await collection.add(mintedPodcast);
+
           // Generate all of required JSON
           const uploadedFiles = await Promise.all(
             allTokenTypesToRarity.map(async (tokenTypeToRarity) => {

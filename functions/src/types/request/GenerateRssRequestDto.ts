@@ -4,3 +4,5 @@ interface GenerateRssRequestDto {
   oid: string; // owner id
   sid: string; // series id
 }
+
+export default GenerateRssRequestDto;

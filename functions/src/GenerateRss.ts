@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import https from "https";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import GenerateRssRequestDto from "./types/request/GenerateRssRequestDto";
 
 const options = {
   ignoreAttributes: false,
