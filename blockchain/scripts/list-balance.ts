@@ -43,15 +43,3 @@ async function findContract<Type extends Contract>(
   const contractFactory = await ethers.getContractFactory(name);
   return contractFactory.attach(address) as Type;
 }
-
-function generateRandomListenCountArray(podcastIdsCount: number): number[] {
-  return [...Array(podcastIdsCount).keys()].map((_) => {
-    return getRandomInt();
-  });
-}
-
-function getRandomInt(): number {
-  const min = Math.ceil(1);
-  const max = Math.floor(5);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
