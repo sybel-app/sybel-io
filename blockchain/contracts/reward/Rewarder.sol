@@ -153,11 +153,8 @@ contract Rewarder is
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
-        uint64 podcastBadge;
-        address podcastOwner;
-        (podcastBadge, podcastOwner) = podcastBadges.getPaymentBadge(
-            _podcastId
-        );
+        uint64 podcastBadge = podcastBadges.getBadge(_podcastId);
+        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         // Amout we will mint for user and for owner
         uint256 totalAmountToMint = 0;
         // Mint each token for each fraction

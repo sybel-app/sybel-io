@@ -68,18 +68,18 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 _podcastId)
+    function getBadge(uint256 _podcastId)
         external
         view
         override
         whenNotPaused
-        returns (uint64, address)
+        returns (uint64)
     {
         uint64 podcastBadge = podcastBadges[_podcastId];
         if (podcastBadge == 0) {
             // If the badge of this podcast isn't set yet, set it to default
             podcastBadge = SybelMath.DECIMALS;
         }
-        return (podcastBadge, owners[_podcastId]);
+        return podcastBadge;
     }
 }

@@ -2,27 +2,28 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
-import "../updater/IUpdater.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 /// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract SybelInternalTokens is
     ERC1155Upgradeable,
-    MintingAccessControlUpgradeable
+    MintingAccessControlUpgradeable,
+    IERC2981Upgradeable
 {
     // The current podcast token id
     uint256 private _currentPodcastTokenID;
 
-    // Available supply of each tokens (classic, rare and epic only) by they id
+    // Id of podcast to owner of this podcast
+    mapping(uint256 => address) public owners;
+
+    // Available supply of each tokens (classic, rare, epic and legendary only) by they id
     mapping(uint256 => uint256) private _availableSupplies;
 
     // Tell us if that token is supply aware or not
     mapping(uint256 => bool) private _isSupplyAware;
-
-    // Access our updater contract
-    IUpdater private updater;
 
     /**
      * @dev Event emitted when a new fraction of podcast is minted
@@ -42,17 +43,6 @@ contract SybelInternalTokens is
 
         // Set the initial podcast id
         _currentPodcastTokenID = 1;
-    }
-
-    /**
-     * @dev Update the updater address
-     */
-    function updateUpdaterAddr(address newAddress)
-        external
-        onlyUpgrader
-        whenNotPaused
-    {
-        updater = IUpdater(newAddress);
     }
 
     /**
@@ -89,12 +79,14 @@ contract SybelInternalTokens is
             _ids.length == _supplies.length,
             "SYB: Can't set the supply for id and supplies of different length"
         );
-        // Iterate over each ids
+        // Iterate over each ids and increment their supplies
         for (uint256 i = 0; i < _ids.length; ++i) {
-            _availableSupplies[_ids[i]] = _supplies[i];
-            _isSupplyAware[_ids[i]] = true;
+            uint256 id = _ids[i];
+
+            _availableSupplies[id] = _supplies[i];
+            _isSupplyAware[id] = true;
             // Emit the supply update event
-            emit SuplyUpdated(_ids[i], _supplies[i]);
+            emit SuplyUpdated(id, _supplies[i]);
         }
     }
 
@@ -123,24 +115,32 @@ contract SybelInternalTokens is
      * @dev Handle the transfer token (so update the podcast investor, change the owner of some podcast etc)
      */
     function _afterTokenTransfer(
-        address operator,
+        address,
         address from,
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory
     ) internal override {
-        // Handle the badges updates
-        updater.updateFromTransaction(operator, from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
-            bool isSupplyAware = _isSupplyAware[ids[i]];
-            if (from == address(0) && isSupplyAware) {
-                // If it's a minted token
-                _availableSupplies[ids[i]] -= amounts[i];
-            } else if (to == address(0) && isSupplyAware) {
-                // If it's a burned token
-                _availableSupplies[ids[i]] += amounts[i];
+            uint256 id = ids[i];
+
+            if (_isSupplyAware[id]) {
+                if (from == address(0)) {
+                    // If it's a minted token
+                    _availableSupplies[id] -= amounts[i];
+                } else if (to == address(0)) {
+                    // If it's a burned token
+                    _availableSupplies[id] += amounts[i];
+                }
+            }
+
+            // Then check if the owner of this podcast have changed
+            if (SybelMath.isPodcastNft(id)) {
+                // If this token is a podcast NFT, change the owner of this podcast
+                uint256 podcastId = SybelMath.extractPodcastId(id);
+                owners[podcastId] = to;
             }
         }
     }
@@ -168,13 +168,45 @@ contract SybelInternalTokens is
     }
 
     /**
+     * @dev Returns how much royalty is owed and to whom, based on a sale price that may be denominated in any unit of
+     * exchange. The royalty amount is denominated and should be paid in that same unit of exchange.
+     */
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        external
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        if (salePrice > 0 && SybelMath.isPodcastNft(tokenId)) {
+            // Find the address of the owner of this podcast
+            address ownerAddress = owners[SybelMath.extractPodcastId(tokenId)];
+            uint256 royaltyForOwner = (salePrice * 6) / 100;
+            return (ownerAddress, royaltyForOwner);
+        } else {
+            // Otherwise, return address 0 with no royalty amount
+            return (address(0), 0);
+        }
+    }
+
+    /**
+     * @dev Find the owner of the given podcast is
+     */
+    function ownerOf(uint256 podcastId) external view returns (address owner) {
+        return owners[podcastId];
+    }
+
+    /**
      * @dev Required extension to support access control and ERC1155
      */
     function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
-        override(ERC1155Upgradeable, AccessControlUpgradeable)
+        override(
+            ERC1155Upgradeable,
+            IERC165Upgradeable,
+            AccessControlUpgradeable
+        )
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
