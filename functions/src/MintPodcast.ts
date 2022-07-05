@@ -111,11 +111,13 @@ export default () =>
           );
           // Then send our response
           response.status(200).json({
-            transactionHash: mintPodcastEvent.transactionHash,
-            podcastId: mintPodcastEvent.args.baseId,
-            owner: mintPodcastEvent.args.owner,
-            operator: mintPodcastTxReceipt.from,
-            metadataGenerated: uploadedFiles,
+            data: {
+              transactionHash: mintPodcastEvent.transactionHash,
+              podcastId: mintPodcastEvent.args.baseId,
+              owner: mintPodcastEvent.args.owner,
+              operator: mintPodcastTxReceipt.from,
+              metadataGenerated: uploadedFiles,
+            },
           });
         } catch (error) {
           functions.logger.debug(

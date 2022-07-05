@@ -22,8 +22,11 @@ export async function getWalletForUser(
     // Execute the query
     const snapshot = await collection.where("id", "==", userId).limit(1).get();
     // Find document and map it
-    // TODO : Better way to do that ?
-    snapshot.forEach((doc) => document.push(doc.data() as WalletDbDto));
+    snapshot.forEach((doc) => {
+      if (doc.exists) {
+        document.push(doc.data() as WalletDbDto);
+      }
+    });
     if (document.length >= 1) {
       return document[0];
     } else {

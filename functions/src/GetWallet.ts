@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import { getWalletForUser } from "./utils/UserUtils";
+import { walletToResponse } from "./utils/Mapper";
 
 /**
  * Try to find a wallet for the user
@@ -24,7 +25,8 @@ export default () =>
         // Try to find the wallet
         const wallet = await getWalletForUser(userId);
         if (wallet != null) {
-          response.status(200).send(wallet);
+          // Send the user id and public address in response
+          response.status(200).send(walletToResponse(wallet));
         } else {
           response.status(404).send({ error: "no wallet found" });
         }

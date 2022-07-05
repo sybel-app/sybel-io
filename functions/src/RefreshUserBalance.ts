@@ -33,6 +33,9 @@ export default () =>
           }
 
           // Update the owner and the user amounts
+          logger.debug(
+            "Found the user wallet, starting to fetch all his listen"
+          );
           await countListenAndPayWallet(userWallet);
 
           // Send the response

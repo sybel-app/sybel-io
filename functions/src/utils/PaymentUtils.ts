@@ -30,6 +30,9 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
   userListenQuerySnapshot.forEach((doc) => {
     userListenDocuments.push(doc);
   });
+  logger.debug(
+    `Found ${userListenDocuments.length} listen not yet payed for the user ${wallet.id}`
+  );
 
   // If the user havn't perform any listen operation, exit directly
   if (userListenDocuments.length == 0) {
@@ -42,6 +45,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
   allMintedPodcastSnapshot.forEach((doc) => {
     mintedPodcasts.push(doc.data() as MintedPodcastDbDto);
   });
+  logger.debug(`Found ${mintedPodcasts.length} minted podcasts`);
 
   // Save an array of all the document we handled
   const handledDocument: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =

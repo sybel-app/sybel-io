@@ -89,12 +89,14 @@ export default () =>
                   paletteData.Vibrant ? paletteData.Vibrant.rgb[2] : "0"
                 })`;
                 response.status(200).send({
-                  title,
-                  background,
-                  mainColor,
-                  author,
-                  image,
-                  description,
+                  data: {
+                    title,
+                    background,
+                    mainColor,
+                    author,
+                    image,
+                    description,
+                  },
                 });
               });
             }

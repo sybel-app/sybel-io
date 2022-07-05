@@ -3,6 +3,8 @@ import cors from "cors";
 import { ethers } from "ethers";
 import * as admin from "firebase-admin";
 import { getWalletForUser } from "./utils/UserUtils";
+import { walletToResponse } from "./utils/Mapper";
+import WalletDbDto from "./types/db/WalletDbDto";
 
 const db = admin.firestore();
 
@@ -31,12 +33,8 @@ export default () =>
             functions.logger.debug(
               "The user already have a wallet, don't create a new one"
             );
-            response.status(200).send({
-              data: {
-                id: userId,
-                address: currentWallet.address,
-              },
-            });
+
+            response.status(200).send(walletToResponse(currentWallet));
             return;
           }
 
@@ -51,18 +49,14 @@ export default () =>
           );
 
           // Save the fresh wallet in our database
-          await db.collection("wallet").add({
-            userId,
+          const walletDbDto: WalletDbDto = {
+            id: userId,
             encryptedWallet: encryptedWallet,
             address: newWallet.address,
-          });
+          };
+          await db.collection("wallet").add(walletDbDto);
           // Send the user id and public address in response
-          response.status(200).send({
-            data: {
-              id: userId,
-              address: newWallet.address,
-            },
-          });
+          response.status(200).send(walletToResponse(walletDbDto));
         } catch (error) {
           functions.logger.debug(
             "An error occured while creating the user wallet",

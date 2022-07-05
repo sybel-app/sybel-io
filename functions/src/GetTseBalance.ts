@@ -33,8 +33,10 @@ export default () =>
           const balance = await tseToken.balanceOf(wallet.address);
           // And send the response
           response.status(200).send({
-            address: wallet.address,
-            balance: balance.toNumber() / 1e6,
+            data: {
+              address: wallet.address,
+              balance: balance.toNumber() / 1e6,
+            },
           });
         } catch (error) {
           functions.logger.debug(
