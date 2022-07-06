@@ -79,9 +79,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     await tseToken.grantRole(sybelRoles.MINTER(), rewarder.address);
 
     // Grand the badges updater roles
-    await updater.grantRole(sybelRoles.BADGE_UPDATER(), internalToken.address);
-    await listenerBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
-    await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), updater.address);
     await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), rewarder.address); // The rewarder has this role since he update the badges on each listen payment
 
     console.log("All roles granted with success");

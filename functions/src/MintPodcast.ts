@@ -50,13 +50,7 @@ export default () =>
           // Get our minter contract, connected via the sybel wallet
           const minter = await minterConnected();
           // Try to mint a new podcast
-          const mintPodcastTx = await minter.addPodcast(
-            requestDto.supply[0],
-            requestDto.supply[1],
-            requestDto.supply[2],
-            requestDto.supply[3],
-            creatorWallet.address
-          );
+          const mintPodcastTx = await minter.addPodcast(creatorWallet.address);
           // Await that the transaction pass on the blockchain
           const mintPodcastTxReceipt = await mintPodcastTx.wait();
           const mintPodcastEvents = mintPodcastTxReceipt.events?.filter(
