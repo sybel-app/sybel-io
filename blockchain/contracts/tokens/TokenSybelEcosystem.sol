@@ -28,14 +28,20 @@ contract TokenSybelEcosystem is
     /**
      * @dev Mint some TSE
      */
-    function mint(address to, uint256 amount) public onlyMinter {
+    function mint(address to, uint256 amount)
+        public
+        onlyRole(SybelRoles.MINTER)
+    {
         _mint(to, amount);
     }
 
     /**
      * @dev Burn some TSE
      */
-    function burn(address from, uint256 amount) public onlyMinter {
+    function burn(address from, uint256 amount)
+        public
+        onlyRole(SybelRoles.MINTER)
+    {
         _burn(from, amount);
     }
 

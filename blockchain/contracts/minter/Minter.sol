@@ -18,12 +18,6 @@ contract Minter is
     MintingAccessControlUpgradeable,
     PaymentBadgesAccessor
 {
-    // The cap for each mintable token type
-    uint256 public constant TOKEN_LEGENDARY_CAP = 10;
-    uint256 public constant TOKEN_EPIC_CAP = 50;
-    uint256 public constant TOKEN_RARE_CAP = 200;
-    uint256 public constant TOKEN_CLASSIC_CAP = 1000;
-
     /**
      * @dev Access our internal tokens
      */
@@ -42,14 +36,7 @@ contract Minter is
     /**
      * @dev Event emitted when a new podcast is minted
      */
-    event PodcastMinted(
-        uint256 baseId,
-        uint256 classicAmount,
-        uint256 rareAmount,
-        uint256 epicAmount,
-        uint256 legendaryAmount,
-        address owner
-    );
+    event PodcastMinted(uint256 baseId, address owner);
 
     /**
      * @dev Event emitted when a new fraction of podcast is minted
@@ -84,32 +71,16 @@ contract Minter is
     /**
      * @dev Add a new podcast to our eco system
      */
-    function addPodcast(
-        uint256 _classicSupply,
-        uint256 _rareSupply,
-        uint256 _epicSupply,
-        uint256 _legendarySupply,
-        address _podcastOwnerAddress
-    ) external override onlyMinter whenNotPaused returns (uint256) {
+    function addPodcast(address _podcastOwnerAddress)
+        external
+        override
+        onlyRole(SybelRoles.MINTER)
+        whenNotPaused
+        returns (uint256)
+    {
         require(
-            _classicSupply > 0,
-            "SYB: Cannot add podcast without classic supply !"
-        );
-        require(
-            _classicSupply <= TOKEN_CLASSIC_CAP,
-            "SYB: Cannot add podcast with that much classic supply !"
-        );
-        require(
-            _rareSupply <= TOKEN_RARE_CAP,
-            "SYB: Cannot add podcast with that much rare supply !"
-        );
-        require(
-            _epicSupply <= TOKEN_EPIC_CAP,
-            "SYB: Cannot add podcast with that much epic supply !"
-        );
-        require(
-            _legendarySupply <= TOKEN_LEGENDARY_CAP,
-            "SYB: Cannot add podcast with that much legendary supply !"
+            _podcastOwnerAddress != address(0),
+            "SYB: Cannot add podcast for the 0 address !"
         );
         // Try to mint the new podcast
         uint256 podcastId = sybelInternalTokens.mintNewPodcast(
@@ -122,20 +93,13 @@ contract Minter is
         ids[2] = SybelMath.buildEpicNftId(podcastId);
         ids[3] = SybelMath.buildLegendaryNftId(podcastId);
         uint256[] memory supplies = new uint256[](4);
-        supplies[0] = _classicSupply;
-        supplies[1] = _rareSupply;
-        supplies[2] = _epicSupply;
-        supplies[3] = _legendarySupply;
+        supplies[0] = 200; // Classic
+        supplies[1] = 20; // Rare
+        supplies[2] = 5; // Epic
+        supplies[3] = 1; // Legendary
         sybelInternalTokens.setSupplyBatch(ids, supplies);
         // Emit the event
-        emit PodcastMinted(
-            podcastId,
-            _classicSupply,
-            _rareSupply,
-            _epicSupply,
-            _legendarySupply,
-            _podcastOwnerAddress
-        );
+        emit PodcastMinted(podcastId, _podcastOwnerAddress);
         // Return the minted podcast id
         return podcastId;
     }
@@ -147,7 +111,7 @@ contract Minter is
         uint256 _id,
         address _to,
         uint256 _amount
-    ) external override onlyMinter whenNotPaused {
+    ) external override onlyRole(SybelRoles.MINTER) whenNotPaused {
         // Get the cost of the fraction
         uint64 fractionCost = fractionCostBadges.getBadge(_id);
         uint256 totalCost = fractionCost * _amount;
@@ -163,5 +127,55 @@ contract Minter is
         tokenSybelEcosystem.burn(_to, totalCost);
         // Emit the event
         emit FractionMinted(_id, _to, _amount, totalCost);
+    }
+
+    /**
+     * @dev Increase the supply for a podcast
+     */
+    function increaseSupply(uint256 _id, uint256 _newSupply)
+        external
+        onlyRole(SybelRoles.MINTER)
+        whenNotPaused
+    {
+        // Get the cost of the new supply
+        uint32 tokenSupplycost = supplyCost(SybelMath.extractTokenType(_id));
+        uint256 totalCost = tokenSupplycost * _newSupply;
+        // Find the owner of this podcast
+        address owner = sybelInternalTokens.ownerOf(
+            SybelMath.extractPodcastId(_id)
+        );
+        // Check if the owner have enough the balance
+        uint256 tseBalance = tokenSybelEcosystem.balanceOf(owner);
+        require(
+            tseBalance >= totalCost,
+            "SYB: The owner havn't enough balance to supply the new fraction"
+        );
+        // Compute the supply difference
+        uint256 newRealSupply = sybelInternalTokens.supplyOf(_id) + _newSupply;
+        // Mint his Fraction of NFT
+        sybelInternalTokens.setSupplyBatch(
+            SybelMath.asSingletonArray(_id),
+            SybelMath.asSingletonArray(newRealSupply)
+        );
+        // Burn his TSE token
+        tokenSybelEcosystem.burn(owner, totalCost);
+    }
+
+    /**
+     * @dev The initial cost of a fraction type
+     * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
+     */
+    function supplyCost(uint8 _tokenType) public pure returns (uint32) {
+        uint32 foundedSupplyCost;
+        if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
+            foundedSupplyCost = 500000; // 0.5 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
+            foundedSupplyCost = 2000000; // 2 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
+            foundedSupplyCost = 5000000; // 5 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
+            foundedSupplyCost = 10000000; // 10 TSE
+        }
+        return foundedSupplyCost;
     }
 }

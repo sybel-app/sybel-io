@@ -11,7 +11,6 @@ import { ListenerBadges } from "../typechain-types/contracts/badges/payment/List
 import { PodcastBadges } from "../typechain-types/contracts/badges/payment/PodcastBadges";
 import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
-import { Updater } from "../typechain-types/contracts/updater/Updater";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
 import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
 
@@ -49,7 +48,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log("Listener badges deployed to " + listenerBadges.address);
     const podcastBadges = await deployContract<PodcastBadges>("PodcastBadges");
     console.log("Podcast badges deployed to " + podcastBadges.address);
-    console.log("Listener badges deployed to " + listenerBadges.address);
     const factionCostBadges = await deployContract<FractionCostBadges>(
       "FractionCostBadges"
     );
@@ -64,13 +62,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     ]);
     console.log("Rewarder deployed to " + rewarder.address);
 
-    // Deploy our updater contract
-    const updater = await deployContract<Updater>("Updater", [
-      listenerBadges.address,
-      podcastBadges.address,
-    ]);
-    console.log("Updater deployed to " + updater.address);
-
     // Deploy our minter contract
     const minter = await deployContract<Minter>("Minter", [
       tseToken.address,
@@ -80,9 +71,6 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
       factionCostBadges.address,
     ]);
     console.log("Minter deployed to " + minter.address);
-
-    // Set the updater address on the internal tokens
-    await internalToken.updateUpdaterAddr(updater.address);
 
     // Grand all the minting roles
     await internalToken.grantRole(sybelRoles.MINTER(), minter.address);
@@ -145,7 +133,6 @@ class DeployedAddress {
     readonly podcastBadgesAddr: String,
     readonly fractionCostBadgesAddr: String,
     readonly rewarderAddr: String,
-    readonly updaterAddr: String,
     readonly minterAddr: String
   ) {}
 

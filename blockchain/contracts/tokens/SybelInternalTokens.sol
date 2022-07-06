@@ -3,16 +3,22 @@ pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 /// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract SybelInternalTokens is
-    ERC1155Upgradeable,
     MintingAccessControlUpgradeable,
+    ERC1155Upgradeable,
     IERC2981Upgradeable
 {
+    // Is this contract paused ?
+    bool private _paused;
+
     // The current podcast token id
     uint256 private _currentPodcastTokenID;
 
@@ -30,6 +36,11 @@ contract SybelInternalTokens is
      */
     event SuplyUpdated(uint256 id, uint256 supply);
 
+    /**
+     * @dev Event emitted when the owner of a podcast changed
+     */
+    event PodcastOwnerUpdated(uint256 id, address owner);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -40,7 +51,6 @@ contract SybelInternalTokens is
             "https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json"
         );
         __MintingAccessControlUpgradeable_init();
-
         // Set the initial podcast id
         _currentPodcastTokenID = 1;
     }
@@ -50,7 +60,7 @@ contract SybelInternalTokens is
      */
     function mintNewPodcast(address _podcastOwnerAddress)
         external
-        onlyMinter
+        onlyRole(SybelRoles.MINTER)
         whenNotPaused
         returns (uint256)
     {
@@ -74,7 +84,7 @@ contract SybelInternalTokens is
     function setSupplyBatch(
         uint256[] calldata _ids,
         uint256[] calldata _supplies
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         require(
             _ids.length == _supplies.length,
             "SYB: Can't set the supply for id and supplies of different length"
@@ -100,7 +110,7 @@ contract SybelInternalTokens is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory
-    ) internal view override whenNotPaused {
+    ) internal view override onlyRole(SybelRoles.MINTER) whenNotPaused {
         for (uint256 i = 0; i < ids.length; ++i) {
             if (from == address(0) && _isSupplyAware[ids[i]]) {
                 require(
@@ -141,6 +151,7 @@ contract SybelInternalTokens is
                 // If this token is a podcast NFT, change the owner of this podcast
                 uint256 podcastId = SybelMath.extractPodcastId(id);
                 owners[podcastId] = to;
+                emit PodcastOwnerUpdated(podcastId, to);
             }
         }
     }
@@ -152,7 +163,7 @@ contract SybelInternalTokens is
         address _to,
         uint256 _id,
         uint256 _amount
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         _mint(_to, _id, _amount, new bytes(0x0));
     }
 
@@ -163,7 +174,7 @@ contract SybelInternalTokens is
         address _from,
         uint256 _id,
         uint256 _amount
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         _burn(_from, _id, _amount);
     }
 
@@ -177,10 +188,10 @@ contract SybelInternalTokens is
         override
         returns (address receiver, uint256 royaltyAmount)
     {
-        if (salePrice > 0 && SybelMath.isPodcastNft(tokenId)) {
+        if (salePrice > 0 && SybelMath.isPodcastRelatedToken(tokenId)) {
             // Find the address of the owner of this podcast
             address ownerAddress = owners[SybelMath.extractPodcastId(tokenId)];
-            uint256 royaltyForOwner = (salePrice * 6) / 100;
+            uint256 royaltyForOwner = (salePrice * 4) / 100;
             return (ownerAddress, royaltyForOwner);
         } else {
             // Otherwise, return address 0 with no royalty amount
@@ -193,6 +204,13 @@ contract SybelInternalTokens is
      */
     function ownerOf(uint256 podcastId) external view returns (address owner) {
         return owners[podcastId];
+    }
+
+    /**
+     * @dev Fidn the current supply of the given token
+     */
+    function supplyOf(uint256 tokenId) external view returns (uint256 supply) {
+        return _availableSupplies[tokenId];
     }
 
     /**

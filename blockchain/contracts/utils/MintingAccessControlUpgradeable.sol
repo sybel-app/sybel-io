@@ -16,12 +16,4 @@ abstract contract MintingAccessControlUpgradeable is
 
         _grantRole(SybelRoles.MINTER, msg.sender);
     }
-
-    /**
-     * @dev Allow only the minter role
-     */
-    modifier onlyMinter() {
-        _checkRole(SybelRoles.MINTER);
-        _;
-    }
 }

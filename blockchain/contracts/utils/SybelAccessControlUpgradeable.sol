@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -12,48 +11,67 @@ import "../utils/SybelRoles.sol";
 abstract contract SybelAccessControlUpgradeable is
     Initializable,
     IPausable,
-    PausableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
+    // Is this contract paused ?
+    bool private _paused;
+
     function __SybelAccessControlUpgradeable_init() internal onlyInitializing {
-        __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
         _grantRole(SybelRoles.ADMIN, msg.sender);
         _grantRole(SybelRoles.PAUSER, msg.sender);
         _grantRole(SybelRoles.UPGRADER, msg.sender);
+
+        // Tell we are not paused at start
+        _paused = false;
     }
 
     /**
-     * @dev Allow only the pauser role
+     * @dev Returns true if the contract is paused, and false otherwise.
      */
-    modifier onlyPauser() {
-        _checkRole(SybelRoles.PAUSER);
+    function paused() private view returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused(), "Pausable: paused");
         _;
     }
 
     /**
-     * @dev Allow only the upgrader role
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
      */
-    modifier onlyUpgrader() {
-        _checkRole(SybelRoles.UPGRADER);
+    modifier whenPaused() {
+        require(paused(), "Pausable: not paused");
         _;
     }
 
     /**
      * @dev Pause this smart contract
      */
-    function pause() public override onlyPauser {
-        _pause();
+    function pause() public whenNotPaused onlyRole(SybelRoles.PAUSER) {
+        _paused = true;
     }
 
     /**
      * @dev Un pause this smart contract
      */
-    function unpause() public override onlyPauser {
-        _unpause();
+    function unpause() public whenPaused onlyRole(SybelRoles.PAUSER) {
+        _paused = false;
     }
 
     /**
@@ -62,6 +80,6 @@ abstract contract SybelAccessControlUpgradeable is
     function _authorizeUpgrade(address newImplementation)
         internal
         override
-        onlyUpgrader
+        onlyRole(SybelRoles.UPGRADER)
     {}
 }

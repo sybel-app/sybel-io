@@ -31,7 +31,10 @@ contract SybelMediaToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
     /**
      * @dev Mint new SMT
      */
-    function mint(address to, uint256 amount) public onlyMinter {
+    function mint(address to, uint256 amount)
+        public
+        onlyRole(SybelRoles.MINTER)
+    {
         _mint(to, amount);
         // Decrease the available supply
         _availableSupply -= amount;

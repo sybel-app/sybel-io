@@ -171,8 +171,16 @@ contract Rewarder is
                     _listenCount) /
                 SybelMath.DECIMALS;
         }
+        // If nothing to mint, directly exit
+        if (totalAmountToMint == 0) {
+            return;
+        }
         uint256 amountForOwner = totalAmountToMint / 2;
-        uint256 amountForListener = amountForOwner - totalAmountToMint;
+        uint256 baseAmountForListener = amountForOwner - totalAmountToMint;
+        // Handle the user badge for his amount
+        uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        uint256 amountForListener = (baseAmountForListener * listenerBadge) /
+            SybelMath.DECIMALS;
         // Mint the TSE for the listener and the owner of the podcast
         tokenSybelEcosystem.mint(_listener, amountForListener);
         tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
