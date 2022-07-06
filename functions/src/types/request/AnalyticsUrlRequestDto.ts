@@ -4,3 +4,5 @@ interface AnalyticsUrlRequestDto {
   readonly ownerId: string; // owner id
   readonly seriesId: string; // series id
 }
+
+export default AnalyticsUrlRequestDto;

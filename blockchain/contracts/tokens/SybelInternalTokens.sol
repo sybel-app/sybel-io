@@ -2,32 +2,44 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "../utils/SybelMath.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
-import "../updater/IUpdater.sol";
 
 /// @custom:security-contact crypto-support@sybel.co
 /// @custom:oz-upgrades-unsafe-allow external-library-linking
 contract SybelInternalTokens is
+    MintingAccessControlUpgradeable,
     ERC1155Upgradeable,
-    MintingAccessControlUpgradeable
+    IERC2981Upgradeable
 {
+    // Is this contract paused ?
+    bool private _paused;
+
     // The current podcast token id
     uint256 private _currentPodcastTokenID;
 
-    // Available supply of each tokens (classic, rare and epic only) by they id
+    // Id of podcast to owner of this podcast
+    mapping(uint256 => address) public owners;
+
+    // Available supply of each tokens (classic, rare, epic and legendary only) by they id
     mapping(uint256 => uint256) private _availableSupplies;
 
     // Tell us if that token is supply aware or not
     mapping(uint256 => bool) private _isSupplyAware;
 
-    // Access our updater contract
-    IUpdater private updater;
-
     /**
      * @dev Event emitted when a new fraction of podcast is minted
      */
     event SuplyUpdated(uint256 id, uint256 supply);
+
+    /**
+     * @dev Event emitted when the owner of a podcast changed
+     */
+    event PodcastOwnerUpdated(uint256 id, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -39,20 +51,8 @@ contract SybelInternalTokens is
             "https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json"
         );
         __MintingAccessControlUpgradeable_init();
-
         // Set the initial podcast id
         _currentPodcastTokenID = 1;
-    }
-
-    /**
-     * @dev Update the updater address
-     */
-    function updateUpdaterAddr(address newAddress)
-        external
-        onlyUpgrader
-        whenNotPaused
-    {
-        updater = IUpdater(newAddress);
     }
 
     /**
@@ -60,7 +60,7 @@ contract SybelInternalTokens is
      */
     function mintNewPodcast(address _podcastOwnerAddress)
         external
-        onlyMinter
+        onlyRole(SybelRoles.MINTER)
         whenNotPaused
         returns (uint256)
     {
@@ -84,17 +84,19 @@ contract SybelInternalTokens is
     function setSupplyBatch(
         uint256[] calldata _ids,
         uint256[] calldata _supplies
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         require(
             _ids.length == _supplies.length,
             "SYB: Can't set the supply for id and supplies of different length"
         );
-        // Iterate over each ids
+        // Iterate over each ids and increment their supplies
         for (uint256 i = 0; i < _ids.length; ++i) {
-            _availableSupplies[_ids[i]] = _supplies[i];
-            _isSupplyAware[_ids[i]] = true;
+            uint256 id = _ids[i];
+
+            _availableSupplies[id] = _supplies[i];
+            _isSupplyAware[id] = true;
             // Emit the supply update event
-            emit SuplyUpdated(_ids[i], _supplies[i]);
+            emit SuplyUpdated(id, _supplies[i]);
         }
     }
 
@@ -108,7 +110,7 @@ contract SybelInternalTokens is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory
-    ) internal view override whenNotPaused {
+    ) internal view override onlyRole(SybelRoles.MINTER) whenNotPaused {
         for (uint256 i = 0; i < ids.length; ++i) {
             if (from == address(0) && _isSupplyAware[ids[i]]) {
                 require(
@@ -123,24 +125,33 @@ contract SybelInternalTokens is
      * @dev Handle the transfer token (so update the podcast investor, change the owner of some podcast etc)
      */
     function _afterTokenTransfer(
-        address operator,
+        address,
         address from,
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory
     ) internal override {
-        // Handle the badges updates
-        updater.updateFromTransaction(operator, from, to, ids, amounts);
         // In the case we are sending the token to a given wallet
         for (uint256 i = 0; i < ids.length; ++i) {
-            bool isSupplyAware = _isSupplyAware[ids[i]];
-            if (from == address(0) && isSupplyAware) {
-                // If it's a minted token
-                _availableSupplies[ids[i]] -= amounts[i];
-            } else if (to == address(0) && isSupplyAware) {
-                // If it's a burned token
-                _availableSupplies[ids[i]] += amounts[i];
+            uint256 id = ids[i];
+
+            if (_isSupplyAware[id]) {
+                if (from == address(0)) {
+                    // If it's a minted token
+                    _availableSupplies[id] -= amounts[i];
+                } else if (to == address(0)) {
+                    // If it's a burned token
+                    _availableSupplies[id] += amounts[i];
+                }
+            }
+
+            // Then check if the owner of this podcast have changed
+            if (SybelMath.isPodcastNft(id)) {
+                // If this token is a podcast NFT, change the owner of this podcast
+                uint256 podcastId = SybelMath.extractPodcastId(id);
+                owners[podcastId] = to;
+                emit PodcastOwnerUpdated(podcastId, to);
             }
         }
     }
@@ -152,7 +163,7 @@ contract SybelInternalTokens is
         address _to,
         uint256 _id,
         uint256 _amount
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         _mint(_to, _id, _amount, new bytes(0x0));
     }
 
@@ -163,8 +174,43 @@ contract SybelInternalTokens is
         address _from,
         uint256 _id,
         uint256 _amount
-    ) external onlyMinter whenNotPaused {
+    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
         _burn(_from, _id, _amount);
+    }
+
+    /**
+     * @dev Returns how much royalty is owed and to whom, based on a sale price that may be denominated in any unit of
+     * exchange. The royalty amount is denominated and should be paid in that same unit of exchange.
+     */
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        external
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        if (salePrice > 0 && SybelMath.isPodcastRelatedToken(tokenId)) {
+            // Find the address of the owner of this podcast
+            address ownerAddress = owners[SybelMath.extractPodcastId(tokenId)];
+            uint256 royaltyForOwner = (salePrice * 4) / 100;
+            return (ownerAddress, royaltyForOwner);
+        } else {
+            // Otherwise, return address 0 with no royalty amount
+            return (address(0), 0);
+        }
+    }
+
+    /**
+     * @dev Find the owner of the given podcast is
+     */
+    function ownerOf(uint256 podcastId) external view returns (address owner) {
+        return owners[podcastId];
+    }
+
+    /**
+     * @dev Fidn the current supply of the given token
+     */
+    function supplyOf(uint256 tokenId) external view returns (uint256 supply) {
+        return _availableSupplies[tokenId];
     }
 
     /**
@@ -174,7 +220,11 @@ contract SybelInternalTokens is
         public
         view
         virtual
-        override(ERC1155Upgradeable, AccessControlUpgradeable)
+        override(
+            ERC1155Upgradeable,
+            IERC165Upgradeable,
+            AccessControlUpgradeable
+        )
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

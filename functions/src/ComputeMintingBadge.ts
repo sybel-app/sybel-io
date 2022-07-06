@@ -19,6 +19,7 @@ export default () =>
     .region("europe-west3")
     .pubsub.schedule("0 0 * * 1") // Run every week on monday
     .onRun(async () => {
+      functions.logger.info("Started the fraction cost badges update");
       // Get our connected badges contract
       const connectedBadgesContract = await fractionCostBadgesConnected();
 
@@ -156,7 +157,7 @@ export default () =>
           );
         }
       }
-      functions.logger.info("Finished the podcast badges update");
+      functions.logger.info("Finished the fraction cost badges update");
     });
 
 /**

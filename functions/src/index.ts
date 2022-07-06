@@ -8,6 +8,8 @@ import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./ExtractPodcastInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
 import importSybelListenEventCron from "./ImportSybelListenEvent";
+import computeMintingBadgeCron from "./ComputeMintingBadge";
+import computePodcastBadgeCron from "./ComputePodcastBadge";
 import mintPodcast from "./MintPodcast";
 
 /**
@@ -71,7 +73,11 @@ export const refreshBalance = refreshUserBalanceFunction();
 export const importSybelListenEvent = importSybelListenEventCron();
 
 /**
- * Compute the minting badge of each token fraction
- * TODO : Disabled for now, since not live
+ * Compute the fraction cost badge of each token fraction
  */
-// export const computeMintingBadge = computeMintingBadgeCron();
+export const computeMintingBadge = computeMintingBadgeCron();
+
+/**
+ * Compute the podcast badge of each token fraction
+ */
+export const computePodcastBadge = computePodcastBadgeCron();

@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import { getWalletForUser } from "./utils/UserUtils";
+import { walletToResponse } from "./utils/Mapper";
 
 /**
  * Try to find a wallet for the user
@@ -12,21 +13,25 @@ import { getWalletForUser } from "./utils/UserUtils";
 export default () =>
   functions
     .region("europe-west3")
-    .https.onRequest(async (request, response) => {
-      cors()(request, response, async () => {
-        // Ensure we got the right param
-        const userId = request.body.data.id;
-        if (!userId) {
-          response.status(500).send({ error: "missing arguments" });
-          return;
-        }
+    .https.onCall(async (data, context): Promise<unknown> => {
+      functions.logger.debug(`app id ${context.app?.appId}`);
+      functions.logger.debug(`auth id ${context.auth?.uid}`);
+      functions.logger.debug(`instance id token ${context.instanceIdToken}`);
+      // Ensure we got the right param
+      const userId = data.id;
+      if (!userId) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "missing arguments"
+        );
+      }
 
-        // Try to find the wallet
-        const wallet = await getWalletForUser(userId);
-        if (wallet != null) {
-          response.status(200).send(wallet);
-        } else {
-          response.status(404).send({ error: "no wallet found" });
-        }
-      });
+      // Try to find the wallet
+      const wallet = await getWalletForUser(userId);
+      if (wallet != null) {
+        // Send the user id and public address in response
+        return walletToResponse(wallet);
+      } else {
+        throw new functions.https.HttpsError("not-found", "no wallet found");
+      }
     });

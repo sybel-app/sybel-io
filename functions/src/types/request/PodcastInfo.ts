@@ -4,3 +4,5 @@ interface PodcastInfo {
   description: string;
   background_color: string;
 }
+
+export default PodcastInfo;

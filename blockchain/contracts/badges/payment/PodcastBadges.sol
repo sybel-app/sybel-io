@@ -14,12 +14,7 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     // Map podcast id to Podcast badge
     mapping(uint256 => uint64) podcastBadges;
 
-    // Id of podcast to owner of podcast
-    mapping(uint256 => address) public owners;
-
     event PodcastBadgeUpdated(uint256 id, uint64 badge);
-
-    event PodcastOwnerUpdated(uint256 id, address owner);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -47,39 +42,20 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
     }
 
     /**
-     * @dev Update the badges from a transaction record
-     */
-    function updateFromTransaction(
-        address,
-        address _to,
-        uint256[] calldata _ids,
-        uint256[] calldata
-    ) external override onlyRole(SybelRoles.BADGE_UPDATER) whenNotPaused {
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            if (_to != address(0) && SybelMath.isPodcastNft(_ids[i])) {
-                // If this token is a podcast NFT, change the owner of this podcast
-                uint256 podcastId = SybelMath.extractPodcastId(_ids[i]);
-                owners[podcastId] = _to;
-                emit PodcastOwnerUpdated(podcastId, _to);
-            }
-        }
-    }
-
-    /**
      * @dev Get the payment badges for the given informations
      */
-    function getPaymentBadge(uint256 _podcastId)
+    function getBadge(uint256 _podcastId)
         external
         view
         override
         whenNotPaused
-        returns (uint64, address)
+        returns (uint64)
     {
         uint64 podcastBadge = podcastBadges[_podcastId];
         if (podcastBadge == 0) {
             // If the badge of this podcast isn't set yet, set it to default
             podcastBadge = SybelMath.DECIMALS;
         }
-        return (podcastBadge, owners[_podcastId]);
+        return podcastBadge;
     }
 }

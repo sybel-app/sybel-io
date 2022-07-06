@@ -3,20 +3,20 @@ pragma solidity ^0.8.15;
 
 library SybelMath {
     // The offset of the id and the mask we use to store the token type
-    uint8 public constant ID_OFFSET = 4;
-    uint8 public constant TYPE_MASK = 0xF;
+    uint8 internal constant ID_OFFSET = 4;
+    uint8 internal constant TYPE_MASK = 0xF;
 
     // The mask for the different podcast specfic types
-    uint8 public constant TOKEN_TYPE_NFT_MASK = 1;
-    uint8 public constant TOKEN_TYPE_STANDART_MASK = 2;
-    uint8 public constant TOKEN_TYPE_CLASSIC_MASK = 3;
-    uint8 public constant TOKEN_TYPE_RARE_MASK = 4;
-    uint8 public constant TOKEN_TYPE_EPIC_MASK = 5;
-    uint8 public constant TOKEN_TYPE_LEGENDARY_MASK = 6;
+    uint8 internal constant TOKEN_TYPE_NFT_MASK = 1;
+    uint8 internal constant TOKEN_TYPE_STANDART_MASK = 2;
+    uint8 internal constant TOKEN_TYPE_CLASSIC_MASK = 3;
+    uint8 internal constant TOKEN_TYPE_RARE_MASK = 4;
+    uint8 internal constant TOKEN_TYPE_EPIC_MASK = 5;
+    uint8 internal constant TOKEN_TYPE_LEGENDARY_MASK = 6;
 
     // The decimals for each emitted token
-    uint8 public constant DECIMALS_COUNT = 6;
-    uint64 public constant DECIMALS = 1000000;
+    uint8 internal constant DECIMALS_COUNT = 6;
+    uint64 internal constant DECIMALS = 1000000;
 
     /**
      * @dev Build the id for a S FNT
@@ -168,5 +168,19 @@ library SybelMath {
      */
     function isPodcastNft(uint256 _id) internal pure returns (bool) {
         return extractTokenType(_id) == TOKEN_TYPE_NFT_MASK;
+    }
+
+    /**
+     * @dev Create a singleton array of the given element
+     */
+    function asSingletonArray(uint256 element)
+        internal
+        pure
+        returns (uint256[] memory)
+    {
+        uint256[] memory array = new uint256[](1);
+        array[0] = element;
+
+        return array;
     }
 }

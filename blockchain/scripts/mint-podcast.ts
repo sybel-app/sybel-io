@@ -22,7 +22,7 @@ import { minterAddr } from "../addresses.json";
     // Mint a podcast per account
     for (const account of accounts) {
       // Mint podcast
-      await minter.addPodcast(1000, 100, 10, 5, account.address);
+      await minter.addPodcast(account.address);
       console.log("New podcast minted for the owner " + account.address);
     }
   } catch (e: any) {

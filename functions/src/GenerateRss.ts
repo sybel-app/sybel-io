@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import https from "https";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import GenerateRssRequestDto from "./types/request/GenerateRssRequestDto";
 
 const options = {
   ignoreAttributes: false,
@@ -56,7 +57,7 @@ export default () =>
                   ) =>
                     each.enclosure.att_url
                       ? (each.enclosure.att_url =
-                          process.env.AUDIO +
+                          process.env.BASE_URL_AUDIO_REDIRECT +
                           "?uid=" +
                           requestDto.uid +
                           "&oid=" +

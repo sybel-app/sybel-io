@@ -15,10 +15,11 @@ import {
 } from "./addresses.json";
 import { FractionCostBadges__factory } from "../generated-types/factories/FractionCostBadges__factory";
 import { FractionCostBadges } from "../generated-types/FractionCostBadges";
+import { decryptJsonWallet } from "@ethersproject/json-wallets";
 
 // Build our provider
 const provider = new ethers.providers.JsonRpcProvider(
-  process.env.HARDHAT_LOCAL_NODE
+  process.env.JSON_RPC_PROVIDER_URL
 );
 
 // Access our tse token contract
@@ -45,16 +46,21 @@ export const fractionCostBadges = FractionCostBadges__factory.connect(
   provider
 );
 
+// Access the sybel private wallet
+async function sybelWallet(): Promise<Wallet> {
+  // Decrypt the sybel key from the env variable
+  const account = await decryptJsonWallet(
+    process.env.SYBEL_ENCRYPTED_WALLET!,
+    process.env.SYBEL_ENCRYPTION_KEY!
+  );
+  // Build the wallet
+  return new Wallet(account, provider);
+}
+
 // Access our fraction cost badge contract, connected on the sybe lwallet
 export async function fractionCostBadgesConnected(): Promise<FractionCostBadges> {
-  const sybelWallet = new Wallet(
-    process.env.HARDHAT_LOCAL_TEST_WALLET!,
-    provider
-  );
-  return FractionCostBadges__factory.connect(
-    fractionCostBadgesAddr,
-    sybelWallet
-  );
+  const wallet = await sybelWallet();
+  return FractionCostBadges__factory.connect(fractionCostBadgesAddr, wallet);
 }
 
 // Access our fraction cost badge contract, connected on the sybe lwallet

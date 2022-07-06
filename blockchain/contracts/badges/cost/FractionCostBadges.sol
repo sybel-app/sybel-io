@@ -74,13 +74,13 @@ contract FractionCostBadges is
     {
         uint32 initialCost;
         if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
-            initialCost = 500000; // 0.5 TSE
+            initialCost = 1000000; // 1 TSE
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
-            initialCost = 2000000; // 2 TSE
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
             initialCost = 5000000; // 5 TSE
+        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
+            initialCost = 1000000; // 10 TSE
         } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
-            initialCost = 10000000; // 10 TSE
+            initialCost = 20000000; // 20 TSE
         }
         return initialCost;
     }

@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import * as admin from "firebase-admin";
+import AnalyticsUrlRequestDto from "./types/request/AnalyticsUrlRequestDto";
 
 const db = admin.firestore();
 

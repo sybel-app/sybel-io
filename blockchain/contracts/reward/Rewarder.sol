@@ -153,16 +153,10 @@ contract Rewarder is
         ListenerBalanceOnPodcast[] memory _balances
     ) private {
         // The user have a balance we can continue
-        uint64 podcastBadge;
-        address podcastOwner;
-        (podcastBadge, podcastOwner) = podcastBadges.getPaymentBadge(
-            _podcastId
-        );
-        // Get the listener multiplier
-        // uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        uint64 podcastBadge = podcastBadges.getBadge(_podcastId);
+        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         // Amout we will mint for user and for owner
-        uint256 amountForListener = 0;
-        uint256 amountForOwner = 0;
+        uint256 totalAmountToMint = 0;
         // Mint each token for each fraction
         for (uint256 i = 0; i < _balances.length; ++i) {
             if (_balances[i].balance <= 0) {
@@ -170,24 +164,23 @@ contract Rewarder is
                 continue;
             }
             // Compute the amount for the owner and the users
-            uint256 amountToMint = (_balances[i].balance *
-                baseRewardForTokenType(_balances[i].tokenType) *
-                podcastBadge *
-                _listenCount) / SybelMath.DECIMALS;
-            // Jump this iteration if we got not token to mint
-            if (amountToMint <= 0) {
-                // Jump this iteration if the user havn't go any balance of this token types
-                continue;
-            }
-
-            // Get the ratio between the user and the owner of the podcast (on a thousand)
-            uint256 ratioOwnerUser = ratioForTokenTypeOnAThousand(
-                _balances[i].tokenType
-            );
-            // Compute the right amount to mint
-            amountForListener += (amountToMint * ratioOwnerUser) / 1000;
-            amountForOwner += amountToMint - amountForListener;
+            totalAmountToMint +=
+                (_balances[i].balance *
+                    baseRewardForTokenType(_balances[i].tokenType) *
+                    podcastBadge *
+                    _listenCount) /
+                SybelMath.DECIMALS;
         }
+        // If nothing to mint, directly exit
+        if (totalAmountToMint == 0) {
+            return;
+        }
+        uint256 amountForOwner = totalAmountToMint / 2;
+        uint256 baseAmountForListener = totalAmountToMint - amountForOwner;
+        // Handle the user badge for his amount
+        uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        uint256 amountForListener = (baseAmountForListener * listenerBadge) /
+            SybelMath.DECIMALS;
         // Mint the TSE for the listener and the owner of the podcast
         tokenSybelEcosystem.mint(_listener, amountForListener);
         tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
@@ -223,30 +216,6 @@ contract Rewarder is
             reward = 2000000; // 2 TSE
         }
         return reward;
-    }
-
-    /**
-     * @dev Get the ratio between user and owner for the given token type
-     * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
-     */
-    function ratioForTokenTypeOnAThousand(uint8 _tokenType)
-        private
-        pure
-        returns (uint16)
-    {
-        uint16 ratio;
-        if (_tokenType == SybelMath.TOKEN_TYPE_STANDART_MASK) {
-            ratio = 1; // 0.1%
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
-            ratio = 50; // 5%
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
-            ratio = 100; // 10%
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
-            ratio = 250; // 25%
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
-            ratio = 500; // 50%
-        }
-        return ratio;
     }
 
     struct ListenerBalanceOnPodcast {

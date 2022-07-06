@@ -1,8 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import SybelDataRefresh from "./model/SybelDataRefresh";
+import SybelDataRefreshDbDto from "./types/db/SybelDataRefreshDbDto";
 import { Timestamp } from "@firebase/firestore";
-import { UsersImported } from "./model/UsersImported";
 import { getWalletForUserSet } from "./utils/UserUtils";
 import { countListenAndPayWallet } from "./utils/PaymentUtils";
 import { chunk } from "lodash";
@@ -39,21 +38,13 @@ export default () =>
       }
 
       // Import sybel listen event in our analytics table
-      const usersImported = await importSybelListenEvent(
-        lastRefreshedTimestamp
-      );
+      const userIdSet = await importSybelListenEvent(lastRefreshedTimestamp);
 
-      // Directly pay the owner updated
-      const ownerWallets = await getWalletForUserSet(usersImported.ownerIdSet);
-      ownerWallets.forEach(async (wallet) => {
-        await countListenAndPayWallet(wallet, "ownerId", "givenToOwner");
-      });
-
-      // Directly pay the ownuserer updated
-      const userWallets = await getWalletForUserSet(usersImported.userIdSet);
-      userWallets.forEach(async (wallet) => {
-        await countListenAndPayWallet(wallet, "userId", "givenToUser");
-      });
+      // Directly pay the user updated
+      const userWallets = await getWalletForUserSet(userIdSet);
+      for (const userWallet of userWallets) {
+        await countListenAndPayWallet(userWallet);
+      }
 
       return null;
     });
@@ -64,15 +55,17 @@ export default () =>
  */
 async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
   const collection = db.collection("sybelProdctionRefresh");
-  const documents: SybelDataRefresh[] = [];
+  const documents: SybelDataRefreshDbDto[] = [];
   const snapshot = await collection.orderBy("timestamp", "desc").limit(1).get();
   let lastTimestamp: Timestamp;
-  snapshot.forEach((doc) => documents.push(doc.data() as SybelDataRefresh));
+  snapshot.forEach((doc) =>
+    documents.push(doc.data() as SybelDataRefreshDbDto)
+  );
   if (documents.length > 0) {
-    const lastDataRefresh = documents[0] as SybelDataRefresh;
+    const lastDataRefresh = documents[0] as SybelDataRefreshDbDto;
     lastTimestamp = lastDataRefresh.timestamp;
   } else {
-    lastTimestamp = new Timestamp(1, 1);
+    lastTimestamp = Timestamp.fromDate(new Date());
   }
 
   return lastTimestamp;
@@ -86,7 +79,7 @@ async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
  */
 async function importSybelListenEvent(
   lastRefreshedTimestamp: Timestamp
-): Promise<UsersImported> {
+): Promise<Set<string>> {
   // Build our big query connection
   const projectId = "sybel-bigquery";
   const keyFilename = "sybel-bigquery.json";
@@ -117,7 +110,7 @@ async function importSybelListenEvent(
     // Exit recitly if we didn't found any new row
     if (rows.length <= 0) {
       logger.debug("No transaction found, aborting the import process");
-      return new UsersImported();
+      return new Set();
     }
 
     // Create the batch for our database operation
@@ -129,7 +122,6 @@ async function importSybelListenEvent(
     );
 
     // Build the set of owner and user id set we updated
-    const ownerIdSet = new Set<string>();
     const userIdSet = new Set<string>();
 
     // Slide into chunk of 500 to prevent transaction overflow from firestore db
@@ -146,13 +138,11 @@ async function importSybelListenEvent(
             userId: row.user_id,
             ownerId: row.owner_id,
             seriesId: row.series_id,
-            givenToOwner: false,
             givenToUser: false,
             date: admin.firestore.Timestamp.fromMillis(row.timestamp),
           };
 
-          // Add the user and owner id into our set
-          ownerIdSet.add(newListen.ownerId);
+          // Add the user id into our set
           userIdSet.add(newListen.userId);
 
           // Add it in our db transaction
@@ -173,9 +163,9 @@ async function importSybelListenEvent(
     });
 
     // Then, return the set of user's imported
-    return new UsersImported(ownerIdSet, userIdSet);
+    return userIdSet;
   } catch (e) {
     logger.warn("Unable to import the sybel listen event's", e);
-    return new UsersImported();
+    return new Set();
   }
 }

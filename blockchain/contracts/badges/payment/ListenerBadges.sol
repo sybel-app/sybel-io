@@ -39,7 +39,7 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     }
 
     /**
-     * @dev Find the badge for the given lsitener
+     * @dev Find the badge for the given listener (on a 1e6 scale)
      */
     function getBadge(address _listener)
         external
@@ -50,7 +50,7 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
         uint64 listenerBadge = listenerBadges[_listener];
         if (listenerBadge == 0) {
             // If the badge of this listener isn't set yet, set it to default
-            listenerBadge = 1;
+            listenerBadge = SybelMath.DECIMALS;
         }
         return listenerBadge;
     }
