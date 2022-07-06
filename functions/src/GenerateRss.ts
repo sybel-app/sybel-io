@@ -57,7 +57,7 @@ export default () =>
                   ) =>
                     each.enclosure.att_url
                       ? (each.enclosure.att_url =
-                          process.env.AUDIO +
+                          process.env.BASE_URL_AUDIO_REDIRECT +
                           "?uid=" +
                           requestDto.uid +
                           "&oid=" +

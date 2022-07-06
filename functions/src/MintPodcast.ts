@@ -1,6 +1,5 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import cors from "cors";
 import { buildFractionId, allTokenTypesToRarity } from "./utils/SybelMath";
 import { Storage } from "@google-cloud/storage";
 import { Event } from "ethers";
@@ -8,8 +7,8 @@ import { NftMetadata } from "./model/NftMetadata";
 import { getWalletForUser } from "./utils/UserUtils";
 import { PodcastMintedEvent } from "./generated-types/Minter";
 import { minterConnected } from "./utils/Contract";
-import MintPodcastRequestDto from "./types/request/MintPodcastRequestDto";
 import MintedPodcastDbDto from "./types/db/MintedPodcastDbDto";
+import MintPodcastRequestDto from "./types/request/MintPodcastRequestDto";
 
 /**
  * @function
@@ -20,30 +19,28 @@ import MintedPodcastDbDto from "./types/db/MintedPodcastDbDto";
 export default () =>
   functions
     .region("europe-west3")
-    .https.onRequest(async (request, response) => {
-      cors()(request, response, async () => {
-        // Extract variable from the request
-        const requestDto: MintPodcastRequestDto = request.body.data;
+    .https.onCall(
+      async (request: MintPodcastRequestDto, context): Promise<unknown> => {
+        functions.logger.debug(`app id ${context.app?.appId}`);
+        functions.logger.debug(`auth id ${context.auth?.uid}`);
+        functions.logger.debug(`instance id token ${context.instanceIdToken}`);
 
-        // Our route require the from address, the supply of different rarity token,
+        // Our route require the from address and the info required for the
         //  and rss informations to generate the json
-        if (
-          !requestDto.id ||
-          !requestDto.supply ||
-          !requestDto.podcastInfo ||
-          requestDto.supply.length != 4
-        ) {
-          response.status(500).send({ error: "missing arguments" });
-          return;
+        if (!request.id || !request.podcastInfo) {
+          throw new functions.https.HttpsError(
+            "invalid-argument",
+            "missing arguments"
+          );
         }
 
         // Find the wallet of the creator of this podcast
-        const creatorWallet = await getWalletForUser(requestDto.id);
+        const creatorWallet = await getWalletForUser(request.id);
         if (!creatorWallet) {
-          response
-            .status(404)
-            .send({ error: "Unable to find the wallet of the owner" });
-          return;
+          throw new functions.https.HttpsError(
+            "not-found",
+            "no creator wallet found"
+          );
         }
 
         try {
@@ -59,10 +56,10 @@ export default () =>
           );
           // If we are unable to extract the mint event, exit directly
           if (!mintPodcastEvents) {
-            response.status(500).send({
-              error: `Unable to find the mind podcast event, you should check it manually, tx hash ${mintPodcastTxReceipt.blockHash}`,
-            });
-            return;
+            throw new functions.https.HttpsError(
+              "internal",
+              `Unable to find the mind podcast event, you should check it manually, tx hash ${mintPodcastTxReceipt.blockHash}`
+            );
           }
           // Otherwise, extract the mint event, and use it to generate metadata
           const mintPodcastEvent = mintPodcastEvents[0];
@@ -71,7 +68,7 @@ export default () =>
           );
           // Create the object we will store in our database, and save it
           const mintedPodcast: MintedPodcastDbDto = {
-            seriesId: requestDto.id,
+            seriesId: request.id,
             fractionBaseId: mintPodcastEvent.args.baseId.toNumber(),
             txBlockNumber: mintPodcastTxReceipt.blockNumber,
             txBlockHash: mintPodcastTxReceipt.blockHash,
@@ -93,10 +90,10 @@ export default () =>
               // Build the json metadata we will upload
               const nftMetadata = new NftMetadata(
                 fractionId,
-                requestDto.podcastInfo.image,
-                requestDto.podcastInfo.name,
-                requestDto.podcastInfo.description,
-                requestDto.podcastInfo.background_color,
+                request.podcastInfo.image,
+                request.podcastInfo.name,
+                request.podcastInfo.description,
+                request.podcastInfo.background_color,
                 tokenTypeToRarity.rarity
               );
               // Then upload the built metadata
@@ -104,24 +101,22 @@ export default () =>
             })
           );
           // Then send our response
-          response.status(200).json({
-            data: {
-              transactionHash: mintPodcastEvent.transactionHash,
-              podcastId: mintPodcastEvent.args.baseId,
-              owner: mintPodcastEvent.args.owner,
-              operator: mintPodcastTxReceipt.from,
-              metadataGenerated: uploadedFiles,
-            },
-          });
+          return {
+            transactionHash: mintPodcastEvent.transactionHash,
+            podcastId: mintPodcastEvent.args.baseId,
+            owner: mintPodcastEvent.args.owner,
+            operator: mintPodcastTxReceipt.from,
+            metadataGenerated: uploadedFiles,
+          };
         } catch (error) {
           functions.logger.debug(
             "An error occured while minting the podcast",
             error
           );
-          response.status(500).send({ error });
+          throw new functions.https.HttpsError("internal", "unknown", error);
         }
-      });
-    });
+      }
+    );
 
 /**
  * Upload a given json into our bucket
