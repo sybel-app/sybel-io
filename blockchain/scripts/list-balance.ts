@@ -10,7 +10,7 @@ import { tseTokenAddr } from "../addresses.json";
 
 (async () => {
   try {
-    console.log("Paying some random listen to all the known accounts");
+    console.log(`current network name ${hre.hardhatArguments.network}`);
 
     // Find our required contracts
     const tseToken = await findContract<TokenSybelEcosystem>(

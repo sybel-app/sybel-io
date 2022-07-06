@@ -176,7 +176,7 @@ contract Rewarder is
             return;
         }
         uint256 amountForOwner = totalAmountToMint / 2;
-        uint256 baseAmountForListener = amountForOwner - totalAmountToMint;
+        uint256 baseAmountForListener = totalAmountToMint - amountForOwner;
         // Handle the user badge for his amount
         uint64 listenerBadge = listenerBadges.getBadge(_listener);
         uint256 amountForListener = (baseAmountForListener * listenerBadge) /

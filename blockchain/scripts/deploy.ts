@@ -2,7 +2,9 @@
 import { ethers, upgrades } from "hardhat";
 import * as fs from "fs";
 
-import { Contract } from "ethers";
+const hre = require("hardhat");
+
+import { Contract, utils } from "ethers";
 
 import { SybelInternalTokens } from "../typechain-types/contracts/tokens/SybelInternalTokens";
 import { SybelMediaToken } from "../typechain-types/contracts/tokens/SybelMediaToken";
@@ -12,18 +14,13 @@ import { PodcastBadges } from "../typechain-types/contracts/badges/payment/Podca
 import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
-import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
+import { util } from "chai";
 
 (async () => {
   try {
     console.log(
       "Deploying all the contract for a simple blockchain intergration"
     );
-
-    // Deploy our roles libs (just use to access the roles, not really needed)
-    const SybelRolesFactory = await ethers.getContractFactory("SybelRoles");
-    const sybelRoles = (await SybelRolesFactory.deploy()) as SybelRoles;
-    console.log("Sybel roles deployed to " + sybelRoles.address);
 
     // Deploy our internal token contract
     const internalToken = await deployContract<SybelInternalTokens>(
@@ -73,19 +70,16 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
     console.log("Minter deployed to " + minter.address);
 
     // Grand all the minting roles
-    await internalToken.grantRole(sybelRoles.MINTER(), minter.address);
-    await internalToken.grantRole(sybelRoles.MINTER(), rewarder.address);
-    await tseToken.grantRole(sybelRoles.MINTER(), minter.address);
-    await tseToken.grantRole(sybelRoles.MINTER(), rewarder.address);
-
-    // Grand the badges updater roles
-    await podcastBadges.grantRole(sybelRoles.BADGE_UPDATER(), rewarder.address); // The rewarder has this role since he update the badges on each listen payment
+    const minterRole = utils.keccak256(utils.toUtf8Bytes("MINTER_ROLE"));
+    await internalToken.grantRole(minterRole, minter.address);
+    await internalToken.grantRole(minterRole, rewarder.address);
+    await tseToken.grantRole(minterRole, minter.address);
+    await tseToken.grantRole(minterRole, rewarder.address);
 
     console.log("All roles granted with success");
 
     // Build our deplyoed address object
     const addresses = new DeployedAddress(
-      sybelRoles.address,
       internalToken.address,
       tseToken.address,
       smtToken.address,
@@ -93,15 +87,14 @@ import { SybelRoles } from "../typechain-types/contracts/utils/SybelRoles";
       podcastBadges.address,
       factionCostBadges.address,
       rewarder.address,
-      updater.address,
       minter.address
     );
     fs.writeFileSync("addresses.json", addresses.toJson());
-
-    // Gas used : 382 191 of 388 162
-    // Without user and earn multiplier : 354 360 of 359 896
-    // With only one iteration of balanceOf (and mint standart) : 487 463 of 495 079
-    // With only one iteration of balanceOf : 237 857 of 241 573
+    // Write another addresses with the name of the current network as backup
+    fs.writeFileSync(
+      `addresses-${hre.hardhatArguments.network}.json`,
+      addresses.toJson()
+    );
   } catch (e: any) {
     console.log(e.message);
   }
@@ -122,7 +115,6 @@ async function deployContract<Type extends Contract>(
 // Immutable data object
 class DeployedAddress {
   constructor(
-    readonly sybelRolesAddr: String,
     readonly internalTokenAddr: String,
     readonly tseTokenAddr: String,
     readonly smtTokenAddr: String,
