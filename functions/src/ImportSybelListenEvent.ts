@@ -65,7 +65,7 @@ async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
     const lastDataRefresh = documents[0] as SybelDataRefreshDbDto;
     lastTimestamp = lastDataRefresh.timestamp;
   } else {
-    lastTimestamp = new Timestamp(1, 1);
+    lastTimestamp = Timestamp.fromDate(new Date());
   }
 
   return lastTimestamp;
