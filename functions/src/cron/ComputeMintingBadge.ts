@@ -4,8 +4,8 @@ import {
   fractionCostBadges,
   internalTokens,
   fractionCostBadgesConnected,
-} from "./utils/Contract";
-import { buildFractionId, BUYABLE_TOKEN_TYPES } from "./utils/SybelMath";
+} from "../utils/Contract";
+import { buildFractionId, BUYABLE_TOKEN_TYPES } from "../utils/SybelMath";
 import { BigNumber } from "ethers";
 
 /**

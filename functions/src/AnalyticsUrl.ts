@@ -2,6 +2,8 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import * as admin from "firebase-admin";
 import AnalyticsUrlRequestDto from "./types/request/AnalyticsUrlRequestDto";
+import ListenAnalyticsDbDto from "./types/db/ListenAnalyticsDbDto";
+import { Timestamp } from "@firebase/firestore";
 
 const db = admin.firestore();
 
@@ -42,13 +44,11 @@ export default () =>
             const collection = db.collection("listeningAnalytics");
             const batch = db.batch();
             // Create the new listen object we will store in our database
-            const newListen = {
-              rssUrl: requestDto.rssUrl,
+            const newListen: ListenAnalyticsDbDto = {
               userId: requestDto.userId,
-              ownerId: requestDto.ownerId,
               seriesId: requestDto.seriesId,
               givenToUser: false,
-              date: admin.firestore.Timestamp.fromDate(new Date()),
+              date: FirebaseFirestore.Timestamp.fromDate(new Date()),
             };
             // Store it inside our db
             batch.set(collection.doc(), newListen);

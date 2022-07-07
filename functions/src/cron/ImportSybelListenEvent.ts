@@ -9,6 +9,7 @@ import { chunk } from "lodash";
 const db = admin.firestore();
 
 import { BigQuery } from "@google-cloud/bigquery";
+import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 const logger = functions.logger;
 
 /**
@@ -25,16 +26,19 @@ export default () =>
       logger.debug("Starting to import the sybel listen event");
 
       // Get the last timestamp used to fetch the prod data
-      const lastRefreshedTimestamp = await getLastSybelRefreshTimestamp();
-
-      // Check the difference between the current time and the last time it was refreshed, if that was less than 15min again abort
-      const diffInMillis =
-        new Date().getTime() - lastRefreshedTimestamp.toMillis();
-      if (diffInMillis < 15 * 60 * 1000) {
-        logger.debug(
-          "The sybel prod data where refreshed less than 15min again, aborting the refresh"
-        );
-        return null;
+      let lastRefreshedTimestamp = await getLastSybelRefreshTimestamp();
+      if (lastRefreshedTimestamp) {
+        // Check the difference between the current time and the last time it was refreshed, if that was less than 15min again abort
+        const diffInMillis =
+          new Date().getTime() - lastRefreshedTimestamp.toMillis();
+        if (diffInMillis < 15 * 60 * 1000) {
+          logger.debug(
+            "The sybel prod data where refreshed less than 15min again, aborting the refresh"
+          );
+          return null;
+        }
+      } else {
+        lastRefreshedTimestamp = Timestamp.fromDate(new Date());
       }
 
       // Import sybel listen event in our analytics table
@@ -53,22 +57,19 @@ export default () =>
  * Get the last time the sybel prod data where imported
  * @return {void} The last timestamp at which the listen data from Sybel where refreshed
  */
-async function getLastSybelRefreshTimestamp(): Promise<Timestamp> {
+async function getLastSybelRefreshTimestamp(): Promise<Timestamp | null> {
   const collection = db.collection("sybelProdctionRefresh");
   const documents: SybelDataRefreshDbDto[] = [];
   const snapshot = await collection.orderBy("timestamp", "desc").limit(1).get();
-  let lastTimestamp: Timestamp;
   snapshot.forEach((doc) =>
     documents.push(doc.data() as SybelDataRefreshDbDto)
   );
   if (documents.length > 0) {
     const lastDataRefresh = documents[0] as SybelDataRefreshDbDto;
-    lastTimestamp = lastDataRefresh.timestamp;
-  } else {
-    lastTimestamp = Timestamp.fromDate(new Date());
+    return lastDataRefresh.timestamp;
   }
 
-  return lastTimestamp;
+  return null;
 }
 
 /**
@@ -90,10 +91,8 @@ async function importSybelListenEvent(
     `Will import all the listen event after timestamp ${lastRefreshedTimestamp.toMillis()}`
   );
   const query = `SELECT UNIX_MILLIS(data.timestamp) AS timestamp, 
-              data.user_id, data.series_id, owner_id.owner_id, 
+              data.user_id, data.series_id, 
               FROM \`sybel-bigquery.prod_data_studio.prod_union_acpm\` AS data
-              INNER JOIN \`sybel-bigquery.prod_server_api.dev_seriesid_ownerid\` AS owner_id
-              ON owner_id.series_id = data.series_id
               WHERE UNIX_MILLIS(data.timestamp) > @lastTimestamp 
               ORDER BY data.timestamp`;
   try {
@@ -109,7 +108,13 @@ async function importSybelListenEvent(
 
     // Exit recitly if we didn't found any new row
     if (rows.length <= 0) {
-      logger.debug("No transaction found, aborting the import process");
+      logger.debug("No listen action found, aborting the import process");
+      await db.collection("sybelProdctionRefresh").add({
+        timestamp: admin.firestore.Timestamp.fromMillis(
+          lastRefreshedTimestamp.toMillis()
+        ),
+        importCount: rows.length,
+      });
       return new Set();
     }
 
@@ -133,13 +138,11 @@ async function importSybelListenEvent(
 
         chunkedRows.forEach((row: any) => {
           // Build the new listen obj
-          const newListen = {
-            rssUrl: null,
+          const newListen: ListenAnalyticsDbDto = {
             userId: row.user_id,
-            ownerId: row.owner_id,
             seriesId: row.series_id,
             givenToUser: false,
-            date: admin.firestore.Timestamp.fromMillis(row.timestamp),
+            date: FirebaseFirestore.Timestamp.fromMillis(row.timestamp),
           };
 
           // Add the user id into our set

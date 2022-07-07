@@ -7,10 +7,11 @@ import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./ExtractPodcastInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
-import importSybelListenEventCron from "./ImportSybelListenEvent";
-import computeMintingBadgeCron from "./ComputeMintingBadge";
-import computePodcastBadgeCron from "./ComputePodcastBadge";
 import mintPodcast from "./MintPodcast";
+import importSybelListenEventCron from "./cron/ImportSybelListenEvent";
+import computeMintingBadgeCron from "./cron/ComputeMintingBadge";
+import computePodcastBadgeCron from "./cron/ComputePodcastBadge";
+import cleanUnimporedListenEventCron from "./cron/CleanUnimportedListenEvent";
 
 /**
  * @function
@@ -67,6 +68,10 @@ export const mint = mintPodcast();
  */
 export const refreshBalance = refreshUserBalanceFunction();
 
+/*
+ * ===== BATCH =====
+ */
+
 /**
  * Import the sybel listen event cron
  */
@@ -81,3 +86,8 @@ export const computeMintingBadge = computeMintingBadgeCron();
  * Compute the podcast badge of each token fraction
  */
 export const computePodcastBadge = computePodcastBadgeCron();
+
+/**
+ * Clean all the unimported listen event
+ */
+export const cleanUnimportedListenEvent = cleanUnimporedListenEventCron();
