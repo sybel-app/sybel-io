@@ -143,6 +143,9 @@ async function importSybelListenEvent(
             seriesId: row.series_id,
             givenToUser: false,
             date: admin.firestore.Timestamp.fromMillis(row.timestamp),
+            rewardTxHash: null,
+            txBlockHash: null,
+            txBlockNumber: null,
           };
 
           // Add the user id into our set

@@ -23,7 +23,8 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
   // Get all the listen perform by this user and not payed
   const userListenQuerySnapshot = await analyticsCollection
     .where("userId", "==", wallet.id)
-    .where("givenToUser", "!=", true)
+    .where("givenToUser", "!=", true) // Reward not handled yet
+    .where("rewardTxHash", "==", null) // And tx not sent
     .get();
   const userListenDocuments: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
     [];
@@ -93,16 +94,15 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
       podcastIds,
       listenCounts
     );
-    const paymentTxReceipt = await paymentTx.wait();
 
     logger.debug(
-      `Payed the used ${wallet.id} with success, on the tx hash ${paymentTxReceipt.blockHash}, block number ${paymentTxReceipt.blockNumber}`
+      `Payed the used ${wallet.id} with success, on the tx hash ${paymentTx.hash}`
     );
 
     // Update all the handled analytics row
     const batch = db.batch();
     handledDocument.map(async (each) => {
-      batch.update(each.ref, "givenToUser", true);
+      batch.update(each.ref, "rewardTxHash", paymentTx.hash);
     });
     batch.commit();
   } catch (exception: unknown) {

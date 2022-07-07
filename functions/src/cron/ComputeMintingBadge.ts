@@ -1,12 +1,13 @@
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 import {
-  minter,
   fractionCostBadges,
   internalTokens,
   fractionCostBadgesConnected,
 } from "../utils/Contract";
 import { buildFractionId, BUYABLE_TOKEN_TYPES } from "../utils/SybelMath";
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
+import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 
 /**
  * @function
@@ -35,12 +36,6 @@ export default () =>
         transferEventFilter
       );
 
-      // Find all the supply updated
-      const supplyUpdatedEventFilter = internalTokens.filters.SuplyUpdated();
-      const supplyUpdateEvents = await internalTokens.queryFilter(
-        supplyUpdatedEventFilter
-      );
-
       // Get the day we will use to compute our period
       const currentDayTimestamp = Math.floor(Date.now() / 1000);
       const weekDurationInSec = 7 * 24 * 60 * 60;
@@ -59,38 +54,54 @@ export default () =>
         oneWeekAgoTimestamp
       );
 
+      // List of transaction we should wait for
+      const txToWaitFor: ContractTransaction[] = [];
+
+      // Get the last week date
+      const now = new Date();
+      const lastWeekDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 7
+      );
+
+      // Get all the minted podcast
+      const mintCollection = admin.firestore().collection("mintedPodcast");
+      const mintedPodcastSnapshot = await mintCollection
+        .where("txBlockHash", "!=", null)
+        .where(
+          "txBlockTimestamp",
+          "<",
+          admin.firestore.Timestamp.fromDate(lastWeekDate)
+        ) // Get only the podcast minted more than a week ago
+        .get();
+      const mintedPodcastDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+      mintedPodcastSnapshot.forEach((doc) => mintedPodcastDocs.push(doc));
+
       // Iterate over each podcast to find the right values for the badges computation
-      const podcastEventFilter = minter.filters.PodcastMinted();
-      const podcastMintEvents = await minter.queryFilter(podcastEventFilter);
-      for (const mintEvent of podcastMintEvents) {
-        const podcastId = mintEvent.args.baseId;
-        const timestamp = (await mintEvent.getBlock()).timestamp;
+      for (const mintedPodcastDoc of mintedPodcastDocs) {
+        // Extract podcast info and podcast id
+        const mintedPodcast: MintedPodcastDbDto =
+          mintedPodcastDoc.data() as MintedPodcastDbDto;
 
-        // Get the difference between the mint date and the current date in day
-        const dateDifference = currentDayTimestamp - timestamp;
-        const dayDiff = Math.floor(dateDifference / 24 / 60 / 60);
-
-        // Exit if the podcast was minted less than a week ago
-        if (dayDiff < 7) {
-          functions.logger.debug(
-            "The podcast was minted less than a week ago, don't compute his badge"
-          );
+        const podcastId = mintedPodcast.fractionBaseId;
+        if (!podcastId) {
           continue;
         }
 
         // Iterate over each buyable fraction type to compute their cost
         for (const tokenType of BUYABLE_TOKEN_TYPES) {
-          const fractionId = buildFractionId(podcastId, tokenType);
-          functions.logger.debug("Checking the fraction id " + fractionId);
+          const fractionId = buildFractionId(
+            BigNumber.from(podcastId),
+            tokenType
+          );
+          functions.logger.debug(
+            `Checking the fraction id ${fractionId} of the podcast ${mintedPodcast.seriesId}`
+          );
 
           // Get the current fraction cost
           const currentFractionCost = await fractionCostBadges.getBadge(
             fractionId
-          );
-
-          // Filter the supply update event
-          const filteredSupplyEvent = supplyUpdateEvents.filter((supplyEvent) =>
-            supplyEvent.args.id.eq(fractionId)
           );
 
           // Filter the minted fraction for the podcast we want
@@ -106,7 +117,7 @@ export default () =>
             continue;
           }
 
-          // TODO : Should store the block number each time we perform this cron, this will prevent multiple call on getBlock().timestamp that is resources effective, and permit us to save on firebase cost and on infura cost
+          // TODO : Only do that if we can't retreive the block numbers from previous cost update iteration
           // Map each mint event to it's event with a timestamp
           const mintedFractionCountToTimestampAsync =
             filteredFractionMintEvent.map(
@@ -127,15 +138,14 @@ export default () =>
             currentWeekPeriod,
             lastWeekPeriod
           );
-          const totalFractionSuppliedAmount = filteredSupplyEvent.reduce(
-            (acc, supplyEvent) => acc + supplyEvent.args.supply.toNumber(),
-            0
+          const totalFractionSuppliedAmount = await internalTokens.supplyOf(
+            fractionId
           );
 
           // Compute the new badge from all the info we gathered
           const newBadge = computeNewBadge(
             currentFractionCost,
-            totalFractionSuppliedAmount,
+            totalFractionSuppliedAmount.toNumber(),
             fractionMintedForCostBadges
           );
 
@@ -144,7 +154,7 @@ export default () =>
             fractionId,
             newBadge
           );
-          const updateTxReceipt = await updateTx.wait();
+          txToWaitFor.push(updateTx);
           functions.logger.debug(
             "The badge of the fraction " +
               fractionId +
@@ -152,11 +162,21 @@ export default () =>
               currentFractionCost.toNumber() / 1e6 +
               "TSE to " +
               newBadge.toNumber() / 1e6 +
-              "TSE, on tx : " +
-              updateTxReceipt.blockHash
+              "On the tx " +
+              updateTx.hash
           );
         }
       }
+
+      // Wait for all the tx to be done
+      const txPromises = txToWaitFor.map(async (contractTx) => {
+        const txReceipt = await contractTx.wait();
+        functions.logger.debug(
+          `Tx ${txReceipt.blockHash} mined with success on the block ${txReceipt.blockHash}`
+        );
+      });
+      await Promise.all(txPromises);
+
       functions.logger.info("Finished the fraction cost badges update");
     });
 

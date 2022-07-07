@@ -49,6 +49,9 @@ export default () =>
               seriesId: requestDto.seriesId,
               givenToUser: false,
               date: admin.firestore.Timestamp.fromDate(new Date()),
+              rewardTxHash: null,
+              txBlockHash: null,
+              txBlockNumber: null,
             };
             // Store it inside our db
             batch.set(collection.doc(), newListen);

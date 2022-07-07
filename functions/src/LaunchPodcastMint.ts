@@ -73,6 +73,7 @@ export default () =>
             txBlockHash: null,
             txBlockNumber: null,
             uploadedMetadatas: null,
+            txBlockTimestamp: null,
           };
           await mintCollection.add(pendingPodcastMint);
 

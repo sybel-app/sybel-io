@@ -7,7 +7,10 @@ interface MintedPodcastDbDto {
   readonly fractionBaseId: number | null; // Can be null if not minted yet
   readonly txBlockNumber: number | null; // Can be null if not minted yet
   readonly txBlockHash: string | null; // Can be null if not minted yet
+  readonly txBlockTimestamp: FirebaseFirestore.Timestamp | null; // Can be null if not minted yet
   readonly uploadedMetadatas: string[] | null;
 }
+
+// TODO : Store last minting cost refresh block numbers ?
 
 export default MintedPodcastDbDto;

@@ -14,6 +14,7 @@ import computeMintingBadgeCron from "./cron/ComputeMintingBadge";
 import computePodcastBadgeCron from "./cron/ComputePodcastBadge";
 import cleanUnimporedListenEventCron from "./cron/CleanUnimportedListenEvent";
 import checkUnimportedPodcastMintCron from "./cron/CheckUnimportedPodcastMint";
+import checkUnimportedRewardCron from "./cron/CheckUnimportedRewardTx";
 
 /**
  * @function
@@ -106,3 +107,8 @@ export const cleanUnimportedListenEvent = cleanUnimporedListenEventCron();
  * Check all the unimported podcast mint
  */
 export const checkUnimportedPodcastMint = checkUnimportedPodcastMintCron();
+
+/**
+ * Check all the unimported user reward
+ */
+export const checkUnimportedReward = checkUnimportedRewardCron();
