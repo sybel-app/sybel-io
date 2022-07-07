@@ -48,7 +48,7 @@ export default () =>
               userId: requestDto.userId,
               seriesId: requestDto.seriesId,
               givenToUser: false,
-              date: FirebaseFirestore.Timestamp.fromDate(new Date()),
+              date: admin.firestore.Timestamp.fromDate(new Date()),
             };
             // Store it inside our db
             batch.set(collection.doc(), newListen);

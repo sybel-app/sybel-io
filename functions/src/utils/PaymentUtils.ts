@@ -58,7 +58,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
     const matchingMintedPodcast = mintedPodcasts.find(
       (mintedPodcast) => mintedPodcast.seriesId == listenAnalitycs.seriesId
     );
-    if (!matchingMintedPodcast) {
+    if (!matchingMintedPodcast || !matchingMintedPodcast.fractionBaseId) {
       // If the podcast wasn't minted, don't include it in our map
       return acc;
     }

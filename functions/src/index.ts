@@ -7,11 +7,13 @@ import generateRssFunction from "./GenerateRss";
 import analyticsUrlFunction from "./AnalyticsUrl";
 import getSeriesFunction from "./ExtractPodcastInfo";
 import refreshUserBalanceFunction from "./RefreshUserBalance";
-import mintPodcast from "./MintPodcast";
+import launchPodcastMint from "./LaunchPodcastMint";
+import getPodcastMint from "./GetPodcastMint";
 import importSybelListenEventCron from "./cron/ImportSybelListenEvent";
 import computeMintingBadgeCron from "./cron/ComputeMintingBadge";
 import computePodcastBadgeCron from "./cron/ComputePodcastBadge";
 import cleanUnimporedListenEventCron from "./cron/CleanUnimportedListenEvent";
+import checkUnimportedPodcastMintCron from "./cron/CheckUnimportedPodcastMint";
 
 /**
  * @function
@@ -55,13 +57,21 @@ export const analytics = analyticsUrlFunction();
  * @returns {void}
  */
 export const getSeries = getSeriesFunction();
+
 /**
  * @function
  * @param {functions.https.Request} request
  * @param {functions.Response<any>} response
  * @returns {void}
  */
-export const mint = mintPodcast();
+export const launchMint = launchPodcastMint();
+/**
+ * @function
+ * @param {functions.https.Request} request
+ * @param {functions.Response<any>} response
+ * @returns {void}
+ */
+export const getMint = getPodcastMint();
 
 /**
  * Refresh the user balance function
@@ -91,3 +101,8 @@ export const computePodcastBadge = computePodcastBadgeCron();
  * Clean all the unimported listen event
  */
 export const cleanUnimportedListenEvent = cleanUnimporedListenEventCron();
+
+/**
+ * Check all the unimported podcast mint
+ */
+export const checkUnimportedPodcastMint = checkUnimportedPodcastMintCron();

@@ -1,9 +1,9 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import SybelDataRefreshDbDto from "./types/db/SybelDataRefreshDbDto";
+import SybelDataRefreshDbDto from "../types/db/SybelDataRefreshDbDto";
 import { Timestamp } from "@firebase/firestore";
-import { getWalletForUserSet } from "./utils/UserUtils";
-import { countListenAndPayWallet } from "./utils/PaymentUtils";
+import { getWalletForUserSet } from "../utils/UserUtils";
+import { countListenAndPayWallet } from "../utils/PaymentUtils";
 import { chunk } from "lodash";
 
 const db = admin.firestore();
@@ -142,7 +142,7 @@ async function importSybelListenEvent(
             userId: row.user_id,
             seriesId: row.series_id,
             givenToUser: false,
-            date: FirebaseFirestore.Timestamp.fromMillis(row.timestamp),
+            date: admin.firestore.Timestamp.fromMillis(row.timestamp),
           };
 
           // Add the user id into our set
