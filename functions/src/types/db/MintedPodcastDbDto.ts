@@ -9,8 +9,19 @@ interface MintedPodcastDbDto {
   readonly txBlockHash: string | null; // Can be null if not minted yet
   readonly txBlockTimestamp: FirebaseFirestore.Timestamp | null; // Can be null if not minted yet
   readonly uploadedMetadatas: string[] | null;
+  readonly previousCostUpdate?: CostBadgeUpdate;
+}
+
+export interface CostBadgeUpdate {
+  readonly txHashes: string[];
+  readonly period: CostBadgeUpdatePeriod;
 }
 
 // TODO : Store last minting cost refresh block numbers ?
+export interface CostBadgeUpdatePeriod {
+  readonly lastWeekBlockStart: number;
+  readonly currentWeekBlockStart: number;
+  readonly currentWeekBlockEnd: number;
+}
 
 export default MintedPodcastDbDto;

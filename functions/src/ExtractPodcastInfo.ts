@@ -26,9 +26,15 @@ export default () =>
     .runWith(runtimeOpts)
     .region("europe-west3")
     .https.onCall(async (data, context): Promise<unknown> => {
-      for (const header of context.rawRequest.rawHeaders) {
-        functions.logger.debug(`header ${header}`);
-      }
+      functions.logger.debug(
+        `Auth header ${context.rawRequest.header("Authorization")}`
+      );
+      functions.logger.debug(
+        `Auth header bis ${context.rawRequest.headers.authorization}`
+      );
+      functions.logger.debug(
+        `Cookie header ${context.rawRequest.headers.cookie}`
+      );
 
       functions.logger.debug(`app id ${context.app?.appId}`);
       functions.logger.debug(`auth id ${context.auth?.uid}`);

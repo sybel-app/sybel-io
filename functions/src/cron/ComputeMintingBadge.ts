@@ -7,7 +7,11 @@ import {
 } from "../utils/Contract";
 import { buildFractionId, BUYABLE_TOKEN_TYPES } from "../utils/SybelMath";
 import { BigNumber, ContractTransaction } from "ethers";
-import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
+import MintedPodcastDbDto, {
+  CostBadgeUpdatePeriod,
+  CostUpdate,
+} from "../types/db/MintedPodcastDbDto";
+import { TransferSingleEvent } from "../generated-types/SybelInternalTokens";
 
 /**
  * @function
@@ -59,10 +63,10 @@ export default () =>
 
       // Get the last week date
       const now = new Date();
-      const lastWeekDate = new Date(
+      const twoWeekAgoDate = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate() - 7
+        now.getDate() - 14
       );
 
       // Get all the minted podcast
@@ -71,9 +75,9 @@ export default () =>
         .where("txBlockHash", "!=", null)
         .where(
           "txBlockTimestamp",
-          "<",
-          admin.firestore.Timestamp.fromDate(lastWeekDate)
-        ) // Get only the podcast minted more than a week ago
+          "<=",
+          admin.firestore.Timestamp.fromDate(twoWeekAgoDate)
+        ) // Get only the podcast minted more than two week ago (otherwise we can't compute properly their badges)
         .get();
       const mintedPodcastDocs: admin.firestore.QueryDocumentSnapshot[] = [];
       mintedPodcastSnapshot.forEach((doc) => mintedPodcastDocs.push(doc));
@@ -117,27 +121,48 @@ export default () =>
             continue;
           }
 
-          // TODO : Only do that if we can't retreive the block numbers from previous cost update iteration
-          // Map each mint event to it's event with a timestamp
-          const mintedFractionCountToTimestampAsync =
-            filteredFractionMintEvent.map(
-              async (transferEvent) =>
-                new FractionCountToTimestamp(
-                  transferEvent.args.value,
-                  (await transferEvent.getBlock()).timestamp
-                )
+          let fractionMintedForCostBadges: FractionMintedForCostBadges;
+          if (mintedPodcast.previousCostUpdate) {
+            // In the case this cost badge was already minted, base ourself on the block numbers
+            const lastWeekBlockPeriod: BlockPeriod = {
+              start:
+                mintedPodcast.previousCostUpdate.period.currentWeekBlockStart,
+              end: mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
+            };
+            const currentWeekBlockPeriod: BlockPeriod = {
+              start:
+                mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
+            };
+
+            // Save the count
+            fractionMintedForCostBadges = countFractionForBlockPeriod(
+              filteredFractionMintEvent,
+              lastWeekBlockPeriod,
+              currentWeekBlockPeriod
+            );
+          } else {
+            // Otherwise, we will need the timestamp of each block, so fetch them
+            const mintedFractionCountToTimestampAsync =
+              filteredFractionMintEvent.map(async (transferEvent) => {
+                return {
+                  count: transferEvent.args.value,
+                  timestampInSec: (await transferEvent.getBlock()).timestamp,
+                  blockNumber: transferEvent.blockNumber,
+                };
+              });
+            const mintedFractionCountToTimestamp = await Promise.all(
+              mintedFractionCountToTimestampAsync
             );
 
-          const mintedFractionCountToTimestamp = await Promise.all(
-            mintedFractionCountToTimestampAsync
-          );
+            // And save the count
+            fractionMintedForCostBadges = countFractionForPeriod(
+              mintedFractionCountToTimestamp,
+              currentWeekPeriod,
+              lastWeekPeriod
+            );
+          }
 
-          // Extract all the data we need to perform the computation
-          const fractionMintedForCostBadges = countFractionForPeriod(
-            mintedFractionCountToTimestamp,
-            currentWeekPeriod,
-            lastWeekPeriod
-          );
+          // Get the number of supply of this fraction
           const totalFractionSuppliedAmount = await internalTokens.supplyOf(
             fractionId
           );
@@ -165,6 +190,8 @@ export default () =>
               "On the tx " +
               updateTx.hash
           );
+
+          // We should update our cost update object to save the block number and the tx hash
         }
       }
 
@@ -183,11 +210,10 @@ export default () =>
 /**
  * Simple class helping us to check the transfer event fraction per timestamp
  */
-class FractionCountToTimestamp {
-  /**
-   * Constructor
-   */
-  constructor(readonly count: BigNumber, readonly timestampInSec: number) {}
+interface FractionCountToTimestamp {
+  readonly count: BigNumber;
+  readonly timestampInSec: number;
+  readonly blockNumber: number;
 }
 
 /**
@@ -209,18 +235,33 @@ class TimestampPeriod {
   }
 }
 
+interface BlockPeriod {
+  readonly start: number;
+  readonly end?: number;
+}
+
+/**
+ * Check if the given block number is inside the given block period
+ * @param {BlockPeriod} blockPeriod
+ * @param {number} block
+ * @return {boolean}
+ */
+function isInBlockPeriod(blockPeriod: BlockPeriod, block: number) {
+  if (blockPeriod.end) {
+    return block >= blockPeriod.start && block < blockPeriod.end;
+  } else {
+    return block >= blockPeriod.start;
+  }
+}
+
 /**
  * Get the number of fraction minted for the cost badges, with the total, the one for the current and last week
  */
-class FractionMintedForCostBadges {
-  /**
-   * Constructor
-   */
-  constructor(
-    readonly total: number,
-    readonly currentWeek: number,
-    readonly lastWeek: number
-  ) {}
+interface FractionMintedForCostBadges {
+  readonly total: number;
+  readonly currentWeek: number;
+  readonly lastWeek: number;
+  readonly period: CostBadgeUpdatePeriod;
 }
 
 /**
@@ -239,16 +280,74 @@ function countFractionForPeriod(
   let currentWeekAcc = 0;
   let lastWeekAcc = 0;
 
+  const lastWeekBlockNumbers: number[] = [];
+  const currentWeekBlockNumbers: number[] = [];
+
   for (const fractionToTimestamp of fractionToTimestamps) {
     totalAcc += fractionToTimestamp.count.toNumber();
     if (currenWeekPeriod.isInPeriod(fractionToTimestamp.timestampInSec)) {
       currentWeekAcc += fractionToTimestamp.count.toNumber();
+      currentWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
     } else if (lastWeekPeriod.isInPeriod(fractionToTimestamp.timestampInSec)) {
       lastWeekAcc += fractionToTimestamp.count.toNumber();
+      lastWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
     }
   }
 
-  return new FractionMintedForCostBadges(totalAcc, currentWeekAcc, lastWeekAcc);
+  return {
+    total: totalAcc,
+    currentWeek: currentWeekAcc,
+    lastWeek: lastWeekAcc,
+    period: {
+      lastWeekBlockStart: Math.min(...lastWeekBlockNumbers),
+      currentWeekBlockStart: Math.min(...currentWeekBlockNumbers),
+      currentWeekBlockEnd: Math.max(...currentWeekBlockNumbers),
+    },
+  };
+}
+
+/**
+ * Count the number of fraction emitted during the given period
+ * @param {FractionCountToTimestamp} fractionToTimestamps The array oto filter
+ * @param {TimestampPeriod} currenWeekPeriod The initial period
+ * @param {TimestampPeriod} lastWeekPeriod The last period
+ * @return {FractionMintedForCostBadges} The number of fraction minted
+ */
+function countFractionForBlockPeriod(
+  fractionToTimestamps: TransferSingleEvent[],
+  currenWeekPeriod: BlockPeriod,
+  lastWeekPeriod: BlockPeriod
+): FractionMintedForCostBadges {
+  let totalAcc = 0;
+  let currentWeekAcc = 0;
+  let lastWeekAcc = 0;
+
+  const lastWeekBlockNumbers: number[] = [];
+  const currentWeekBlockNumbers: number[] = [];
+
+  for (const fractionToTimestamp of fractionToTimestamps) {
+    totalAcc += fractionToTimestamp.args.value.toNumber();
+    if (isInBlockPeriod(currenWeekPeriod, fractionToTimestamp.blockNumber)) {
+      currentWeekAcc += fractionToTimestamp.args.value.toNumber();
+      currentWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
+    } else if (
+      isInBlockPeriod(lastWeekPeriod, fractionToTimestamp.blockNumber)
+    ) {
+      lastWeekAcc += fractionToTimestamp.args.value.toNumber();
+      lastWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
+    }
+  }
+
+  return {
+    total: totalAcc,
+    currentWeek: currentWeekAcc,
+    lastWeek: lastWeekAcc,
+    period: {
+      lastWeekBlockStart: Math.min(...lastWeekBlockNumbers),
+      currentWeekBlockStart: Math.min(...currentWeekBlockNumbers),
+      currentWeekBlockEnd: Math.max(...currentWeekBlockNumbers),
+    },
+  };
 }
 
 /**

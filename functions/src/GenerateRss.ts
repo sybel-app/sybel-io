@@ -16,6 +16,9 @@ const builder = new XMLBuilder(options);
  * @param {functions.https.Request} request
  * @param {functions.Response<any>} response
  * @return {void}
+ *
+ * TODO : Switch back to https function, like analytics and
+ * TODO : Setup caching
  */
 export default () =>
   functions
