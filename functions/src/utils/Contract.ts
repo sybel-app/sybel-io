@@ -1,6 +1,7 @@
 import {
   Minter,
   Minter__factory,
+  Rewarder,
   Rewarder__factory,
   SybelInternalTokens__factory,
   TokenSybelEcosystem__factory,
@@ -54,6 +55,12 @@ async function sybelWallet(): Promise<Wallet> {
   );
   // Build the wallet
   return wallet.connect(provider);
+}
+
+// Access our fraction cost badge contract, connected on the sybe lwallet
+export async function rewarderConnected(): Promise<Rewarder> {
+  const wallet = await sybelWallet();
+  return Rewarder__factory.connect(rewarderAddr, wallet);
 }
 
 // Access our fraction cost badge contract, connected on the sybe lwallet

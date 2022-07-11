@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import WalletDbDto from "../types/db/WalletDbDto";
-import { rewarder } from "./Contract";
+import { rewarder, rewarderConnected } from "./Contract";
 import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 import { DocumentData } from "@firebase/firestore";
@@ -77,6 +77,12 @@ export async function countListenAndPayWallet(
     return acc;
   }, new Map<number, number>());
 
+  // If we didn't found any minted podcast, exit directly
+  if (podcastIdToListenCountMap.size <= 0) {
+    logger.info("No minted podcast found for the user, exiting directly");
+    return null;
+  }
+
   // Build the array we will send to the smart contract
   const podcastIds: number[] = [];
   const listenCounts: number[] = [];
@@ -91,7 +97,8 @@ export async function countListenAndPayWallet(
   // Try to pay him
   try {
     // Launch the transaction and wait for the receipt
-    const paymentTx = await rewarder.payUser(
+    const rewarderSigned = await rewarderConnected();
+    const paymentTx = await rewarderSigned.payUser(
       wallet.address,
       podcastIds,
       listenCounts
