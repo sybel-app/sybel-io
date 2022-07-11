@@ -118,11 +118,11 @@ contract Rewarder is
                 ListenerBalanceOnPodcast[] memory balances,
                 bool hasAtLeastOneBalance
             ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
-            // If no balance mint a standart NFT
+            // If no balance mint a Standard NFT
             if (!hasAtLeastOneBalance) {
                 sybelInternalTokens.mint(
                     _listener,
-                    SybelMath.buildStandartNftId(_podcastIds[i]),
+                    SybelMath.buildStandardNftId(_podcastIds[i]),
                     1
                 );
                 // And then recompute his balance
@@ -205,7 +205,7 @@ contract Rewarder is
         returns (uint32)
     {
         uint32 reward;
-        if (_tokenType == SybelMath.TOKEN_TYPE_STANDART_MASK) {
+        if (_tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
             reward = 10000; // 0.01 TSE
         } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             reward = 100000; // 0.1 TSE
