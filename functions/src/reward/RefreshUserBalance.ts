@@ -1,6 +1,8 @@
 import * as functions from "firebase-functions";
 import { getWalletForUser } from "../utils/UserUtils";
 import { countListenAndPayWallet } from "../utils/PaymentUtils";
+import { checkCallData } from "../utils/Security";
+import BaseRequestDto from "../types/request/BaseRequestDto";
 
 const logger = functions.logger;
 
@@ -13,10 +15,8 @@ const logger = functions.logger;
 export default () =>
   functions
     .region("europe-west3")
-    .https.onCall(async (data, context): Promise<unknown> => {
-      functions.logger.debug(`app id ${context.app?.appId}`);
-      functions.logger.debug(`auth id ${context.auth?.uid}`);
-      functions.logger.debug(`instance id token ${context.instanceIdToken}`);
+    .https.onCall(async (data: BaseRequestDto): Promise<unknown> => {
+      checkCallData(data);
       // Extract the user id from the request param
       const userId = data.id;
       if (!userId) {

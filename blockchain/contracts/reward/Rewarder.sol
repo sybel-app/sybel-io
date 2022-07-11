@@ -154,7 +154,6 @@ contract Rewarder is
     ) private {
         // The user have a balance we can continue
         uint64 podcastBadge = podcastBadges.getBadge(_podcastId);
-        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         // Amout we will mint for user and for owner
         uint256 totalAmountToMint = 0;
         // Mint each token for each fraction
@@ -181,8 +180,10 @@ contract Rewarder is
         uint64 listenerBadge = listenerBadges.getBadge(_listener);
         uint256 amountForListener = (baseAmountForListener * listenerBadge) /
             SybelMath.DECIMALS;
-        // Mint the TSE for the listener and the owner of the podcast
+        // Mint the TSE for the listener
         tokenSybelEcosystem.mint(_listener, amountForListener);
+        // Mint the TSE for the owner
+        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
         // Emit the reward event
         emit UserRewarded(

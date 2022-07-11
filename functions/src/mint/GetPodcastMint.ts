@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
+import { checkCallData } from "../utils/Security";
 
 /**
  * @function
@@ -11,8 +12,8 @@ import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 export default () =>
   functions
     .region("europe-west3")
-    .https.onCall(async (request, context): Promise<unknown> => {
-      functions.logger.debug(`auth id ${context.auth?.uid}`);
+    .https.onCall(async (request): Promise<unknown> => {
+      checkCallData(request);
 
       // Extract the param and ensure we got it
       const seriesId = request.seriesId;

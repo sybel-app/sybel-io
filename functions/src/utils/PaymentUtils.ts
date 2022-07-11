@@ -48,7 +48,6 @@ export async function countListenAndPayWallet(
   allMintedPodcastSnapshot.forEach((doc) => {
     mintedPodcasts.push(doc.data() as MintedPodcastDbDto);
   });
-  logger.debug(`Found ${mintedPodcasts.length} minted podcasts`);
 
   // Save an array of all the document we handled
   const handledDocument: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
@@ -77,16 +76,10 @@ export async function countListenAndPayWallet(
     return acc;
   }, new Map<number, number>());
 
-  // If we didn't found any minted podcast, exit directly
-  if (podcastIdToListenCountMap.size <= 0) {
-    logger.info("No minted podcast found for the user, exiting directly");
-    return null;
-  }
-
   // Build the array we will send to the smart contract
   const podcastIds: number[] = [];
   const listenCounts: number[] = [];
-  podcastIdToListenCountMap.forEach((podcastId, listenCount) => {
+  podcastIdToListenCountMap.forEach((listenCount, podcastId) => {
     podcastIds.push(podcastId);
     listenCounts.push(listenCount);
   });
@@ -94,10 +87,22 @@ export async function countListenAndPayWallet(
     `Found ${podcastIdToListenCountMap.size} podcast to on which the user perform some listen to be payed`
   );
 
+  // If we didn't found any minted podcast, exit directly
+  if (podcastIds.length <= 0) {
+    logger.info("No minted podcast found for the user, exiting directly");
+    return null;
+  }
+
   // Try to pay him
   try {
     // Launch the transaction and wait for the receipt
     const rewarderSigned = await rewarderConnected();
+    logger.debug(
+      `Paying the user ${wallet.id} on the address ${wallet.address} for the podcast ids ${podcastIds} for listens ${listenCounts}`,
+      podcastIds,
+      listenCounts
+    );
+
     const paymentTx = await rewarderSigned.payUser(
       wallet.address,
       podcastIds,

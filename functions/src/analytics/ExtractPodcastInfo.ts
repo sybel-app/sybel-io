@@ -3,6 +3,7 @@ import { XMLParser } from "fast-xml-parser";
 import Vibrant from "node-vibrant";
 import { RuntimeOptions } from "firebase-functions";
 import axios from "axios";
+import { checkCallData } from "../utils/Security";
 
 const options = {
   ignoreAttributes: false,
@@ -25,20 +26,8 @@ export default () =>
   functions
     .runWith(runtimeOpts)
     .region("europe-west3")
-    .https.onCall(async (data, context): Promise<unknown> => {
-      functions.logger.debug(
-        `Auth header ${context.rawRequest.header("Authorization")}`
-      );
-      functions.logger.debug(
-        `Auth header bis ${context.rawRequest.headers.authorization}`
-      );
-      functions.logger.debug(
-        `Cookie header ${context.rawRequest.headers.cookie}`
-      );
-
-      functions.logger.debug(`app id ${context.app?.appId}`);
-      functions.logger.debug(`auth id ${context.auth?.uid}`);
-      functions.logger.debug(`instance id token ${context.instanceIdToken}`);
+    .https.onCall(async (data): Promise<unknown> => {
+      checkCallData(data);
 
       // Check that we got a rss url as a string
       const rssUrl = data.rss as string;

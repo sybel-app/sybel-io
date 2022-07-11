@@ -1,7 +1,8 @@
 import * as functions from "firebase-functions";
-import cors from "cors";
 import { getWalletForUser } from "../utils/UserUtils";
 import { walletToResponse } from "../utils/Mapper";
+import BaseRequestDto from "../types/request/BaseRequestDto";
+import { checkCallData } from "../utils/Security";
 
 /**
  * Try to find a wallet for the user
@@ -13,10 +14,8 @@ import { walletToResponse } from "../utils/Mapper";
 export default () =>
   functions
     .region("europe-west3")
-    .https.onCall(async (data, context): Promise<unknown> => {
-      functions.logger.debug(`app id ${context.app?.appId}`);
-      functions.logger.debug(`auth id ${context.auth?.uid}`);
-      functions.logger.debug(`instance id token ${context.instanceIdToken}`);
+    .https.onCall(async (data: BaseRequestDto): Promise<unknown> => {
+      checkCallData(data);
       // Ensure we got the right param
       const userId = data.id;
       if (!userId) {

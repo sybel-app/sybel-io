@@ -69,6 +69,9 @@ export default () =>
               seriesId: requestDto.seriesId,
               givenToUser: false,
               date: admin.firestore.Timestamp.fromDate(now),
+              rewardTxHash: null,
+              txBlockNumber: null,
+              txBlockHash: null,
             });
             functions.logger.info(
               `Saved a new listen for the user ${requestDto.userId} on the series ${requestDto.seriesId}`

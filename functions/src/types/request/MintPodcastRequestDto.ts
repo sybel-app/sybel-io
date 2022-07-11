@@ -1,7 +1,7 @@
+import BaseRequestDto from "./BaseRequestDto";
 import PodcastInfo from "./PodcastInfo";
 
-interface MintPodcastRequestDto {
-  id: string;
+interface MintPodcastRequestDto extends BaseRequestDto {
   seriesId: string;
   podcastInfo: PodcastInfo;
 }
