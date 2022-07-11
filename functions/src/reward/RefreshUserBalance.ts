@@ -37,10 +37,12 @@ export default () =>
 
         // Update the owner and the user amounts
         logger.debug("Found the user wallet, starting to fetch all his listen");
-        await countListenAndPayWallet(userWallet);
+        const rewardTxHash = await countListenAndPayWallet(userWallet);
 
         // Send the response
-        return;
+        return {
+          txHash: rewardTxHash,
+        };
       } catch (error) {
         logger.warn("Unable refresh the amount for the user " + userId, error);
         throw new functions.https.HttpsError("internal", "unknown", error);

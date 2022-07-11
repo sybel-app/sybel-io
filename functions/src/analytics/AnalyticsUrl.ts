@@ -76,6 +76,10 @@ export default () =>
             // Redirect the user
             response.redirect(requestDto.rssUrl);
           } catch (error) {
+            functions.logger.warn(
+              "Unable to handle the podcast redirection",
+              error
+            );
             response.status(500).send(error);
           }
         } else {

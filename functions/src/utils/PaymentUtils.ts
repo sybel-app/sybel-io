@@ -19,7 +19,9 @@ const mintedPodactCollection = db.collection("mintedPodcast");
  * @param {WalletDbDto} wallet The wallet to count listen and pay
  * @param {string} paymentProperties The payment boolean properties to check in database
  */
-export async function countListenAndPayWallet(wallet: WalletDbDto) {
+export async function countListenAndPayWallet(
+  wallet: WalletDbDto
+): Promise<string | null> {
   // Get all the listen perform by this user and not payed
   const userListenQuerySnapshot = await analyticsCollection
     .where("userId", "==", wallet.id)
@@ -37,7 +39,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
 
   // If the user havn't perform any listen operation, exit directly
   if (userListenDocuments.length == 0) {
-    return;
+    return null;
   }
 
   // Get the list of all the known minted podcast
@@ -105,7 +107,11 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
       batch.update(each.ref, "rewardTxHash", paymentTx.hash);
     });
     batch.commit();
+
+    // Then send back the payment tx
+    return paymentTx.hash;
   } catch (exception: unknown) {
     logger.warn(`Error when paying the user ${wallet.id}`, exception);
+    return null;
   }
 }
