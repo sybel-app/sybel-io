@@ -1,8 +1,8 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
 import * as admin from "firebase-admin";
-import AnalyticsUrlRequestDto from "./types/request/AnalyticsUrlRequestDto";
-import ListenAnalyticsDbDto from "./types/db/ListenAnalyticsDbDto";
+import AnalyticsUrlRequestDto from "../types/request/AnalyticsUrlRequestDto";
+import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 import { Timestamp } from "@firebase/firestore";
 
 const db = admin.firestore();
@@ -22,17 +22,11 @@ export default () =>
         const requestDto: AnalyticsUrlRequestDto = {
           rssUrl: request.query.rss as string,
           userId: request.query.uid as string,
-          ownerId: request.query.oid as string,
           seriesId: request.query.sid as string,
         };
 
         // Check that we got all of our param
-        if (
-          !requestDto.rssUrl ||
-          !requestDto.userId ||
-          !requestDto.ownerId ||
-          !requestDto.seriesId
-        ) {
+        if (!requestDto.rssUrl || !requestDto.userId || !requestDto.seriesId) {
           response.status(500).send({ error: "missing arguments" });
           return;
         }
@@ -40,22 +34,45 @@ export default () =>
         // TODO : Why we need it ??
         if (request.headers["user-agent"]) {
           try {
+            const now = new Date();
+            const fiveMinAgoDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              now.getHours(),
+              now.getMinutes() - 5
+            );
+
             // Access our db and prepare the batch we will use to save inside it
             const collection = db.collection("listeningAnalytics");
-            const batch = db.batch();
+            const lessThan5minSnapshots = await collection
+              .where("userId", "==", requestDto)
+              .where(
+                "date",
+                ">=",
+                admin.firestore.Timestamp.fromDate(fiveMinAgoDate)
+              )
+              .get();
+            if (lessThan5minSnapshots.size > 0) {
+              // If we got listen events in the past 5min, don't register new one
+              functions.logger.info(
+                `The user ${requestDto.userId} has already perform ${lessThan5minSnapshots.size} listen events in the past 5min, don't register new one`
+              );
+              // Directly redirect it
+              response.redirect(requestDto.rssUrl);
+              return;
+            }
+
             // Create the new listen object we will store in our database
-            const newListen: ListenAnalyticsDbDto = {
+            await collection.add({
               userId: requestDto.userId,
               seriesId: requestDto.seriesId,
               givenToUser: false,
-              date: admin.firestore.Timestamp.fromDate(new Date()),
-              rewardTxHash: null,
-              txBlockHash: null,
-              txBlockNumber: null,
-            };
-            // Store it inside our db
-            batch.set(collection.doc(), newListen);
-            batch.commit();
+              date: admin.firestore.Timestamp.fromDate(now),
+            });
+            functions.logger.info(
+              `Saved a new listen for the user ${requestDto.userId} on the series ${requestDto.seriesId}`
+            );
             // Redirect the user
             response.redirect(requestDto.rssUrl);
           } catch (error) {

@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import MintedPodcastDbDto from "./types/db/MintedPodcastDbDto";
+import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 
 /**
  * @function

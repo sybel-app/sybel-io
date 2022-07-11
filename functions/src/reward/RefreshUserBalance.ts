@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
-import { getWalletForUser } from "./utils/UserUtils";
-import { countListenAndPayWallet } from "./utils/PaymentUtils";
+import { getWalletForUser } from "../utils/UserUtils";
+import { countListenAndPayWallet } from "../utils/PaymentUtils";
 
 const logger = functions.logger;
 

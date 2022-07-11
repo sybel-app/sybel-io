@@ -9,7 +9,6 @@ import { buildFractionId, BUYABLE_TOKEN_TYPES } from "../utils/SybelMath";
 import { BigNumber, ContractTransaction } from "ethers";
 import MintedPodcastDbDto, {
   CostBadgeUpdatePeriod,
-  CostUpdate,
 } from "../types/db/MintedPodcastDbDto";
 import { TransferSingleEvent } from "../generated-types/SybelInternalTokens";
 
@@ -93,6 +92,23 @@ export default () =>
           continue;
         }
 
+        // Get the period for this podcast (can be null if not minted before and if first run)
+        let lastWeekBlockPeriod: BlockPeriod | undefined;
+        let currentWeekBlockPeriod: BlockPeriod | undefined;
+        if (mintedPodcast.previousCostUpdate) {
+          lastWeekBlockPeriod = {
+            start:
+              mintedPodcast.previousCostUpdate.period.currentWeekBlockStart,
+            end: mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
+          };
+          currentWeekBlockPeriod = {
+            start: mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
+          };
+        }
+
+        // List of transaction we should wait for
+        const podcastTx: ContractTransaction[] = [];
+
         // Iterate over each buyable fraction type to compute their cost
         for (const tokenType of BUYABLE_TOKEN_TYPES) {
           const fractionId = buildFractionId(
@@ -122,19 +138,8 @@ export default () =>
           }
 
           let fractionMintedForCostBadges: FractionMintedForCostBadges;
-          if (mintedPodcast.previousCostUpdate) {
+          if (lastWeekBlockPeriod && currentWeekBlockPeriod) {
             // In the case this cost badge was already minted, base ourself on the block numbers
-            const lastWeekBlockPeriod: BlockPeriod = {
-              start:
-                mintedPodcast.previousCostUpdate.period.currentWeekBlockStart,
-              end: mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
-            };
-            const currentWeekBlockPeriod: BlockPeriod = {
-              start:
-                mintedPodcast.previousCostUpdate.period.currentWeekBlockEnd,
-            };
-
-            // Save the count
             fractionMintedForCostBadges = countFractionForBlockPeriod(
               filteredFractionMintEvent,
               lastWeekBlockPeriod,
@@ -174,6 +179,16 @@ export default () =>
             fractionMintedForCostBadges
           );
 
+          // Update the block period used for this podcast
+          lastWeekBlockPeriod = {
+            start: fractionMintedForCostBadges.period.lastWeekBlockStart,
+            end: fractionMintedForCostBadges.period.currentWeekBlockStart,
+          };
+          currentWeekBlockPeriod = {
+            start: fractionMintedForCostBadges.period.currentWeekBlockStart,
+            end: fractionMintedForCostBadges.period.currentWeekBlockEnd,
+          };
+
           // Send this new badge to the contracts
           const updateTx = await connectedBadgesContract.updateBadge(
             fractionId,
@@ -190,8 +205,21 @@ export default () =>
               "On the tx " +
               updateTx.hash
           );
-
           // We should update our cost update object to save the block number and the tx hash
+        }
+
+        // Update the minted podcast db dto to store the period
+        if (lastWeekBlockPeriod && currentWeekBlockPeriod) {
+          await mintedPodcastDoc.ref.update({
+            previousCostUpdate: {
+              period: {
+                lastWeekBlockStart: lastWeekBlockPeriod.start,
+                currentWeekBlockStart: currentWeekBlockPeriod.start,
+                currentWeekBlockEnd: currentWeekBlockPeriod.end,
+              },
+              txHashes: podcastTx.map((tx) => tx.hash),
+            },
+          });
         }
       }
 

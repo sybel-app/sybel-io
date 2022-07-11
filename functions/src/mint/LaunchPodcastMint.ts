@@ -1,9 +1,9 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { getWalletForUser } from "./utils/UserUtils";
-import { minterConnected } from "./utils/Contract";
-import MintedPodcastDbDto from "./types/db/MintedPodcastDbDto";
-import MintPodcastRequestDto from "./types/request/MintPodcastRequestDto";
+import { getWalletForUser } from "../utils/UserUtils";
+import { minterConnected } from "../utils/Contract";
+import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
+import MintPodcastRequestDto from "../types/request/MintPodcastRequestDto";
 
 /**
  * @function

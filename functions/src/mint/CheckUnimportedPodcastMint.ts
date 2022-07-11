@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 import { minter, provider } from "../utils/Contract";
 import { allTokenTypesToRarity, buildFractionId } from "../utils/SybelMath";
-import { NftMetadata } from "../model/NftMetadata";
+import { NftMetadata } from "./model/NftMetadata";
 import { Storage } from "@google-cloud/storage";
 
 /*
@@ -45,7 +45,7 @@ export default () =>
           );
 
           // If the transaction isn't mined yet, jump to the next iteration
-          if (!transaction.blockHash) {
+          if (!transaction.blockHash || !transaction.timestamp) {
             functions.logger.debug(
               `The tx ${transaction.hash} isn't minted yet, aborting the import`
             );
@@ -82,7 +82,7 @@ export default () =>
             txBlockNumber: transaction.blockNumber,
             txBlockHash: transaction.blockHash,
             txBlockTimestamp: admin.firestore.Timestamp.fromMillis(
-              transaction.timestamp! * 1000
+              transaction.timestamp * 1000
             ),
           });
 

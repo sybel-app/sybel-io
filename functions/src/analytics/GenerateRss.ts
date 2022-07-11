@@ -2,7 +2,8 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import https from "https";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import GenerateRssRequestDto from "./types/request/GenerateRssRequestDto";
+import GenerateRssRequestDto from "../types/request/GenerateRssRequestDto";
+import AnalyticsUrlRequestDto from "../types/request/AnalyticsUrlRequestDto";
 
 const options = {
   ignoreAttributes: false,
@@ -16,32 +17,28 @@ const builder = new XMLBuilder(options);
  * @param {functions.https.Request} request
  * @param {functions.Response<any>} response
  * @return {void}
- *
- * TODO : Switch back to https function, like analytics and
- * TODO : Setup caching
  */
 export default () =>
   functions
     .region("europe-west3")
     .https.onRequest(async (request, response) => {
       cors()(request, response, async () => {
-        // Extract the info from the request body
-        const requestDto: GenerateRssRequestDto = request.body.data;
+        // Extract the data from the request query
+        const requestDto: AnalyticsUrlRequestDto = {
+          rssUrl: request.query.rss as string,
+          userId: request.query.uid as string,
+          seriesId: request.query.sid as string,
+        };
 
         // Then check all the info
-        if (
-          !requestDto.rss ||
-          !requestDto.uid ||
-          !requestDto.oid ||
-          !requestDto.sid
-        ) {
+        if (!requestDto.rssUrl || !requestDto.userId || !requestDto.seriesId) {
           response.status(500).send({ error: "missing arguments" });
           return;
         }
         let data = "";
         try {
           // Request the rss url to extract some info
-          https.get(requestDto.rss, function (res) {
+          https.get(requestDto.rssUrl, function (res) {
             if (
               res.statusCode &&
               res.statusCode >= 200 &&
@@ -62,11 +59,9 @@ export default () =>
                       ? (each.enclosure.att_url =
                           process.env.BASE_URL_AUDIO_REDIRECT +
                           "?uid=" +
-                          requestDto.uid +
-                          "&oid=" +
-                          requestDto.oid +
+                          requestDto.userId +
                           "&sid=" +
-                          requestDto.sid +
+                          requestDto.seriesId +
                           "&rss=" +
                           each.enclosure.att_url)
                       : undefined
@@ -75,6 +70,7 @@ export default () =>
                 const newUrl = builder.build(jObj);
                 response
                   .set("Content-Type", "text/xml; charset=utf8")
+                  .set("Cache-Control", "public, max-age=600, s-maxage=1200") // Cached for 20min on CDN and 10min on client
                   .status(200)
                   .send(newUrl);
               });
