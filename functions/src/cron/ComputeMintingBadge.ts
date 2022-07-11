@@ -71,7 +71,6 @@ export default () =>
       // Get all the minted podcast
       const mintCollection = admin.firestore().collection("mintedPodcast");
       const mintedPodcastSnapshot = await mintCollection
-        .where("txBlockHash", "!=", null)
         .where(
           "txBlockTimestamp",
           "<=",

@@ -16,9 +16,11 @@ export function checkCallData(data: BaseRequestDto) {
   }
 
   // Ensure the hashed key is corerct
-  const builtHashedKey = utils.keccak256(
-    `${process.env.SYBEL_BACK_API_KEY}_${data.id}`
-  );
+  const builtHashedKey = utils
+    .keccak256(
+      utils.toUtf8Bytes(`${process.env.SYBEL_BACK_API_KEY}_${data.id}`)
+    )
+    .replace("0x", "");
   if (data.hashed_key != builtHashedKey) {
     throw new functions.https.HttpsError(
       "permission-denied",
