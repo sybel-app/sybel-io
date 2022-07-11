@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
-import { tseToken } from "./utils/Contract";
-import { getWalletForUser } from "./utils/UserUtils";
+import { tseToken } from "../utils/Contract";
+import { getWalletForUser } from "../utils/UserUtils";
 
 /**
  * @function

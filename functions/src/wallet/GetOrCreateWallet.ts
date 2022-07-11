@@ -2,9 +2,9 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import { ethers } from "ethers";
 import * as admin from "firebase-admin";
-import { getWalletForUser } from "./utils/UserUtils";
-import { walletToResponse } from "./utils/Mapper";
-import WalletDbDto from "./types/db/WalletDbDto";
+import { getWalletForUser } from "../utils/UserUtils";
+import { walletToResponse } from "../utils/Mapper";
+import WalletDbDto from "../types/db/WalletDbDto";
 
 const db = admin.firestore();
 

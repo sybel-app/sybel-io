@@ -45,12 +45,16 @@ export default () =>
           );
 
           // If the transaction isn't mined yet, jump to the next iteration
-          if (!transaction.blockHash || !transaction.timestamp) {
+          if (!transaction.blockHash) {
             functions.logger.debug(
               `The tx ${transaction.hash} isn't minted yet, aborting the import`
             );
             continue;
           }
+
+          // Retreive the timestamp of the mined block
+          const txTimestamp = (await provider.getBlock(transaction.blockHash))
+            .timestamp;
 
           // Get all the PodcastMinted events of this blocks
           const events = await minter.queryFilter(
@@ -82,7 +86,7 @@ export default () =>
             txBlockNumber: transaction.blockNumber,
             txBlockHash: transaction.blockHash,
             txBlockTimestamp: admin.firestore.Timestamp.fromMillis(
-              transaction.timestamp * 1000
+              txTimestamp * 1000
             ),
           });
 

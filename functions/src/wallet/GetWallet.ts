@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import { getWalletForUser } from "./utils/UserUtils";
-import { walletToResponse } from "./utils/Mapper";
+import { getWalletForUser } from "../utils/UserUtils";
+import { walletToResponse } from "../utils/Mapper";
 
 /**
  * Try to find a wallet for the user

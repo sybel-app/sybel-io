@@ -1,8 +1,8 @@
 import * as admin from "firebase-admin";
 admin.initializeApp();
-import getOrCreateWalletFunction from "./GetOrCreateWallet";
-import getWalletFunction from "./GetWallet";
-import getBalanceFunction from "./GetTseBalance";
+import getOrCreateWalletFunction from "./wallet/GetOrCreateWallet";
+import getWalletFunction from "./wallet/GetWallet";
+import getBalanceFunction from "./wallet/GetTseBalance";
 import generateRssFunction from "./analytics/GenerateRss";
 import analyticsUrlFunction from "./analytics/AnalyticsUrl";
 import getSeriesFunction from "./analytics/ExtractPodcastInfo";
