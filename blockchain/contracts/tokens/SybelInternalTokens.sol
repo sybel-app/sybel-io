@@ -48,7 +48,7 @@ contract SybelInternalTokens is
 
     function initialize() public initializer {
         __ERC1155_init(
-            "https://sybel-io-fnft.s3.eu-west-1.amazonaws.com/{id}.json"
+            "https://storage.googleapis.com/sybel-io.appspot.com/json/{id}.json"
         );
         __MintingAccessControlUpgradeable_init();
         // Set the initial podcast id

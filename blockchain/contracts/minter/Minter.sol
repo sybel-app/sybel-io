@@ -93,7 +93,7 @@ contract Minter is
         ids[2] = SybelMath.buildEpicNftId(podcastId);
         ids[3] = SybelMath.buildLegendaryNftId(podcastId);
         uint256[] memory supplies = new uint256[](4);
-        supplies[0] = 200; // Classic
+        supplies[0] = 200; // Common
         supplies[1] = 20; // Rare
         supplies[2] = 5; // Epic
         supplies[3] = 1; // Legendary
@@ -123,8 +123,16 @@ contract Minter is
         );
         // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
-        // Burn his TSE token
-        tokenSybelEcosystem.burn(_to, totalCost);
+        uint256 amountToBurn = (totalCost * 80) / 100;
+        // Burn 80% of the cost TSE token
+        tokenSybelEcosystem.burn(_to, amountToBurn);
+        // Send 20% to the owner
+        address owner = sybelInternalTokens.ownerOf(
+            SybelMath.extractPodcastId(_id)
+        );
+        uint256 amountForOwner = totalCost - amountToBurn;
+        tokenSybelEcosystem.transfer(_to, owner, amountForOwner);
+
         // Emit the event
         emit FractionMinted(_id, _to, _amount, totalCost);
     }

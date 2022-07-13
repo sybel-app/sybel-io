@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import WalletDbDto from "../types/db/WalletDbDto";
-import { rewarder } from "./Contract";
+import { rewarder, rewarderConnected } from "./Contract";
 import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 import { DocumentData } from "@firebase/firestore";
@@ -19,11 +19,14 @@ const mintedPodactCollection = db.collection("mintedPodcast");
  * @param {WalletDbDto} wallet The wallet to count listen and pay
  * @param {string} paymentProperties The payment boolean properties to check in database
  */
-export async function countListenAndPayWallet(wallet: WalletDbDto) {
+export async function countListenAndPayWallet(
+  wallet: WalletDbDto
+): Promise<string | null> {
   // Get all the listen perform by this user and not payed
   const userListenQuerySnapshot = await analyticsCollection
     .where("userId", "==", wallet.id)
-    .where("givenToUser", "!=", true)
+    .where("givenToUser", "!=", true) // Reward not handled yet
+    .where("rewardTxHash", "==", null) // And tx not sent
     .get();
   const userListenDocuments: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
     [];
@@ -36,7 +39,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
 
   // If the user havn't perform any listen operation, exit directly
   if (userListenDocuments.length == 0) {
-    return;
+    return null;
   }
 
   // Get the list of all the known minted podcast
@@ -45,7 +48,6 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
   allMintedPodcastSnapshot.forEach((doc) => {
     mintedPodcasts.push(doc.data() as MintedPodcastDbDto);
   });
-  logger.debug(`Found ${mintedPodcasts.length} minted podcasts`);
 
   // Save an array of all the document we handled
   const handledDocument: FirebaseFirestore.QueryDocumentSnapshot<DocumentData>[] =
@@ -58,7 +60,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
     const matchingMintedPodcast = mintedPodcasts.find(
       (mintedPodcast) => mintedPodcast.seriesId == listenAnalitycs.seriesId
     );
-    if (!matchingMintedPodcast) {
+    if (!matchingMintedPodcast || !matchingMintedPodcast.fractionBaseId) {
       // If the podcast wasn't minted, don't include it in our map
       return acc;
     }
@@ -77,7 +79,7 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
   // Build the array we will send to the smart contract
   const podcastIds: number[] = [];
   const listenCounts: number[] = [];
-  podcastIdToListenCountMap.forEach((podcastId, listenCount) => {
+  podcastIdToListenCountMap.forEach((listenCount, podcastId) => {
     podcastIds.push(podcastId);
     listenCounts.push(listenCount);
   });
@@ -85,27 +87,43 @@ export async function countListenAndPayWallet(wallet: WalletDbDto) {
     `Found ${podcastIdToListenCountMap.size} podcast to on which the user perform some listen to be payed`
   );
 
+  // If we didn't found any minted podcast, exit directly
+  if (podcastIds.length <= 0) {
+    logger.info("No minted podcast found for the user, exiting directly");
+    return null;
+  }
+
   // Try to pay him
   try {
     // Launch the transaction and wait for the receipt
-    const paymentTx = await rewarder.payUser(
+    const rewarderSigned = await rewarderConnected();
+    logger.debug(
+      `Paying the user ${wallet.id} on the address ${wallet.address} for the podcast ids ${podcastIds} for listens ${listenCounts}`,
+      podcastIds,
+      listenCounts
+    );
+
+    const paymentTx = await rewarderSigned.payUser(
       wallet.address,
       podcastIds,
       listenCounts
     );
-    const paymentTxReceipt = await paymentTx.wait();
 
     logger.debug(
-      `Payed the used ${wallet.id} with success, on the tx hash ${paymentTxReceipt.blockHash}, block number ${paymentTxReceipt.blockNumber}`
+      `Payed the used ${wallet.id} with success, on the tx hash ${paymentTx.hash}`
     );
 
     // Update all the handled analytics row
     const batch = db.batch();
     handledDocument.map(async (each) => {
-      batch.update(each.ref, "givenToUser", true);
+      batch.update(each.ref, "rewardTxHash", paymentTx.hash);
     });
     batch.commit();
+
+    // Then send back the payment tx
+    return paymentTx.hash;
   } catch (exception: unknown) {
     logger.warn(`Error when paying the user ${wallet.id}`, exception);
+    return null;
   }
 }

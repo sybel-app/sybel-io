@@ -1,10 +1,11 @@
 import * as functions from "firebase-functions";
-import cors from "cors";
 import { ethers } from "ethers";
 import * as admin from "firebase-admin";
-import { getWalletForUser } from "./utils/UserUtils";
-import { walletToResponse } from "./utils/Mapper";
-import WalletDbDto from "./types/db/WalletDbDto";
+import { getWalletForUser } from "../utils/UserUtils";
+import { walletToResponse } from "../utils/Mapper";
+import WalletDbDto from "../types/db/WalletDbDto";
+import { checkCallData } from "../utils/Security";
+import BaseRequestDto from "../types/request/BaseRequestDto";
 
 const db = admin.firestore();
 
@@ -17,17 +18,8 @@ const db = admin.firestore();
 export default () =>
   functions
     .region("europe-west3")
-    .https.onCall(async (data, context): Promise<unknown> => {
-      functions.logger.debug(`app id ${context.app?.appId}`);
-      functions.logger.debug(`auth id ${context.auth?.uid}`);
-      functions.logger.debug(`instance id token ${context.instanceIdToken}`);
-      // Ensure that this function is called from a known app with the right instance token
-      /*if (!context.app) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "The function need to be called from a known app"
-        );
-      }*/
+    .https.onCall(async (data: BaseRequestDto): Promise<unknown> => {
+      checkCallData(data);
 
       // Extract the user id from the request param
       const userId = data.id;

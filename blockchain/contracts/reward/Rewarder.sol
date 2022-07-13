@@ -118,11 +118,11 @@ contract Rewarder is
                 ListenerBalanceOnPodcast[] memory balances,
                 bool hasAtLeastOneBalance
             ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
-            // If no balance mint a standart NFT
+            // If no balance mint a Standard NFT
             if (!hasAtLeastOneBalance) {
                 sybelInternalTokens.mint(
                     _listener,
-                    SybelMath.buildStandartNftId(_podcastIds[i]),
+                    SybelMath.buildStandardNftId(_podcastIds[i]),
                     1
                 );
                 // And then recompute his balance
@@ -154,7 +154,6 @@ contract Rewarder is
     ) private {
         // The user have a balance we can continue
         uint64 podcastBadge = podcastBadges.getBadge(_podcastId);
-        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         // Amout we will mint for user and for owner
         uint256 totalAmountToMint = 0;
         // Mint each token for each fraction
@@ -181,8 +180,10 @@ contract Rewarder is
         uint64 listenerBadge = listenerBadges.getBadge(_listener);
         uint256 amountForListener = (baseAmountForListener * listenerBadge) /
             SybelMath.DECIMALS;
-        // Mint the TSE for the listener and the owner of the podcast
+        // Mint the TSE for the listener
         tokenSybelEcosystem.mint(_listener, amountForListener);
+        // Mint the TSE for the owner
+        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
         tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
         // Emit the reward event
         emit UserRewarded(
@@ -204,7 +205,7 @@ contract Rewarder is
         returns (uint32)
     {
         uint32 reward;
-        if (_tokenType == SybelMath.TOKEN_TYPE_STANDART_MASK) {
+        if (_tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
             reward = 10000; // 0.01 TSE
         } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             reward = 100000; // 0.1 TSE

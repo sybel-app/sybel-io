@@ -3,7 +3,7 @@ import { BigNumber } from "ethers";
 export const TOKEN_ID_OFFSET = 4;
 
 export const TOKEN_TYPES_NFT = 1;
-export const TOKEN_TYPES_STANDART = 2;
+export const TOKEN_TYPES_STANDARD = 2;
 export const TOKEN_TYPES_CLASSIC = 3;
 export const TOKEN_TYPES_RARE = 4;
 export const TOKEN_TYPES_EPIC = 5;
@@ -18,9 +18,9 @@ export const BUYABLE_TOKEN_TYPES = [
 
 /**
  * Build the id of a nft fraction from a podcast id and the token type
- * @param podcastId The id of the podcast for whioch we want to build the fraction id
- * @param tokenType The type of fraction we want
- * @returns The erc1155 token id
+ * @param {BigNumber} podcastId The id of the podcast for whioch we want to build the fraction id
+ * @param {number} tokenType The type of fraction we want
+ * @return {BigNumber} The erc1155 token id
  */
 export function buildFractionId(
   podcastId: BigNumber,
@@ -31,7 +31,7 @@ export function buildFractionId(
 
 export const allTokenTypesToRarity: { rarity: string; tokenTypes: number }[] = [
   { rarity: "Creator Nft", tokenTypes: TOKEN_TYPES_NFT },
-  { rarity: "Standart", tokenTypes: TOKEN_TYPES_STANDART },
+  { rarity: "Standard", tokenTypes: TOKEN_TYPES_STANDARD },
   { rarity: "Common", tokenTypes: TOKEN_TYPES_CLASSIC },
   { rarity: "Rare", tokenTypes: TOKEN_TYPES_RARE },
   { rarity: "Epic", tokenTypes: TOKEN_TYPES_EPIC },

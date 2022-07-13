@@ -8,7 +8,7 @@ library SybelMath {
 
     // The mask for the different podcast specfic types
     uint8 internal constant TOKEN_TYPE_NFT_MASK = 1;
-    uint8 internal constant TOKEN_TYPE_STANDART_MASK = 2;
+    uint8 internal constant TOKEN_TYPE_STANDARD_MASK = 2;
     uint8 internal constant TOKEN_TYPE_CLASSIC_MASK = 3;
     uint8 internal constant TOKEN_TYPE_RARE_MASK = 4;
     uint8 internal constant TOKEN_TYPE_EPIC_MASK = 5;
@@ -54,12 +54,12 @@ library SybelMath {
     /**
      * @dev Build the id for a classic NFT id
      */
-    function buildStandartNftId(uint256 _podcastId)
+    function buildStandardNftId(uint256 _podcastId)
         internal
         pure
         returns (uint256)
     {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_STANDART_MASK;
+        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_STANDARD_MASK;
     }
 
     /**
@@ -123,7 +123,7 @@ library SybelMath {
      */
     function payableTokenTypes() internal pure returns (uint8[] memory) {
         uint8[] memory types = new uint8[](5);
-        types[0] = SybelMath.TOKEN_TYPE_STANDART_MASK;
+        types[0] = SybelMath.TOKEN_TYPE_STANDARD_MASK;
         types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
         types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
         types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
