@@ -34,7 +34,7 @@ export default () =>
           response.status(500).send({ error: "missing arguments" });
           return;
         }
-        let data = "";
+
         try {
           // Get the Rss data
           const rssResponse = await axios.get(requestDto.rssUrl);
