@@ -2,8 +2,6 @@ import * as functions from "firebase-functions";
 import cors from "cors";
 import * as admin from "firebase-admin";
 import AnalyticsUrlRequestDto from "../types/request/AnalyticsUrlRequestDto";
-import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
-import { Timestamp } from "@firebase/firestore";
 
 const db = admin.firestore();
 
@@ -77,7 +75,9 @@ export default () =>
               `Saved a new listen for the user ${requestDto.userId} on the series ${requestDto.seriesId}`
             );
             // Redirect the user
-            response.redirect(requestDto.rssUrl);
+            response
+              .set("Cache-Control", "public, max-age=300, s-maxage=300") // Cached for 5min
+              .redirect(requestDto.rssUrl);
           } catch (error) {
             functions.logger.warn(
               "Unable to handle the podcast redirection",

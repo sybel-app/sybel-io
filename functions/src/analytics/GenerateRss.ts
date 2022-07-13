@@ -1,8 +1,8 @@
 import * as functions from "firebase-functions";
 import cors from "cors";
-import https from "https";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import AnalyticsUrlRequestDto from "../types/request/AnalyticsUrlRequestDto";
+import axios from "axios";
 
 const options = {
   ignoreAttributes: false,
@@ -36,45 +36,42 @@ export default () =>
         }
         let data = "";
         try {
-          // Request the rss url to extract some info
-          https.get(requestDto.rssUrl, function (res) {
-            if (
-              res.statusCode &&
-              res.statusCode >= 200 &&
-              res.statusCode < 400
-            ) {
-              // Save this rss data
-              res.on("data", function (data_) {
-                data += data_.toString();
-              });
-              // Once we reached the end of the data, parse the object and build the new url
-              res.on("end", function () {
-                const jObj = parser.parse(data);
-                jObj.rss.channel.item.map(
-                  (
-                    each: any // eslint-disable-line
-                  ) =>
-                    each.enclosure.att_url
-                      ? (each.enclosure.att_url =
-                          process.env.BASE_URL_AUDIO_REDIRECT +
-                          "?uid=" +
-                          requestDto.userId +
-                          "&sid=" +
-                          requestDto.seriesId +
-                          "&rss=" +
-                          each.enclosure.att_url)
-                      : undefined
-                );
-                // Build the new url the client should could to have TSE reward
-                const newUrl = builder.build(jObj);
-                response
-                  .set("Content-Type", "text/xml; charset=utf8")
-                  .set("Cache-Control", "public, max-age=600, s-maxage=1200") // Cached for 20min on CDN and 10min on client
-                  .status(200)
-                  .send(newUrl);
-              });
-            }
-          });
+          // Get the Rss data
+          const rssResponse = await axios.get(requestDto.rssUrl);
+
+          // Check the response code
+          if (rssResponse.status >= 400) {
+            functions.logger.debug("Invalid response from the rss url");
+            throw new functions.https.HttpsError(
+              "internal",
+              "unable to extract rss info from the rss feed"
+            );
+          }
+
+          // Extract the data from the rss feed
+          const rssXmlObject = parser.parse(rssResponse.data);
+          rssXmlObject.rss.channel.item.map(
+            (
+              each: any // eslint-disable-line
+            ) =>
+              each.enclosure.att_url
+                ? (each.enclosure.att_url =
+                    process.env.BASE_URL_AUDIO_REDIRECT +
+                    "?uid=" +
+                    requestDto.userId +
+                    "&sid=" +
+                    requestDto.seriesId +
+                    "&rss=" +
+                    each.enclosure.att_url)
+                : undefined
+          );
+          // Build the new url the client should could to have TSE reward
+          const newUrl = builder.build(rssXmlObject);
+          response
+            .set("Content-Type", "text/xml; charset=utf8")
+            .set("Cache-Control", "public, max-age=600, s-maxage=1200") // Cached for 20min on CDN and 10min on client
+            .status(200)
+            .send(newUrl);
         } catch (error) {
           response.status(500).send(error);
         }

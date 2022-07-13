@@ -93,7 +93,7 @@ contract Minter is
         ids[2] = SybelMath.buildEpicNftId(podcastId);
         ids[3] = SybelMath.buildLegendaryNftId(podcastId);
         uint256[] memory supplies = new uint256[](4);
-        supplies[0] = 200; // Classic
+        supplies[0] = 200; // Common
         supplies[1] = 20; // Rare
         supplies[2] = 5; // Epic
         supplies[3] = 1; // Legendary

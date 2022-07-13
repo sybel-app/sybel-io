@@ -18,9 +18,9 @@ export const BUYABLE_TOKEN_TYPES = [
 
 /**
  * Build the id of a nft fraction from a podcast id and the token type
- * @param podcastId The id of the podcast for whioch we want to build the fraction id
- * @param tokenType The type of fraction we want
- * @returns The erc1155 token id
+ * @param {BigNumber} podcastId The id of the podcast for whioch we want to build the fraction id
+ * @param {number} tokenType The type of fraction we want
+ * @return {BigNumber} The erc1155 token id
  */
 export function buildFractionId(
   podcastId: BigNumber,
