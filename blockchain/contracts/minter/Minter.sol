@@ -123,10 +123,10 @@ contract Minter is
         );
         // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
-        uint256 amountToBurn = (totalCost * 80) / 100;
-        // Burn 80% of the cost TSE token
+        uint256 amountToBurn = (totalCost * 2) / 10;
+        // Burn 20% of the cost TSE token
         tokenSybelEcosystem.burn(_to, amountToBurn);
-        // Send 20% to the owner
+        // Send 80% to the owner
         address owner = sybelInternalTokens.ownerOf(
             SybelMath.extractPodcastId(_id)
         );
