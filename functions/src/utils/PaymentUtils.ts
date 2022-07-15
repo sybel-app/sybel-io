@@ -5,7 +5,7 @@ import { rewarderConnected } from "./Contract";
 import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 import { DocumentData } from "@firebase/firestore";
-import ConsumedContentDbDto from "../types/db/ConsumedContentDbDto";
+import { ConsumedContentDbDto } from "../types/db/ConsumedContentDbDto";
 
 // Firebase logger
 const logger = functions.logger;
