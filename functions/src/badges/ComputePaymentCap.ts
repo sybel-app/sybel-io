@@ -64,6 +64,7 @@ export default () =>
       // Get the top 5%
       const fivePercentSlice = Math.floor(currentWeekCcus.length * 0.05);
       const top5PercentCcus = currentWeekCcus.slice(0, fivePercentSlice);
+      functions.logger.debug("Found the top 5percent CCU", top5PercentCcus);
 
       // TODO : We should store this top 5 percent, and then perform a chi squared test on each reward, on the number of ccu to be payed, to ensure it's ok ?
 
