@@ -4,8 +4,6 @@ import {
   ConsumedContentDbDto,
   CcuPerWeek,
 } from "../types/db/ConsumedContentDbDto";
-import { DocumentSnapshot, QueryDocumentSnapshot } from "@firebase/firestore";
-import { use } from "node-vibrant";
 
 // Access our database
 const db = admin.firestore();
