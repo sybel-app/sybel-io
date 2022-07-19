@@ -9,6 +9,9 @@ import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 export default () =>
   functions
     .region("europe-west3")
+    .runWith({
+      timeoutSeconds: 540,
+    })
     .pubsub.schedule("5,35 * * * *") // Run every 30min
     .onRun(async () => {
       functions.logger.info(
