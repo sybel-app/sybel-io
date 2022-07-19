@@ -10,6 +10,7 @@ export interface OwnedFraction {
   readonly seriesId: string;
   readonly tokenType: number;
   readonly count: number;
+  readonly txHash: string;
 }
 
 export default WalletDbDto;

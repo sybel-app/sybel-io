@@ -1,9 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import BaseRequestDto from "../types/request/BaseRequestDto";
 import { tseToken } from "../utils/Contract";
 import { checkCallData } from "../utils/Security";
-import { getWalletForUser } from "../utils/UserUtils";
 import WalletDbDto from "../types/db/WalletDbDto";
 
 /**
@@ -26,6 +24,7 @@ export default () =>
         );
       }
 
+      // Check if a force refresh is asked
       let forceRefresh: boolean;
       if (data.forceRefresh) {
         forceRefresh = data.forceRefresh;
