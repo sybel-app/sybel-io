@@ -55,9 +55,9 @@ export default () =>
         const remainingSupply = await internalTokens.supplyOf(fractionId);
         const rawCost = await fractionCostBadges.getBadge(fractionId);
         return {
-          id: fractionId,
+          id: fractionId.toNumber(),
           type: tokenType,
-          supply: remainingSupply,
+          supply: remainingSupply.toNumber(),
           cost: rawCost.toNumber() / 1e6,
         };
       });
