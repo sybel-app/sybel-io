@@ -15,11 +15,25 @@ export default () =>
     .https.onCall(async (request): Promise<unknown> => {
       checkCallData(request);
 
-      // Get all the minted podcast
+      // Build the initial query
       const mintCollection = admin.firestore().collection("mintedPodcast");
-      const mintedPodcastDocsSnapshot = await mintCollection
-        .where("fractionBaseId", "!=", null)
-        .get();
+      let mintedPodcastQuery = mintCollection.where(
+        "fractionBaseId",
+        "!=",
+        null
+      );
+
+      // Filter on the series id if needed
+      if (request.seriesId) {
+        mintedPodcastQuery = mintedPodcastQuery.where(
+          "seriesId",
+          "==",
+          request.seriesId
+        );
+      }
+
+      // Get the minted podcast
+      const mintedPodcastDocsSnapshot = await mintedPodcastQuery.get();
       const mintedPodcasts: MintedPodcastDbDto[] = [];
       mintedPodcastDocsSnapshot.forEach((mintedPodcastDoc) =>
         mintedPodcasts.push(mintedPodcastDoc.data() as MintedPodcastDbDto)

@@ -11,6 +11,7 @@ import launchPodcastMint from "./mint/LaunchPodcastMint";
 import getPodcastMint from "./mint/GetPodcastMint";
 import getPodcastsMintedCall from "./mint/GetPodcastsMinted";
 import getPodcastFractionsCall from "./fraction/GetPodcastFractions";
+import buyPodcastFractionCall from "./fraction/BuyPodcastFraction";
 import mintPodcastFromJsonCall from "./mint/MintPodcastFromJson";
 import importSybelListenEventCron from "./analytics/ImportSybelListenEvent";
 import computeMintingBadgeCron from "./badges/ComputeMintingBadge";
@@ -96,6 +97,11 @@ export const getPodcastFractions = getPodcastFractionsCall();
  * Mint all the podcast from a sybel db export
  */
 export const mintPodcastFromSybelExport = mintPodcastFromJsonCall();
+
+/**
+ * Buy the given podcast fraction
+ */
+export const buyPodcastFraction = buyPodcastFractionCall();
 
 /*
  * ===== BATCH =====

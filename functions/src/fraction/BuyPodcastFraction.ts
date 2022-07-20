@@ -41,11 +41,17 @@ export default () =>
           );
         }
         // Extract it from our db snapshot
-        let mintedPodcast: MintedPodcastDbDto;
-        mintedPodcastDocsSnapshot.forEach(
-          (mintedPodcastDoc) =>
-            (mintedPodcast = mintedPodcastDoc.data() as MintedPodcastDbDto)
+        const mintedPodcasts: MintedPodcastDbDto[] = [];
+        mintedPodcastDocsSnapshot.forEach((mintedPodcastDoc) =>
+          mintedPodcasts.push(mintedPodcastDoc.data() as MintedPodcastDbDto)
         );
+        const mintedPodcast: MintedPodcastDbDto = mintedPodcasts[0];
+        if (!mintedPodcast) {
+          throw new functions.https.HttpsError(
+            "not-found",
+            `Unable to found a minted podcast for the id ${request.seriesId}`
+          );
+        }
 
         // Get the user wallet
         const walletCollection = admin.firestore().collection("wallet");
@@ -98,7 +104,7 @@ export default () =>
           fractions: newUserFractions,
         });
 
-        // Return our freshly built object
-        return fractions;
+        // Return the tx on which the buy was done
+        return mintFractionTx.hash;
       }
     );
