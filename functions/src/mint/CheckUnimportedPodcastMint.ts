@@ -12,6 +12,9 @@ import { Storage } from "@google-cloud/storage";
 export default () =>
   functions
     .region("europe-west3")
+    .runWith({
+      timeoutSeconds: 540,
+    })
     .pubsub.schedule("0,30 * * * *") // Run every 30min
     .onRun(async () => {
       functions.logger.info(

@@ -43,7 +43,7 @@ export default () =>
       // Ensure this podcast wasn't previously minted
       const mintCollection = admin.firestore().collection("mintedPodcast");
       const mintedPodcastWithSameId = await mintCollection
-        .where("series", "==", request.seriesId)
+        .where("seriesId", "==", request.seriesId)
         .get();
       if (mintedPodcastWithSameId.size > 0) {
         throw new functions.https.HttpsError(
@@ -64,7 +64,7 @@ export default () =>
 
         // Create the object we will store in our database, and save it
         const pendingPodcastMint: MintedPodcastDbDto = {
-          seriesId: request.seriesId, // TODO : this is the user id
+          seriesId: request.seriesId,
           txHash: mintPodcastTx.hash,
           podcastInfo: request.podcastInfo,
           fractionBaseId: null,

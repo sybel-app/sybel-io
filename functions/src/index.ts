@@ -9,6 +9,10 @@ import getSeriesFunction from "./analytics/ExtractPodcastInfo";
 import refreshUserBalanceFunction from "./reward/RefreshUserBalance";
 import launchPodcastMint from "./mint/LaunchPodcastMint";
 import getPodcastMint from "./mint/GetPodcastMint";
+import getPodcastsMintedCall from "./mint/GetPodcastsMinted";
+import getPodcastFractionsCall from "./fraction/GetPodcastFractions";
+import buyPodcastFractionCall from "./fraction/BuyPodcastFraction";
+import mintPodcastFromJsonCall from "./mint/MintPodcastFromJson";
 import importSybelListenEventCron from "./analytics/ImportSybelListenEvent";
 import computeMintingBadgeCron from "./badges/ComputeMintingBadge";
 import computePodcastBadgeCron from "./badges/ComputePodcastBadge";
@@ -78,6 +82,26 @@ export const getMint = getPodcastMint();
  * Refresh the user balance function
  */
 export const refreshBalance = refreshUserBalanceFunction();
+
+/**
+ * List all the podcast minted
+ */
+export const getPodcastsMinted = getPodcastsMintedCall();
+
+/**
+ * List all the fractions for a giben podcasts
+ */
+export const getPodcastFractions = getPodcastFractionsCall();
+
+/**
+ * Mint all the podcast from a sybel db export
+ */
+export const mintPodcastFromSybelExport = mintPodcastFromJsonCall();
+
+/**
+ * Buy the given podcast fraction
+ */
+export const buyPodcastFraction = buyPodcastFractionCall();
 
 /*
  * ===== BATCH =====

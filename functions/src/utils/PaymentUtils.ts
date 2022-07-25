@@ -1,10 +1,11 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import WalletDbDto from "../types/db/WalletDbDto";
-import { rewarder, rewarderConnected } from "./Contract";
+import { rewarderConnected } from "./Contract";
 import ListenAnalyticsDbDto from "../types/db/ListenAnalyticsDbDto";
 import MintedPodcastDbDto from "../types/db/MintedPodcastDbDto";
 import { DocumentData } from "@firebase/firestore";
+import { ConsumedContentDbDto } from "../types/db/ConsumedContentDbDto";
 
 // Firebase logger
 const logger = functions.logger;
@@ -13,6 +14,7 @@ const logger = functions.logger;
 const db = admin.firestore();
 const analyticsCollection = db.collection("listeningAnalytics");
 const mintedPodactCollection = db.collection("mintedPodcast");
+const ccuCollection = db.collection("consumedContentUnit");
 
 /**
  * Count the number of listen for a given wallet, matching the db properties
@@ -54,6 +56,8 @@ export async function countListenAndPayWallet(
     [];
 
   // Reduce it to extract only a map of series id to listen count
+  let minTimestamp = 0;
+  let maxTimestamp = 0;
   const podcastIdToListenCountMap = userListenDocuments.reduce((acc, value) => {
     const listenAnalitycs = value.data() as ListenAnalyticsDbDto;
     // Check if that podcast is minted or not (if not, don't count his listen)
@@ -66,6 +70,14 @@ export async function countListenAndPayWallet(
     }
     // Save the fact that we handled this document
     handledDocument.push(value);
+
+    // Check the timestamp
+    if (!minTimestamp || listenAnalitycs.date.toMillis() < minTimestamp) {
+      minTimestamp = listenAnalitycs.date.toMillis();
+    }
+    if (!maxTimestamp || listenAnalitycs.date.toMillis() > maxTimestamp) {
+      maxTimestamp = listenAnalitycs.date.toMillis();
+    }
 
     // Otherwise, increment the current listen count on this podcast
     let currentListenCount = acc.get(matchingMintedPodcast.fractionBaseId);
@@ -119,6 +131,28 @@ export async function countListenAndPayWallet(
       batch.update(each.ref, "rewardTxHash", paymentTx.hash);
     });
     batch.commit();
+
+    // Save the number of consumed content for this user
+    const totalListenCount = listenCounts.reduce(
+      (acc, value) => (acc += value)
+    );
+    // Increment the ccu for this user
+    const userCcu = await ccuCollection.where("userId", "==", wallet.id).get();
+    if (userCcu.empty) {
+      // Build the initial ccu for this user
+      await ccuCollection.add({
+        userId: wallet.id,
+        currentWeekCcu: totalListenCount,
+        ccuPerWeeks: [],
+      });
+    } else {
+      // Otherwise, update it
+      const currentCcuDoc = userCcu.docs[0];
+      const currentCcu = currentCcuDoc.data() as ConsumedContentDbDto;
+      await currentCcuDoc.ref.update({
+        currentWeekCcu: currentCcu.currentWeekCcu + totalListenCount,
+      });
+    }
 
     // Then send back the payment tx
     return paymentTx.hash;

@@ -17,7 +17,6 @@ export interface CostBadgeUpdate {
   readonly txHashes: string[];
 }
 
-// TODO : Store last minting cost refresh block numbers ?
 export interface CostBadgeUpdatePeriod {
   readonly lastWeekBlockStart: number;
   readonly currentWeekBlockStart: number;
