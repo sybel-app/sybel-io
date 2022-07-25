@@ -4,8 +4,8 @@ import { task, types } from "hardhat/config";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
-import "hardhat-tracer";
 import "hardhat-contract-sizer";
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -25,7 +25,7 @@ export default {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 200,
+      runs: 1000,
     },
   },
   paths: {
@@ -41,6 +41,15 @@ export default {
     esModuleInterop: true,
     outDir: "dist",
     resolveJsonModule: true,
+  },
+  networks: {
+    mumbai: {
+      url: process.env.MUMBAI_PROVIDER,
+      accounts: [process.env.SYBEL_DEPLOY_PRIV_KEY],
+    },
+  },
+  etherscan: {
+    apiKey: process.env.POLYGON_SCAN_API_KEY,
   },
   include: ["./scripts", "./test", "./typechain-types"],
   files: ["./hardhat.config.ts"],
