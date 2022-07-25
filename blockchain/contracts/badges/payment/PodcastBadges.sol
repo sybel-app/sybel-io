@@ -54,7 +54,7 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
         uint64 podcastBadge = podcastBadges[_podcastId];
         if (podcastBadge == 0) {
             // If the badge of this podcast isn't set yet, set it to default
-            podcastBadge = SybelMath.DECIMALS;
+            podcastBadge = 1 ether;
         }
         return podcastBadge;
     }

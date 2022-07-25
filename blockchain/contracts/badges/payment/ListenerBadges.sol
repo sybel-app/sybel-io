@@ -50,7 +50,7 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
         uint64 listenerBadge = listenerBadges[_listener];
         if (listenerBadge == 0) {
             // If the badge of this listener isn't set yet, set it to default
-            listenerBadge = SybelMath.DECIMALS;
+            listenerBadge = 1 ether;
         }
         return listenerBadge;
     }

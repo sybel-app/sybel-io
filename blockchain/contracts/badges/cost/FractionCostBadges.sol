@@ -15,9 +15,9 @@ contract FractionCostBadges is
     SybelAccessControlUpgradeable
 {
     // Map f nft id to cost badge
-    mapping(uint256 => uint64) fractionBadges;
+    mapping(uint256 => uint128) fractionBadges;
 
-    event FractionCostBadgeUpdated(uint256 id, uint64 badge);
+    event FractionCostBadgeUpdated(uint256 id, uint128 badge);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -34,7 +34,7 @@ contract FractionCostBadges is
     /**
      * @dev Update the podcast internal coefficient
      */
-    function updateBadge(uint256 _fractionId, uint64 _badge)
+    function updateBadge(uint256 _fractionId, uint128 _badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
@@ -52,9 +52,9 @@ contract FractionCostBadges is
         view
         override
         whenNotPaused
-        returns (uint64)
+        returns (uint128)
     {
-        uint64 fractionBadge = fractionBadges[_fractionId];
+        uint128 fractionBadge = fractionBadges[_fractionId];
         if (fractionBadge == 0) {
             // If the badge of this fraction isn't set yet, set it to default
             uint8 tokenType = SybelMath.extractTokenType(_fractionId);
@@ -70,17 +70,17 @@ contract FractionCostBadges is
     function initialFractionCost(uint8 _tokenType)
         public
         pure
-        returns (uint32)
+        returns (uint128)
     {
-        uint32 initialCost;
+        uint128 initialCost;
         if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
-            initialCost = 1000000; // 1 TSE
+            initialCost = 1 ether; // 1 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
-            initialCost = 5000000; // 5 TSE
+            initialCost = 5 ether; // 5 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
-            initialCost = 10000000; // 10 TSE
+            initialCost = 10 ether; // 10 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
-            initialCost = 20000000; // 20 TSE
+            initialCost = 20 ether; // 20 SYBL
         }
         return initialCost;
     }

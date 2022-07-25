@@ -6,7 +6,7 @@ import "../badges/access/PaymentBadgesAccessor.sol";
 import "../badges/cost/IFractionCostBadges.sol";
 import "../utils/SybelMath.sol";
 import "../tokens/SybelInternalTokens.sol";
-import "../tokens/TokenSybelEcosystem.sol";
+import "../tokens/SybelToken.sol";
 import "../utils/MintingAccessControlUpgradeable.sol";
 
 /**
@@ -26,7 +26,7 @@ contract Minter is
     /**
      * @dev Access our governance token
      */
-    TokenSybelEcosystem private tokenSybelEcosystem;
+    SybelToken private sybelToken;
 
     /**
      * @dev Access our fraction cost badges
@@ -54,7 +54,7 @@ contract Minter is
     }
 
     function initialize(
-        address tseAddr,
+        address sybelTokenAddr,
         address internalTokenAddr,
         address listenerBadgesAddr,
         address podcastBadgesAddr,
@@ -64,7 +64,7 @@ contract Minter is
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
         sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
-        tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
+        sybelToken = SybelToken(sybelTokenAddr);
         fractionCostBadges = IFractionCostBadges(fractionCostBadgesAddr);
     }
 
@@ -113,25 +113,26 @@ contract Minter is
         uint256 _amount
     ) external override onlyRole(SybelRoles.MINTER) whenNotPaused {
         // Get the cost of the fraction
-        uint64 fractionCost = fractionCostBadges.getBadge(_id);
+        uint128 fractionCost = fractionCostBadges.getBadge(_id);
         uint256 totalCost = fractionCost * _amount;
         // Check if the user have enough the balance
-        uint256 tseBalance = tokenSybelEcosystem.balanceOf(_to);
+        uint256 userBalance = sybelToken.balanceOf(_to);
         require(
-            tseBalance >= totalCost,
+            userBalance >= totalCost,
             "SYB: Not enough balance to pay for this fraction"
         );
         // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
         uint256 amountToBurn = (totalCost * 2) / 10;
-        // Burn 20% of the cost TSE token
-        tokenSybelEcosystem.burn(_to, amountToBurn);
+        // Send 20% of sybl token to owner
+        // TODO : Owner wallet
+        // sybelToken.burn(_to, amountToBurn);
         // Send 80% to the owner
         address owner = sybelInternalTokens.ownerOf(
             SybelMath.extractPodcastId(_id)
         );
         uint256 amountForOwner = totalCost - amountToBurn;
-        tokenSybelEcosystem.transfer(_to, owner, amountForOwner);
+        sybelToken.transfer(_to, owner, amountForOwner);
 
         // Emit the event
         emit FractionMinted(_id, _to, _amount, totalCost);
@@ -146,16 +147,16 @@ contract Minter is
         whenNotPaused
     {
         // Get the cost of the new supply
-        uint32 tokenSupplycost = supplyCost(SybelMath.extractTokenType(_id));
+        uint96 tokenSupplycost = supplyCost(SybelMath.extractTokenType(_id));
         uint256 totalCost = tokenSupplycost * _newSupply;
         // Find the owner of this podcast
         address owner = sybelInternalTokens.ownerOf(
             SybelMath.extractPodcastId(_id)
         );
         // Check if the owner have enough the balance
-        uint256 tseBalance = tokenSybelEcosystem.balanceOf(owner);
+        uint256 userBalance = sybelToken.balanceOf(owner);
         require(
-            tseBalance >= totalCost,
+            userBalance >= totalCost,
             "SYB: The owner havn't enough balance to supply the new fraction"
         );
         // Compute the supply difference
@@ -165,24 +166,25 @@ contract Minter is
             SybelMath.asSingletonArray(_id),
             SybelMath.asSingletonArray(newRealSupply)
         );
-        // Burn his TSE token
-        tokenSybelEcosystem.burn(owner, totalCost);
+        // Transfer his sybl token to the owner wallet
+        // TODO
+        sybelToken.burn(owner, totalCost);
     }
 
     /**
      * @dev The initial cost of a fraction type
      * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
      */
-    function supplyCost(uint8 _tokenType) public pure returns (uint32) {
-        uint32 foundedSupplyCost;
+    function supplyCost(uint8 _tokenType) public pure returns (uint96) {
+        uint96 foundedSupplyCost;
         if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
-            foundedSupplyCost = 500000; // 0.5 TSE
+            foundedSupplyCost = 0.5 ether; // 0.5 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
-            foundedSupplyCost = 2000000; // 2 TSE
+            foundedSupplyCost = 2 ether; // 2 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
-            foundedSupplyCost = 5000000; // 5 TSE
+            foundedSupplyCost = 5 ether; // 5 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
-            foundedSupplyCost = 10000000; // 10 TSE
+            foundedSupplyCost = 10 ether; // 10 SYBL
         }
         return foundedSupplyCost;
     }

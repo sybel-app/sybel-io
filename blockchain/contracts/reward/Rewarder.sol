@@ -6,7 +6,7 @@ import "../badges/access/PaymentBadgesAccessor.sol";
 import "../utils/SybelMath.sol";
 import "../utils/SybelRoles.sol";
 import "../tokens/SybelInternalTokens.sol";
-import "../tokens/TokenSybelEcosystem.sol";
+import "../tokens/SybelToken.sol";
 import "../utils/SybelAccessControlUpgradeable.sol";
 
 /**
@@ -29,7 +29,7 @@ contract Rewarder is
     /**
      * @dev Access our governance token
      */
-    TokenSybelEcosystem private tokenSybelEcosystem;
+    SybelToken private sybelToken;
 
     /**
      * @dev Event emitted when a user is rewarded for his listen
@@ -48,7 +48,7 @@ contract Rewarder is
     }
 
     function initialize(
-        address tseAddr,
+        address syblTokenAddr,
         address internalTokenAddr,
         address listenerBadgesAddr,
         address podcastBadgesAddr
@@ -57,7 +57,7 @@ contract Rewarder is
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
         sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
-        tokenSybelEcosystem = TokenSybelEcosystem(tseAddr);
+        sybelToken = SybelToken(syblTokenAddr);
 
         // Grant the rewarder role to the contract deployer
         _grantRole(SybelRoles.REWARDER, msg.sender);
@@ -168,7 +168,7 @@ contract Rewarder is
                     baseRewardForTokenType(_balances[i].tokenType) *
                     podcastBadge *
                     _listenCount) /
-                SybelMath.DECIMALS;
+                1 ether;
         }
         // If nothing to mint, directly exit
         if (totalAmountToMint == 0) {
@@ -179,12 +179,12 @@ contract Rewarder is
         // Handle the user badge for his amount
         uint64 listenerBadge = listenerBadges.getBadge(_listener);
         uint256 amountForListener = (baseAmountForListener * listenerBadge) /
-            SybelMath.DECIMALS;
-        // Mint the TSE for the listener
-        tokenSybelEcosystem.mint(_listener, amountForListener);
-        // Mint the TSE for the owner
+            1 ether;
+        // Mint the SYBL for the listener
+        sybelToken.mint(_listener, amountForListener);
+        // Mint the SYBL for the owner
         address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
-        tokenSybelEcosystem.mint(podcastOwner, amountForOwner);
+        sybelToken.mint(podcastOwner, amountForOwner);
         // Emit the reward event
         emit UserRewarded(
             _podcastId,
@@ -202,19 +202,19 @@ contract Rewarder is
     function baseRewardForTokenType(uint8 _tokenType)
         private
         pure
-        returns (uint32)
+        returns (uint96)
     {
-        uint32 reward;
+        uint96 reward;
         if (_tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
-            reward = 10000; // 0.01 TSE
+            reward = 0.01 ether; // 0.01 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
-            reward = 100000; // 0.1 TSE
+            reward = 0.1 ether; // 0.1 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
-            reward = 500000; // 0.5 TSE
+            reward = 0.5 ether; // 0.5 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
-            reward = 1000000; // 1 TSE
+            reward = 1 ether; // 1 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
-            reward = 2000000; // 2 TSE
+            reward = 2 ether; // 2 SYBL
         }
         return reward;
     }
