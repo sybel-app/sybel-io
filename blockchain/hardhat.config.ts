@@ -8,6 +8,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-contract-sizer";
+import "hardhat-abi-exporter";
 
 dotenv.config();
 
@@ -56,4 +57,12 @@ export default {
   },
   include: ["./scripts", "./test", "./typechain-types"],
   files: ["./hardhat.config.ts"],
+  abiExporter: {
+    path: "../abi",
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    format: "json",
+    pretty: false,
+  },
 };

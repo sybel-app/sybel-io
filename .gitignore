@@ -30,5 +30,3 @@ sybel-io-*.json
 blockchain/.openzeppelin/unknwon-*.json
 blockchain/.deps/*
 
-# Generated abi
-abi/

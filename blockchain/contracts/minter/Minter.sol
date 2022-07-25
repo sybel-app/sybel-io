@@ -146,14 +146,14 @@ contract Minter is
         );
         // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
-        uint256 amountToBurn = (totalCost * 2) / 10;
+        uint256 amountForFundation = (totalCost * 2) / 10;
         // Send 20% of sybl token to the foundation
-        sybelToken.mint(foundationWallet, amountToBurn);
+        sybelToken.mint(foundationWallet, amountForFundation);
         // Send 80% to the owner
         address owner = sybelInternalTokens.ownerOf(
             SybelMath.extractPodcastId(_id)
         );
-        uint256 amountForOwner = totalCost - amountToBurn;
+        uint256 amountForOwner = totalCost - amountForFundation;
         sybelToken.transfer(_to, owner, amountForOwner);
 
         // Emit the event
