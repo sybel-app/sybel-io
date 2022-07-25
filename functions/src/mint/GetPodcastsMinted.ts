@@ -32,12 +32,17 @@ export default () =>
         );
       }
 
+      // Get the light type for our output
+      type LightPodcast = Omit<MintedPodcastDbDto, "previousCostUpdate">;
+
       // Get the minted podcast
       const mintedPodcastDocsSnapshot = await mintedPodcastQuery.get();
-      const mintedPodcasts: MintedPodcastDbDto[] = [];
-      mintedPodcastDocsSnapshot.forEach((mintedPodcastDoc) =>
-        mintedPodcasts.push(mintedPodcastDoc.data() as MintedPodcastDbDto)
-      );
+      const mintedPodcasts: LightPodcast[] = [];
+      mintedPodcastDocsSnapshot.forEach((mintedPodcastDoc) => {
+        if (mintedPodcastDoc.exists) {
+          mintedPodcasts.push(mintedPodcastDoc.data() as LightPodcast);
+        }
+      });
 
       // Return our freshly built object
       return mintedPodcasts;

@@ -201,7 +201,7 @@ export default () =>
               currentFractionCost.toNumber() / 1e6 +
               "TSE to " +
               newBadge.toNumber() / 1e6 +
-              "On the tx " +
+              "TSE on the tx " +
               updateTx.hash
           );
           // We should update our cost update object to save the block number and the tx hash
@@ -273,7 +273,7 @@ interface BlockPeriod {
  * @param {number} block
  * @return {boolean}
  */
-function isInBlockPeriod(blockPeriod: BlockPeriod, block: number) {
+function isInBlockPeriod(blockPeriod: BlockPeriod, block: number): boolean {
   if (blockPeriod.end) {
     return block >= blockPeriod.start && block < blockPeriod.end;
   } else {
@@ -310,6 +310,7 @@ function countFractionForPeriod(
   const lastWeekBlockNumbers: number[] = [];
   const currentWeekBlockNumbers: number[] = [];
 
+  // Compute the accumulation and find the block numbers
   for (const fractionToTimestamp of fractionToTimestamps) {
     totalAcc += fractionToTimestamp.count.toNumber();
     if (currenWeekPeriod.isInPeriod(fractionToTimestamp.timestampInSec)) {
@@ -319,6 +320,16 @@ function countFractionForPeriod(
       lastWeekAcc += fractionToTimestamp.count.toNumber();
       lastWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
     }
+  }
+
+  // Ensure we got some values in our arrays
+  if (lastWeekBlockNumbers.length == 0) {
+    lastWeekBlockNumbers.push(0);
+  }
+  if (currentWeekBlockNumbers.length == 0 && lastWeekBlockNumbers.length != 0) {
+    currentWeekBlockNumbers.push(Math.max(...lastWeekBlockNumbers));
+  } else if (currentWeekBlockNumbers.length == 0) {
+    currentWeekBlockNumbers.push(0);
   }
 
   return {
@@ -363,6 +374,16 @@ function countFractionForBlockPeriod(
       lastWeekAcc += fractionToTimestamp.args.value.toNumber();
       lastWeekBlockNumbers.push(fractionToTimestamp.blockNumber);
     }
+  }
+
+  // Ensure we got some values in our arrays
+  if (lastWeekBlockNumbers.length == 0) {
+    lastWeekBlockNumbers.push(currenWeekPeriod.start);
+  }
+  if (currentWeekBlockNumbers.length == 0 && lastWeekBlockNumbers.length != 0) {
+    currentWeekBlockNumbers.push(Math.max(...lastWeekBlockNumbers));
+  } else if (currentWeekBlockNumbers.length == 0) {
+    currentWeekBlockNumbers.push(currenWeekPeriod.start);
   }
 
   return {
