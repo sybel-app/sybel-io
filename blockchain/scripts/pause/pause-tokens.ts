@@ -3,37 +3,28 @@ import { ethers } from "hardhat";
 
 import { Contract } from "ethers";
 
-import { TokenSybelEcosystem } from "../../typechain-types/contracts/tokens/TokenSybelEcosystem";
+import { SybelToken } from "../../typechain-types/contracts/tokens/SybelToken";
 import {
   tseTokenAddr,
   smtTokenAddr,
   internalTokenAddr,
 } from "../../addresses.json";
 import { SybelInternalTokens } from "../../typechain-types/contracts/tokens/SybelInternalTokens";
-import { SybelMediaToken } from "../../typechain-types/contracts/tokens/SybelMediaToken";
 
 (async () => {
   try {
     console.log("Pausing all the tokens contract");
 
     // Find the contract we want to pause
-    const tseToken = await findContract<TokenSybelEcosystem>(
-      "TokenSybelEcosystem",
-      tseTokenAddr
-    );
+    const tseToken = await findContract<SybelToken>("SybelToken", tseTokenAddr);
     const internalToken = await findContract<SybelInternalTokens>(
       "SybelInternalTokens",
       internalTokenAddr
-    );
-    const smtToken = await findContract<SybelMediaToken>(
-      "SybelMediaToken",
-      smtTokenAddr
     );
 
     // Pause each one of them
     await tseToken.pause();
     await internalToken.pause();
-    await smtToken.pause();
   } catch (e: any) {
     console.log(e.message);
   }

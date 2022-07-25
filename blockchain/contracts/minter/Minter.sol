@@ -68,6 +68,13 @@ contract Minter is
         fractionCostBadges = IFractionCostBadges(fractionCostBadgesAddr);
     }
 
+    function updateSybTokenAddr(address sybelTokenAddr)
+        external
+        onlyRole(SybelRoles.ADMIN)
+    {
+        sybelToken = SybelToken(sybelTokenAddr);
+    }
+
     /**
      * @dev Add a new podcast to our eco system
      */

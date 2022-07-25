@@ -5,24 +5,24 @@ import { Contract } from "ethers";
 
 const hre = require("hardhat");
 
-import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSybelEcosystem";
-import { tseTokenAddr } from "../addresses.json";
+import { SybelToken } from "../typechain-types/contracts/tokens/SybelToken";
+import { sybelTokenAddr } from "../addresses.json";
 
 (async () => {
   try {
     console.log(`current network name ${hre.hardhatArguments.network}`);
 
     // Find our required contracts
-    const tseToken = await findContract<TokenSybelEcosystem>(
-      "TokenSybelEcosystem",
-      tseTokenAddr
+    const sybelToken = await findContract<SybelToken>(
+      "SybelToken",
+      sybelTokenAddr
     );
 
     // Get all the first accounts
     const accounts = await hre.ethers.getSigners();
 
     for (const account of accounts) {
-      const balance = await tseToken.balanceOf(account.address);
+      const balance = await sybelToken.balanceOf(account.address);
       console.log(
         "The user " +
           account.address +

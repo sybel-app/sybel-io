@@ -63,6 +63,13 @@ contract Rewarder is
         _grantRole(SybelRoles.REWARDER, msg.sender);
     }
 
+    function updateSybTokenAddr(address sybelTokenAddr)
+        external
+        onlyRole(SybelRoles.ADMIN)
+    {
+        sybelToken = SybelToken(sybelTokenAddr);
+    }
+
     /**
      * @dev Find the balance of the given user on each tokens
      */

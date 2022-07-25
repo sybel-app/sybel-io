@@ -7,14 +7,12 @@ const hre = require("hardhat");
 import { Contract, utils } from "ethers";
 
 import { SybelInternalTokens } from "../typechain-types/contracts/tokens/SybelInternalTokens";
-import { SybelMediaToken } from "../typechain-types/contracts/tokens/SybelMediaToken";
-import { TokenSybelEcosystem } from "../typechain-types/contracts/tokens/TokenSybelEcosystem";
+import { SybelToken } from "../typechain-types/contracts/tokens/SybelToken";
 import { ListenerBadges } from "../typechain-types/contracts/badges/payment/ListenerBadges";
 import { PodcastBadges } from "../typechain-types/contracts/badges/payment/PodcastBadges";
 import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
-import { util } from "chai";
 
 (async () => {
   try {
@@ -29,14 +27,8 @@ import { util } from "chai";
     console.log("Internal tokens deployed to " + internalToken.address);
 
     // Deploy our tse token contract
-    const tseToken = await deployContract<TokenSybelEcosystem>(
-      "TokenSybelEcosystem"
-    );
-    console.log("TSE token deployed to " + tseToken.address);
-
-    // Deploy our smt token contract
-    const smtToken = await deployContract<SybelMediaToken>("SybelMediaToken");
-    console.log("SMT token deployed to " + smtToken.address);
+    const sybelToken = await deployContract<SybelToken>("SybelToken");
+    console.log("Sybel token deployed to " + sybelToken.address);
 
     // Deploy our listener and podcast badges contract
     const listenerBadges = await deployContract<ListenerBadges>(
@@ -52,7 +44,7 @@ import { util } from "chai";
 
     // Deploy our rewarder contract
     const rewarder = await deployContract<Rewarder>("Rewarder", [
-      tseToken.address,
+      sybelToken.address,
       internalToken.address,
       listenerBadges.address,
       podcastBadges.address,
@@ -61,7 +53,7 @@ import { util } from "chai";
 
     // Deploy our minter contract
     const minter = await deployContract<Minter>("Minter", [
-      tseToken.address,
+      sybelToken.address,
       internalToken.address,
       listenerBadges.address,
       podcastBadges.address,
@@ -73,16 +65,15 @@ import { util } from "chai";
     const minterRole = utils.keccak256(utils.toUtf8Bytes("MINTER_ROLE"));
     await internalToken.grantRole(minterRole, minter.address);
     await internalToken.grantRole(minterRole, rewarder.address);
-    await tseToken.grantRole(minterRole, minter.address);
-    await tseToken.grantRole(minterRole, rewarder.address);
+    await sybelToken.grantRole(minterRole, minter.address);
+    await sybelToken.grantRole(minterRole, rewarder.address);
 
     console.log("All roles granted with success");
 
     // Build our deplyoed address object
     const addresses = new DeployedAddress(
       internalToken.address,
-      tseToken.address,
-      smtToken.address,
+      sybelToken.address,
       listenerBadges.address,
       podcastBadges.address,
       factionCostBadges.address,
@@ -116,8 +107,7 @@ async function deployContract<Type extends Contract>(
 class DeployedAddress {
   constructor(
     readonly internalTokenAddr: String,
-    readonly tseTokenAddr: String,
-    readonly smtTokenAddr: String,
+    readonly sybelTokenAddr: String,
     readonly listenBadgesAddr: String,
     readonly podcastBadgesAddr: String,
     readonly fractionCostBadgesAddr: String,
