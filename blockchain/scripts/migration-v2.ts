@@ -25,7 +25,7 @@ import * as deployedAddresses from "../addresses.json";
       "Rewarder",
       deployedAddresses.rewarderAddr
     );
-    rewarder.updateSybTokenAddr(sybelToken.address);
+    await rewarder.updateSybTokenAddr(sybelToken.address);
     console.log("Rewarder syb address updated on " + rewarder.address);
 
     // Update our minter contract
@@ -33,7 +33,7 @@ import * as deployedAddresses from "../addresses.json";
       "Minter",
       deployedAddresses.minterAddr
     );
-    minter.updateSybTokenAddr(sybelToken.address);
+    await minter.updateSybTokenAddr(sybelToken.address);
     console.log("Minter syb address updated on " + minter.address);
 
     // Grand all the minting roles

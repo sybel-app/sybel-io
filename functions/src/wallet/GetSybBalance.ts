@@ -62,7 +62,7 @@ export default () =>
         if (forceRefresh || !wallet.tseBalance) {
           // If we asked for a force refresh, or if the balance isn't known, fetch it and return it
           const balance = await tseToken.balanceOf(wallet.address);
-          userBalance = balance.toNumber() / 1e6;
+          userBalance = balance.toNumber() / 1e18;
           // Update the user balance
           await walletDoc.ref.update({
             tseBalance: userBalance,

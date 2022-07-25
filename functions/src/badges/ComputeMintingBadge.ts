@@ -6,7 +6,7 @@ import {
   fractionCostBadgesConnected,
 } from "../utils/Contract";
 import { buildFractionId, BUYABLE_TOKEN_TYPES } from "../utils/SybelMath";
-import { BigNumber, ContractTransaction } from "ethers";
+import { BigNumber, ContractTransaction, utils } from "ethers";
 import MintedPodcastDbDto, {
   CostBadgeUpdatePeriod,
 } from "../types/db/MintedPodcastDbDto";
@@ -194,13 +194,14 @@ export default () =>
             newBadge
           );
           txToWaitFor.push(updateTx);
+          utils.formatEther;
           functions.logger.debug(
             "The badge of the fraction " +
               fractionId +
               " evolved from " +
-              currentFractionCost.toNumber() / 1e6 +
+              currentFractionCost.toNumber() / 1e18 +
               "TSE to " +
-              newBadge.toNumber() / 1e6 +
+              newBadge.toNumber() / 1e18 +
               "TSE on the tx " +
               updateTx.hash
           );
