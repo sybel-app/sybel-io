@@ -34,6 +34,11 @@ contract Minter is
     IFractionCostBadges public fractionCostBadges;
 
     /**
+     * @dev Address of the foundation wallet
+     */
+    address public foundationWallet;
+
+    /**
      * @dev Event emitted when a new podcast is minted
      */
     event PodcastMinted(uint256 baseId, address owner);
@@ -66,13 +71,24 @@ contract Minter is
         sybelInternalTokens = SybelInternalTokens(internalTokenAddr);
         sybelToken = SybelToken(sybelTokenAddr);
         fractionCostBadges = IFractionCostBadges(fractionCostBadgesAddr);
+
+        foundationWallet = msg.sender;
     }
 
     function updateSybTokenAddr(address sybelTokenAddr)
         external
         onlyRole(SybelRoles.ADMIN)
+        whenNotPaused
     {
         sybelToken = SybelToken(sybelTokenAddr);
+    }
+
+    function updateFoundationWallet(address foundationAddr)
+        external
+        onlyRole(SybelRoles.ADMIN)
+        whenNotPaused
+    {
+        foundationWallet = foundationAddr;
     }
 
     /**
@@ -131,9 +147,8 @@ contract Minter is
         // Mint his Fraction of NFT
         sybelInternalTokens.mint(_to, _id, _amount);
         uint256 amountToBurn = (totalCost * 2) / 10;
-        // Send 20% of sybl token to owner
-        // TODO : Owner wallet
-        // sybelToken.burn(_to, amountToBurn);
+        // Send 20% of sybl token to the foundation
+        sybelToken.mint(foundationWallet, amountToBurn);
         // Send 80% to the owner
         address owner = sybelInternalTokens.ownerOf(
             SybelMath.extractPodcastId(_id)
@@ -173,9 +188,8 @@ contract Minter is
             SybelMath.asSingletonArray(_id),
             SybelMath.asSingletonArray(newRealSupply)
         );
-        // Transfer his sybl token to the owner wallet
-        // TODO
-        sybelToken.burn(owner, totalCost);
+        // Transfer his sybl token to the foundation wallet
+        sybelToken.transfer(owner, foundationWallet, totalCost);
     }
 
     /**

@@ -1,12 +1,15 @@
-import { task, types } from "hardhat/config";
+import { task } from "hardhat/config";
 // import { ethers } from "hardhat";
 
+import dotenv from "dotenv";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-contract-sizer";
+
+dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
