@@ -58,7 +58,7 @@ export default () =>
           id: fractionId.toNumber(),
           type: tokenType,
           supply: remainingSupply.toNumber(),
-          cost: rawCost.toNumber() / 1e6,
+          cost: rawCost.toNumber() / 1e18,
         };
       });
       const fractions = await Promise.all(fractionsAsync);

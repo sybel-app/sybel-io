@@ -198,9 +198,9 @@ export default () =>
             "The badge of the fraction " +
               fractionId +
               " evolved from " +
-              currentFractionCost.toNumber() / 1e6 +
+              currentFractionCost.toNumber() / 1e18 +
               "TSE to " +
-              newBadge.toNumber() / 1e6 +
+              newBadge.toNumber() / 1e18 +
               "TSE on the tx " +
               updateTx.hash
           );
