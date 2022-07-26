@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 library SybelMath {
     // The offset of the id and the mask we use to store the token type
@@ -13,10 +13,6 @@ library SybelMath {
     uint8 internal constant TOKEN_TYPE_RARE_MASK = 4;
     uint8 internal constant TOKEN_TYPE_EPIC_MASK = 5;
     uint8 internal constant TOKEN_TYPE_LEGENDARY_MASK = 6;
-
-    // The decimals for each emitted token
-    uint8 internal constant DECIMALS_COUNT = 6;
-    uint64 internal constant DECIMALS = 1000000;
 
     /**
      * @dev Build the id for a S FNT
@@ -104,18 +100,6 @@ library SybelMath {
         returns (uint256)
     {
         return (_podcastId << ID_OFFSET) | TOKEN_TYPE_LEGENDARY_MASK;
-    }
-
-    /**
-     * @dev Build a list of all the buyable token types
-     */
-    function buyableTokenTypes() internal pure returns (uint8[] memory) {
-        uint8[] memory types = new uint8[](4);
-        types[1] = SybelMath.TOKEN_TYPE_CLASSIC_MASK;
-        types[2] = SybelMath.TOKEN_TYPE_RARE_MASK;
-        types[3] = SybelMath.TOKEN_TYPE_EPIC_MASK;
-        types[4] = SybelMath.TOKEN_TYPE_LEGENDARY_MASK;
-        return types;
     }
 
     /**

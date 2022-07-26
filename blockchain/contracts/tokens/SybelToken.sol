@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "../utils/SybelMath.sol";
@@ -26,7 +26,7 @@ contract SybelToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
      * @dev Mint some SYBL
      */
     function mint(address to, uint256 amount)
-        public
+        external
         onlyRole(SybelRoles.MINTER)
     {
         require(totalSupply() + amount <= cap(), "ERC20Capped: cap exceeded");
@@ -40,7 +40,7 @@ contract SybelToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
         address from,
         address to,
         uint256 amount
-    ) public onlyRole(SybelRoles.MINTER) {
+    ) external onlyRole(SybelRoles.MINTER) {
         _transfer(from, to, amount);
     }
 
@@ -48,7 +48,7 @@ contract SybelToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
      * @dev Burn some SYBL
      */
     function burn(address from, uint256 amount)
-        public
+        external
         onlyRole(SybelRoles.MINTER)
     {
         _burn(from, amount);

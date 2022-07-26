@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "./IMinter.sol";
 import "../badges/access/PaymentBadgesAccessor.sol";
@@ -88,6 +88,10 @@ contract Minter is
         onlyRole(SybelRoles.ADMIN)
         whenNotPaused
     {
+        require(
+            foundationAddr != address(0),
+            "SYB: Can't set a new address to 0"
+        );
         foundationWallet = foundationAddr;
     }
 
@@ -197,7 +201,7 @@ contract Minter is
      * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
      */
     function supplyCost(uint8 _tokenType) public pure returns (uint96) {
-        uint96 foundedSupplyCost;
+        uint96 foundedSupplyCost = 0;
         if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             foundedSupplyCost = 0.5 ether; // 0.5 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {

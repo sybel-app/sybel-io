@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "./IRewarder.sol";
 import "../badges/access/PaymentBadgesAccessor.sol";
@@ -211,7 +211,7 @@ contract Rewarder is
         pure
         returns (uint96)
     {
-        uint96 reward;
+        uint96 reward = 0;
         if (_tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
             reward = 0.01 ether; // 0.01 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {

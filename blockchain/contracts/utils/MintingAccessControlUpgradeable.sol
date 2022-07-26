@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "./SybelAccessControlUpgradeable.sol";
 import "../utils/SybelRoles.sol";

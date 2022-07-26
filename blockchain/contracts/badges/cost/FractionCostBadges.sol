@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "./IFractionCostBadges.sol";
 import "../../utils/SybelMath.sol";
@@ -72,7 +72,7 @@ contract FractionCostBadges is
         pure
         returns (uint128)
     {
-        uint128 initialCost;
+        uint128 initialCost = 0;
         if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             initialCost = 1 ether; // 1 SYBL
         } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {

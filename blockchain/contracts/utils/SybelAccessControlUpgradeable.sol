@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -63,14 +63,14 @@ abstract contract SybelAccessControlUpgradeable is
     /**
      * @dev Pause this smart contract
      */
-    function pause() public whenNotPaused onlyRole(SybelRoles.PAUSER) {
+    function pause() external whenNotPaused onlyRole(SybelRoles.PAUSER) {
         _paused = true;
     }
 
     /**
      * @dev Un pause this smart contract
      */
-    function unpause() public whenPaused onlyRole(SybelRoles.PAUSER) {
+    function unpause() external whenPaused onlyRole(SybelRoles.PAUSER) {
         _paused = false;
     }
 
