@@ -6,7 +6,8 @@ import { Contract } from "ethers";
 const hre = require("hardhat");
 
 import { SybelToken } from "../typechain-types/contracts/tokens/SybelToken";
-import { sybelTokenAddr } from "../addresses.json";
+import { Minter } from "../typechain-types/contracts/minter/Minter";
+import { sybelTokenAddr, minterAddr } from "../addresses.json";
 
 (async () => {
   try {
@@ -17,6 +18,11 @@ import { sybelTokenAddr } from "../addresses.json";
       "SybelToken",
       sybelTokenAddr
     );
+
+    // Find our required contracts
+    const minter = await findContract<Minter>("Minter", minterAddr);
+    const fundationWallet = await minter.foundationWallet();
+    console.log(`Founded fundation wallet ${fundationWallet}`);
 
     // Get all the first accounts
     const accounts = await hre.ethers.getSigners();

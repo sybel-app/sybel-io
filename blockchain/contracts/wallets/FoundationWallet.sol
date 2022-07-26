@@ -22,7 +22,7 @@ contract FoundationWallet is
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __SybelAccessControlUpgradeable_init();
 
         // TODO : Here we should build our initial payee and shares informations, this can't be modifier in the future

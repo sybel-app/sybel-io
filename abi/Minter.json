@@ -373,6 +373,24 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "sybelTokenAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "foundationAddr",
+        "type": "address"
+      }
+    ],
+    "name": "migrateToV2",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -503,32 +521,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "foundationAddr",
-        "type": "address"
-      }
-    ],
-    "name": "updateFoundationWallet",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sybelTokenAddr",
-        "type": "address"
-      }
-    ],
-    "name": "updateSybTokenAddr",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

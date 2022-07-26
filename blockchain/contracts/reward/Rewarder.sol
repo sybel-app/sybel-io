@@ -52,7 +52,7 @@ contract Rewarder is
         address internalTokenAddr,
         address listenerBadgesAddr,
         address podcastBadgesAddr
-    ) public initializer {
+    ) external initializer {
         __SybelAccessControlUpgradeable_init();
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
@@ -63,10 +63,7 @@ contract Rewarder is
         _grantRole(SybelRoles.REWARDER, msg.sender);
     }
 
-    function updateSybTokenAddr(address sybelTokenAddr)
-        external
-        onlyRole(SybelRoles.ADMIN)
-    {
+    function migrateToV2(address sybelTokenAddr) external reinitializer(2) {
         sybelToken = SybelToken(sybelTokenAddr);
     }
 
@@ -201,21 +198,21 @@ contract Rewarder is
      * @dev Get the base reward to the given token type
      * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
      */
-    function baseRewardForTokenType(uint8 _tokenType)
+    function baseRewardForTokenType(uint8 tokenType)
         private
         pure
         returns (uint96)
     {
         uint96 reward = 0;
-        if (_tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
+        if (tokenType == SybelMath.TOKEN_TYPE_STANDARD_MASK) {
             reward = 0.01 ether; // 0.01 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             reward = 0.1 ether; // 0.1 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
             reward = 0.5 ether; // 0.5 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
             reward = 1 ether; // 1 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
             reward = 2 ether; // 2 SYBL
         }
         return reward;

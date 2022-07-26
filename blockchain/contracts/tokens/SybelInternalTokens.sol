@@ -43,7 +43,7 @@ contract SybelInternalTokens is
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __ERC1155_init(
             "https://storage.googleapis.com/sybel-io.appspot.com/json/{id}.json"
         );

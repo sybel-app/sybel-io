@@ -21,7 +21,7 @@ contract PodcastBadges is IPodcastBadges, SybelAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __SybelAccessControlUpgradeable_init();
 
         // Grant the badge updater role to the contract deployer

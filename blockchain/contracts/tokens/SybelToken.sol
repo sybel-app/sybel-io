@@ -15,7 +15,7 @@ contract SybelToken is ERC20Upgradeable, MintingAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __ERC20_init("Sybel Token", "SYBL");
         __MintingAccessControlUpgradeable_init();
 

@@ -154,7 +154,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_listener",
+        "name": "listener",
         "type": "address"
       }
     ],
@@ -323,12 +323,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_listener",
+        "name": "listener",
         "type": "address"
       },
       {
         "internalType": "uint64",
-        "name": "_badge",
+        "name": "badge",
         "type": "uint64"
       }
     ],

@@ -21,19 +21,33 @@ import * as deployedAddresses from "../addresses.json";
     console.log("Sybel token deployed to " + sybelToken.address);
 
     // Update our rewarder contract
-    const rewarder = await updateContract<Rewarder>(
-      "Rewarder",
-      deployedAddresses.rewarderAddr
-    );
-    await rewarder.updateSybTokenAddr(sybelToken.address);
+    const rewarderFactory = await ethers.getContractFactory("Rewarder");
+    const rewarder = (await upgrades.upgradeProxy(
+      deployedAddresses.rewarderAddr,
+      rewarderFactory,
+      {
+        call: {
+          fn: "migrateToV2",
+          args: [sybelToken.address],
+        },
+      }
+    )) as Rewarder;
+    await rewarder.deployed();
+
     console.log("Rewarder syb address updated on " + rewarder.address);
 
     // Update our minter contract
-    const minter = await updateContract<Minter>(
-      "Minter",
-      deployedAddresses.minterAddr
-    );
-    await minter.updateSybTokenAddr(sybelToken.address);
+    const minterFactory = await ethers.getContractFactory("Minter");
+    const minter = (await upgrades.upgradeProxy(
+      deployedAddresses.minterAddr,
+      minterFactory,
+      {
+        call: {
+          fn: "migrateToV2",
+          args: [sybelToken.address, sybelToken.address], // TODO : Should be payment splitter
+        },
+      }
+    )) as Minter;
     console.log("Minter syb address updated on " + minter.address);
 
     // Grand all the minting roles

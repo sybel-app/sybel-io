@@ -19,7 +19,7 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __SybelAccessControlUpgradeable_init();
 
         // Grant the badge updater role to the contract deployer
@@ -29,25 +29,25 @@ contract ListenerBadges is IListenerBadges, SybelAccessControlUpgradeable {
     /**
      * @dev Update the listener snft amount
      */
-    function updateBadge(address _listener, uint64 _badge)
+    function updateBadge(address listener, uint64 badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        listenerBadges[_listener] = _badge;
+        listenerBadges[listener] = badge;
     }
 
     /**
      * @dev Find the badge for the given listener (on a 1e6 scale)
      */
-    function getBadge(address _listener)
+    function getBadge(address listener)
         external
         view
         override
         returns (uint64)
     {
-        uint64 listenerBadge = listenerBadges[_listener];
+        uint64 listenerBadge = listenerBadges[listener];
         if (listenerBadge == 0) {
             // If the badge of this listener isn't set yet, set it to default
             listenerBadge = 1 ether;

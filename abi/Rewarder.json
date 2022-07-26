@@ -302,6 +302,19 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sybelTokenAddr",
+        "type": "address"
+      }
+    ],
+    "name": "migrateToV2",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "pause",
     "outputs": [],
@@ -415,19 +428,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sybelTokenAddr",
-        "type": "address"
-      }
-    ],
-    "name": "updateSybTokenAddr",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
