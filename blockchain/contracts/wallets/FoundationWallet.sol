@@ -22,12 +22,12 @@ contract FoundationWallet is
         _disableInitializers();
     }
 
-    function initialize() external initializer {
+    function initialize(address sybelCorp) external initializer {
         __SybelAccessControlUpgradeable_init();
 
-        // TODO : Here we should build our initial payee and shares informations, this can't be modifier in the future
-        address[] memory initialPayee = new address[](0);
-        uint256[] memory initialSharee = new uint256[](0);
+        // Add the initial sybel corp payee
+        address[] memory initialPayee = SybelMath.asSingletonArray(sybelCorp);
+        uint256[] memory initialSharee = SybelMath.asSingletonArray(100);
         __PaymentSplitter_init(initialPayee, initialSharee);
 
         // Grant the rewarder role to the contract deployer

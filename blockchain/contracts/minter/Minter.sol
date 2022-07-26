@@ -63,8 +63,11 @@ contract Minter is
         address internalTokenAddr,
         address listenerBadgesAddr,
         address podcastBadgesAddr,
-        address fractionCostBadgesAddr
+        address fractionCostBadgesAddr,
+        address foundationAddr
     ) external initializer {
+        /*
+        // Only for v1 deployment
         __MintingAccessControlUpgradeable_init();
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
@@ -72,17 +75,14 @@ contract Minter is
         sybelToken = SybelToken(sybelTokenAddr);
         fractionCostBadges = IFractionCostBadges(fractionCostBadgesAddr);
 
-        foundationWallet = msg.sender;
+        foundationWallet = foundationAddr;*/
     }
 
     function migrateToV2(address sybelTokenAddr, address foundationAddr)
         external
         reinitializer(2)
     {
-        require(
-            foundationAddr != address(0),
-            "SYB: Can't set a new address to 0"
-        );
+        // Only for v2 upgrade
         sybelToken = SybelToken(sybelTokenAddr);
         foundationWallet = foundationAddr;
     }

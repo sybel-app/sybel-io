@@ -13,6 +13,7 @@ import { PodcastBadges } from "../typechain-types/contracts/badges/payment/Podca
 import { FractionCostBadges } from "../typechain-types/contracts/badges/cost/FractionCostBadges";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
+import { FoundationWallet } from "../typechain-types/contracts/wallets/FoundationWallet";
 
 (async () => {
   try {
@@ -26,9 +27,19 @@ import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
     );
     console.log("Internal tokens deployed to " + internalToken.address);
 
-    // Deploy our tse token contract
+    // Deploy our sybl token contract
     const sybelToken = await deployContract<SybelToken>("SybelToken");
     console.log("Sybel token deployed to " + sybelToken.address);
+
+    // Deploy our sybel foundation wallet contract
+    const sybelCorpWallet = (await hre.ethers.getSigners())[0].address;
+    const fondationWallet = await deployContract<FoundationWallet>(
+      "FoundationWallet",
+      [sybelCorpWallet]
+    );
+    console.log(
+      `FoundationWallet deployed to ${fondationWallet.address} with corp wallet ${sybelCorpWallet}`
+    );
 
     // Deploy our listener and podcast badges contract
     const listenerBadges = await deployContract<ListenerBadges>(
@@ -58,6 +69,7 @@ import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
       listenerBadges.address,
       podcastBadges.address,
       factionCostBadges.address,
+      fondationWallet.address,
     ]);
     console.log("Minter deployed to " + minter.address);
 
@@ -71,20 +83,22 @@ import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
     console.log("All roles granted with success");
 
     // Build our deplyoed address object
-    const addresses = new DeployedAddress(
-      internalToken.address,
-      sybelToken.address,
-      listenerBadges.address,
-      podcastBadges.address,
-      factionCostBadges.address,
-      rewarder.address,
-      minter.address
-    );
-    fs.writeFileSync("addresses.json", addresses.toJson());
+    const addresses = {
+      internalTokenAddr: internalToken.address,
+      sybelTokenAddr: sybelToken.address,
+      listenBadgesAddr: listenerBadges.address,
+      podcastBadgesAddr: podcastBadges.address,
+      fractionCostBadgesAddr: factionCostBadges.address,
+      rewarderAddr: rewarder.address,
+      minterAddr: minter.address,
+      fondationWalletAddr: fondationWallet.address,
+    };
+    const jsonAddresses = JSON.stringify(addresses);
+    fs.writeFileSync("addresses.json", jsonAddresses);
     // Write another addresses with the name of the current network as backup
     fs.writeFileSync(
       `addresses-${hre.hardhatArguments.network}.json`,
-      addresses.toJson()
+      jsonAddresses
     );
   } catch (e: any) {
     console.log(e.message);

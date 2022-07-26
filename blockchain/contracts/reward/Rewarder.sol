@@ -53,6 +53,8 @@ contract Rewarder is
         address listenerBadgesAddr,
         address podcastBadgesAddr
     ) external initializer {
+        /*
+        // Only for v1 deployment
         __SybelAccessControlUpgradeable_init();
         __PaymentBadgesAccessor_init(listenerBadgesAddr, podcastBadgesAddr);
 
@@ -61,9 +63,11 @@ contract Rewarder is
 
         // Grant the rewarder role to the contract deployer
         _grantRole(SybelRoles.REWARDER, msg.sender);
+        */
     }
 
     function migrateToV2(address sybelTokenAddr) external reinitializer(2) {
+        // Only for v2 upgrade
         sybelToken = SybelToken(sybelTokenAddr);
     }
 

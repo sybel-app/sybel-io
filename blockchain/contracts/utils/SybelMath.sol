@@ -159,4 +159,18 @@ library SybelMath {
 
         return array;
     }
+
+    /**
+     * @dev Create a singleton array of the given element
+     */
+    function asSingletonArray(address element)
+        internal
+        pure
+        returns (address[] memory)
+    {
+        address[] memory array = new address[](1);
+        array[0] = element;
+
+        return array;
+    }
 }

@@ -350,6 +350,11 @@
         "internalType": "address",
         "name": "fractionCostBadgesAddr",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "foundationAddr",
+        "type": "address"
       }
     ],
     "name": "initialize",

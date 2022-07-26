@@ -7,6 +7,7 @@ const hre = require("hardhat");
 import { Contract, utils } from "ethers";
 
 import { SybelToken } from "../typechain-types/contracts/tokens/SybelToken";
+import { FoundationWallet } from "../typechain-types/contracts/wallets/FoundationWallet";
 import { Minter } from "../typechain-types/contracts/minter/Minter";
 import { Rewarder } from "../typechain-types/contracts/reward/Rewarder";
 import * as deployedAddresses from "../addresses.json";
@@ -19,6 +20,16 @@ import * as deployedAddresses from "../addresses.json";
     // Deploy our sybel token contract
     const sybelToken = await deployContract<SybelToken>("SybelToken");
     console.log("Sybel token deployed to " + sybelToken.address);
+
+    // Deploy our sybel foundation wallet contract
+    const sybelCorpWallet = (await hre.ethers.getSigners())[0].address;
+    const fondationWallet = await deployContract<FoundationWallet>(
+      "FoundationWallet",
+      [sybelCorpWallet]
+    );
+    console.log(
+      `FoundationWallet deployed to ${fondationWallet.address} with corp wallet ${sybelCorpWallet}`
+    );
 
     // Update our rewarder contract
     const rewarderFactory = await ethers.getContractFactory("Rewarder");
@@ -44,7 +55,7 @@ import * as deployedAddresses from "../addresses.json";
       {
         call: {
           fn: "migrateToV2",
-          args: [sybelToken.address, sybelToken.address], // TODO : Should be payment splitter
+          args: [sybelToken.address, fondationWallet.address],
         },
       }
     )) as Minter;
@@ -61,12 +72,14 @@ import * as deployedAddresses from "../addresses.json";
     const addresses = {
       ...deployedAddresses,
       sybelTokenAddr: sybelToken.address,
+      fondationWalletAddr: fondationWallet.address,
     };
-    fs.writeFileSync("addresses.json", JSON.stringify(addresses));
+    const jsonAddresses = JSON.stringify(addresses);
+    fs.writeFileSync("addresses.json", jsonAddresses);
     // Write another addresses with the name of the current network as backup
     fs.writeFileSync(
       `addresses-${hre.hardhatArguments.network}.json`,
-      JSON.stringify(addresses)
+      jsonAddresses
     );
   } catch (e: any) {
     console.log(e.message);
