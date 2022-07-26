@@ -173,7 +173,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_podcastId",
+        "name": "podcastId",
         "type": "uint256"
       }
     ],
@@ -342,12 +342,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_podcastId",
+        "name": "podcastId",
         "type": "uint256"
       },
       {
         "internalType": "uint64",
-        "name": "_badge",
+        "name": "badge",
         "type": "uint64"
       }
     ],

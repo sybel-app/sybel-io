@@ -55,7 +55,7 @@ contract SybelInternalTokens is
     /**
      * @dev Mint a new podcast, return the id of the built podcast
      */
-    function mintNewPodcast(address _podcastOwnerAddress)
+    function mintNewPodcast(address podcastOwnerAddress)
         external
         onlyRole(SybelRoles.MINTER)
         whenNotPaused
@@ -69,7 +69,7 @@ contract SybelInternalTokens is
         uint256 nftId = SybelMath.buildNftId(id);
         _isSupplyAware[nftId] = true;
         _availableSupplies[nftId] = 1;
-        _mint(_podcastOwnerAddress, nftId, 1, new bytes(0x0));
+        _mint(podcastOwnerAddress, nftId, 1, new bytes(0x0));
 
         // Return the podcast id
         return id;
@@ -78,22 +78,23 @@ contract SybelInternalTokens is
     /**
      * @dev Set the supply for each token ids
      */
-    function setSupplyBatch(
-        uint256[] calldata _ids,
-        uint256[] calldata _supplies
-    ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
+    function setSupplyBatch(uint256[] calldata ids, uint256[] calldata supplies)
+        external
+        onlyRole(SybelRoles.MINTER)
+        whenNotPaused
+    {
         require(
-            _ids.length == _supplies.length,
+            ids.length == supplies.length,
             "SYB: Can't set the supply for id and supplies of different length"
         );
         // Iterate over each ids and increment their supplies
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            uint256 id = _ids[i];
+        for (uint256 i = 0; i < ids.length; ++i) {
+            uint256 id = ids[i];
 
-            _availableSupplies[id] = _supplies[i];
+            _availableSupplies[id] = supplies[i];
             _isSupplyAware[id] = true;
             // Emit the supply update event
-            emit SuplyUpdated(id, _supplies[i]);
+            emit SuplyUpdated(id, supplies[i]);
         }
     }
 
@@ -157,22 +158,22 @@ contract SybelInternalTokens is
      * @dev Mint a new fraction of a nft
      */
     function mint(
-        address _to,
-        uint256 _id,
-        uint256 _amount
+        address to,
+        uint256 id,
+        uint256 amount
     ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
-        _mint(_to, _id, _amount, new bytes(0x0));
+        _mint(to, id, amount, new bytes(0x0));
     }
 
     /**
      * @dev Burn a fraction of a nft
      */
     function burn(
-        address _from,
-        uint256 _id,
-        uint256 _amount
+        address from,
+        uint256 id,
+        uint256 amount
     ) external onlyRole(SybelRoles.MINTER) whenNotPaused {
-        _burn(_from, _id, _amount);
+        _burn(from, id, amount);
     }
 
     /**

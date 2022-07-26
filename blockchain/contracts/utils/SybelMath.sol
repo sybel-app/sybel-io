@@ -17,25 +17,25 @@ library SybelMath {
     /**
      * @dev Build the id for a S FNT
      */
-    function buildSnftId(uint256 _podcastId, uint8 _type)
+    function buildSnftId(uint256 podcastId, uint8 tokenType)
         internal
         pure
         returns (uint256)
     {
-        return (_podcastId << ID_OFFSET) | _type;
+        return (podcastId << ID_OFFSET) | tokenType;
     }
 
     /**
      * @dev Build the id for a S FNT
      */
-    function buildSnftIds(uint256 _podcastId, uint8[] memory _types)
+    function buildSnftIds(uint256 podcastId, uint8[] memory types)
         internal
         pure
         returns (uint256[] memory)
     {
-        uint256[] memory tokenIds = new uint256[](_types.length);
-        for (uint8 i = 0; i < _types.length; ++i) {
-            tokenIds[i] = buildSnftId(_podcastId, _types[i]);
+        uint256[] memory tokenIds = new uint256[](types.length);
+        for (uint8 i = 0; i < types.length; ++i) {
+            tokenIds[i] = buildSnftId(podcastId, types[i]);
         }
         return tokenIds;
     }
@@ -43,63 +43,55 @@ library SybelMath {
     /**
      * @dev Build the id for a NFT
      */
-    function buildNftId(uint256 _podcastId) internal pure returns (uint256) {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_NFT_MASK;
+    function buildNftId(uint256 podcastId) internal pure returns (uint256) {
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_NFT_MASK;
     }
 
     /**
      * @dev Build the id for a classic NFT id
      */
-    function buildStandardNftId(uint256 _podcastId)
+    function buildStandardNftId(uint256 podcastId)
         internal
         pure
         returns (uint256)
     {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_STANDARD_MASK;
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_STANDARD_MASK;
     }
 
     /**
      * @dev Build the id for a classic NFT id
      */
-    function buildClassicNftId(uint256 _podcastId)
+    function buildClassicNftId(uint256 podcastId)
         internal
         pure
         returns (uint256)
     {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_CLASSIC_MASK;
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_CLASSIC_MASK;
     }
 
     /**
      * @dev Build the id for a rare NFT id
      */
-    function buildRareNftId(uint256 _podcastId)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_RARE_MASK;
+    function buildRareNftId(uint256 podcastId) internal pure returns (uint256) {
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_RARE_MASK;
     }
 
     /**
      * @dev Build the id for a epic NFT id
      */
-    function buildEpicNftId(uint256 _podcastId)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_EPIC_MASK;
+    function buildEpicNftId(uint256 podcastId) internal pure returns (uint256) {
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_EPIC_MASK;
     }
 
     /**
      * @dev Build the id for a epic NFT id
      */
-    function buildLegendaryNftId(uint256 _podcastId)
+    function buildLegendaryNftId(uint256 podcastId)
         internal
         pure
         returns (uint256)
     {
-        return (_podcastId << ID_OFFSET) | TOKEN_TYPE_LEGENDARY_MASK;
+        return (podcastId << ID_OFFSET) | TOKEN_TYPE_LEGENDARY_MASK;
     }
 
     /**
@@ -117,29 +109,29 @@ library SybelMath {
 
     /**
      * @dev Return the id of a podcast without the token type mask
-     * @param _id uint256 ID of the token tto exclude the mask of
+     * @param id uint256 ID of the token tto exclude the mask of
      * @return uint256 The id without the type mask
      */
-    function extractPodcastId(uint256 _id) internal pure returns (uint256) {
-        return _id >> ID_OFFSET;
+    function extractPodcastId(uint256 id) internal pure returns (uint256) {
+        return id >> ID_OFFSET;
     }
 
     /**
      * @dev Return the token type
-     * @param _id uint256 ID of the token to extract the mask from
+     * @param id uint256 ID of the token to extract the mask from
      * @return uint256 The token type
      */
-    function extractTokenType(uint256 _id) internal pure returns (uint8) {
-        return uint8(_id & TYPE_MASK);
+    function extractTokenType(uint256 id) internal pure returns (uint8) {
+        return uint8(id & TYPE_MASK);
     }
 
     /**
      * @dev Check if the given token exist
-     * @param _id uint256 ID of the token to check
+     * @param id uint256 ID of the token to check
      * @return bool true if the token is related to a podcast, false otherwise
      */
-    function isPodcastRelatedToken(uint256 _id) internal pure returns (bool) {
-        uint8 tokenType = extractTokenType(_id);
+    function isPodcastRelatedToken(uint256 id) internal pure returns (bool) {
+        uint8 tokenType = extractTokenType(id);
         return
             tokenType > TOKEN_TYPE_NFT_MASK &&
             tokenType <= TOKEN_TYPE_LEGENDARY_MASK;
@@ -147,11 +139,11 @@ library SybelMath {
 
     /**
      * @dev Check if the given token id is a podcast NFT
-     * @param _id uint256 ID of the token to check
+     * @param id uint256 ID of the token to check
      * @return bool true if the token is a podcast nft, false otherwise
      */
-    function isPodcastNft(uint256 _id) internal pure returns (bool) {
-        return extractTokenType(_id) == TOKEN_TYPE_NFT_MASK;
+    function isPodcastNft(uint256 id) internal pure returns (bool) {
+        return extractTokenType(id) == TOKEN_TYPE_NFT_MASK;
     }
 
     /**

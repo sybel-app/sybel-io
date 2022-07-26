@@ -73,7 +73,7 @@ contract Rewarder is
     /**
      * @dev Find the balance of the given user on each tokens
      */
-    function getListenerBalanceForPodcast(address _listener, uint256 _podcastId)
+    function getListenerBalanceForPodcast(address listener, uint256 podcastId)
         private
         view
         returns (ListenerBalanceOnPodcast[] memory, bool hasToken)
@@ -81,7 +81,7 @@ contract Rewarder is
         // The different types we will fetch
         uint8[] memory types = SybelMath.payableTokenTypes();
         // Build the ids for eachs types
-        uint256[] memory tokenIds = SybelMath.buildSnftIds(_podcastId, types);
+        uint256[] memory tokenIds = SybelMath.buildSnftIds(podcastId, types);
         // Build our initial balance map
         ListenerBalanceOnPodcast[]
             memory balances = new ListenerBalanceOnPodcast[](types.length);
@@ -92,7 +92,7 @@ contract Rewarder is
             // TODO : Batch balances of to be more gas efficient ??
             // Get the balance and build our balance on podcast object
             uint256 balance = sybelInternalTokens.balanceOf(
-                _listener,
+                listener,
                 tokenIds[i]
             );
             balances[i] = ListenerBalanceOnPodcast(types[i], balance);
@@ -106,46 +106,41 @@ contract Rewarder is
      * @dev Pay a user for all the listening he have done on different podcast
      */
     function payUser(
-        address _listener,
-        uint256[] calldata _podcastIds,
-        uint16[] calldata _listenCounts
+        address listener,
+        uint256[] calldata podcastIds,
+        uint16[] calldata listenCounts
     ) external override onlyRole(SybelRoles.REWARDER) whenNotPaused {
         require(
-            _podcastIds.length == _listenCounts.length,
+            podcastIds.length == listenCounts.length,
             "SYB: Can't pay of podcast for id and listen of different length"
         );
         require(
-            _podcastIds.length <= MAX_BATCH_AMOUNT,
+            podcastIds.length <= MAX_BATCH_AMOUNT,
             "SYB: Can't treat more than 20 items at a time"
         );
         // Iterate over each podcast
-        for (uint256 i = 0; i < _podcastIds.length; ++i) {
+        for (uint256 i = 0; i < podcastIds.length; ++i) {
             // Find the balance of the listener for this podcast
             (
                 ListenerBalanceOnPodcast[] memory balances,
                 bool hasAtLeastOneBalance
-            ) = getListenerBalanceForPodcast(_listener, _podcastIds[i]);
+            ) = getListenerBalanceForPodcast(listener, podcastIds[i]);
             // If no balance mint a Standard NFT
             if (!hasAtLeastOneBalance) {
                 sybelInternalTokens.mint(
-                    _listener,
-                    SybelMath.buildStandardNftId(_podcastIds[i]),
+                    listener,
+                    SybelMath.buildStandardNftId(podcastIds[i]),
                     1
                 );
                 // And then recompute his balance
                 (balances, hasAtLeastOneBalance) = getListenerBalanceForPodcast(
-                    _listener,
-                    _podcastIds[i]
+                    listener,
+                    podcastIds[i]
                 );
             }
             // If he as at least one balance
             if (hasAtLeastOneBalance) {
-                mintForUser(
-                    _listener,
-                    _podcastIds[i],
-                    _listenCounts[i],
-                    balances
-                );
+                mintForUser(listener, podcastIds[i], listenCounts[i], balances);
             }
         }
     }
@@ -154,27 +149,27 @@ contract Rewarder is
      * @dev Mint the reward for the given user, and take in account his balances for the given podcast
      */
     function mintForUser(
-        address _listener,
-        uint256 _podcastId,
-        uint16 _listenCount,
-        ListenerBalanceOnPodcast[] memory _balances
+        address listener,
+        uint256 podcastId,
+        uint16 listenCount,
+        ListenerBalanceOnPodcast[] memory balances
     ) private {
         // The user have a balance we can continue
-        uint64 podcastBadge = podcastBadges.getBadge(_podcastId);
+        uint64 podcastBadge = podcastBadges.getBadge(podcastId);
         // Amout we will mint for user and for owner
         uint256 totalAmountToMint = 0;
         // Mint each token for each fraction
-        for (uint256 i = 0; i < _balances.length; ++i) {
-            if (_balances[i].balance <= 0) {
+        for (uint256 i = 0; i < balances.length; ++i) {
+            if (balances[i].balance <= 0) {
                 // Jump this iteration if the user havn't go any balance of this token types
                 continue;
             }
             // Compute the amount for the owner and the users
             totalAmountToMint +=
-                (_balances[i].balance *
-                    baseRewardForTokenType(_balances[i].tokenType) *
+                (balances[i].balance *
+                    baseRewardForTokenType(balances[i].tokenType) *
                     podcastBadge *
-                    _listenCount) /
+                    listenCount) /
                 1 ether;
         }
         // If nothing to mint, directly exit
@@ -184,21 +179,21 @@ contract Rewarder is
         uint256 amountForOwner = totalAmountToMint / 2;
         uint256 baseAmountForListener = totalAmountToMint - amountForOwner;
         // Handle the user badge for his amount
-        uint64 listenerBadge = listenerBadges.getBadge(_listener);
+        uint64 listenerBadge = listenerBadges.getBadge(listener);
         uint256 amountForListener = (baseAmountForListener * listenerBadge) /
             1 ether;
         // Mint the SYBL for the listener
-        sybelToken.mint(_listener, amountForListener);
+        sybelToken.mint(listener, amountForListener);
         // Mint the SYBL for the owner
-        address podcastOwner = sybelInternalTokens.ownerOf(_podcastId);
+        address podcastOwner = sybelInternalTokens.ownerOf(podcastId);
         sybelToken.mint(podcastOwner, amountForOwner);
         // Emit the reward event
         emit UserRewarded(
-            _podcastId,
-            _listener,
-            _listenCount,
+            podcastId,
+            listener,
+            listenCount,
             amountForListener,
-            _balances
+            balances
         );
     }
 

@@ -204,7 +204,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_podcastOwnerAddress",
+        "name": "podcastOwnerAddress",
         "type": "address"
       }
     ],
@@ -310,12 +310,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_newSupply",
+        "name": "newSupply",
         "type": "uint256"
       }
     ],
@@ -374,17 +374,17 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -466,7 +466,7 @@
     "inputs": [
       {
         "internalType": "uint8",
-        "name": "_tokenType",
+        "name": "tokenType",
         "type": "uint8"
       }
     ],

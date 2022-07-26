@@ -173,7 +173,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_fractionId",
+        "name": "fractionId",
         "type": "uint256"
       }
     ],
@@ -253,7 +253,7 @@
     "inputs": [
       {
         "internalType": "uint8",
-        "name": "_tokenType",
+        "name": "tokenType",
         "type": "uint8"
       }
     ],
@@ -361,12 +361,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_fractionId",
+        "name": "fractionId",
         "type": "uint256"
       },
       {
         "internalType": "uint128",
-        "name": "_badge",
+        "name": "badge",
         "type": "uint128"
       }
     ],

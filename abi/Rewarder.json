@@ -312,17 +312,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_listener",
+        "name": "listener",
         "type": "address"
       },
       {
         "internalType": "uint256[]",
-        "name": "_podcastIds",
+        "name": "podcastIds",
         "type": "uint256[]"
       },
       {
         "internalType": "uint16[]",
-        "name": "_listenCounts",
+        "name": "listenCounts",
         "type": "uint16[]"
       }
     ],

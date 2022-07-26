@@ -34,30 +34,30 @@ contract FractionCostBadges is
     /**
      * @dev Update the podcast internal coefficient
      */
-    function updateBadge(uint256 _fractionId, uint128 _badge)
+    function updateBadge(uint256 fractionId, uint128 badge)
         external
         override
         onlyRole(SybelRoles.BADGE_UPDATER)
         whenNotPaused
     {
-        fractionBadges[_fractionId] = _badge;
-        emit FractionCostBadgeUpdated(_fractionId, _badge);
+        fractionBadges[fractionId] = badge;
+        emit FractionCostBadgeUpdated(fractionId, badge);
     }
 
     /**
      * @dev Get the payment badges for the given informations
      */
-    function getBadge(uint256 _fractionId)
+    function getBadge(uint256 fractionId)
         external
         view
         override
         whenNotPaused
         returns (uint128)
     {
-        uint128 fractionBadge = fractionBadges[_fractionId];
+        uint128 fractionBadge = fractionBadges[fractionId];
         if (fractionBadge == 0) {
             // If the badge of this fraction isn't set yet, set it to default
-            uint8 tokenType = SybelMath.extractTokenType(_fractionId);
+            uint8 tokenType = SybelMath.extractTokenType(fractionId);
             fractionBadge = initialFractionCost(tokenType);
         }
         return fractionBadge;
@@ -67,19 +67,19 @@ contract FractionCostBadges is
      * @dev The initial cost of a fraction type
      * We use a pure function instead of a mapping to economise on storage read, and since this reawrd shouldn't evolve really fast
      */
-    function initialFractionCost(uint8 _tokenType)
+    function initialFractionCost(uint8 tokenType)
         public
         pure
         returns (uint128)
     {
         uint128 initialCost = 0;
-        if (_tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
+        if (tokenType == SybelMath.TOKEN_TYPE_CLASSIC_MASK) {
             initialCost = 1 ether; // 1 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_RARE_MASK) {
             initialCost = 5 ether; // 5 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_EPIC_MASK) {
             initialCost = 10 ether; // 10 SYBL
-        } else if (_tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
+        } else if (tokenType == SybelMath.TOKEN_TYPE_LEGENDARY_MASK) {
             initialCost = 20 ether; // 20 SYBL
         }
         return initialCost;
